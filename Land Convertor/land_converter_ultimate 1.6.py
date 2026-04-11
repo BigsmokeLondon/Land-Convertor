@@ -70,6 +70,11 @@ URDU_TEXT = {
     'invalid_number': 'براہ کرم درست نمبر درج کریں!',
     'invalid_positive': 'مربع فٹ صفر سے بڑا ہونا چاہیے!',
     'standards': 'قانونی: 1 مرلہ = 225 مربع فٹ | روایتی: 1 مرلہ = 272 مربع فٹ (خیبر پختونخوا بلڈرز)',
+    'lookup_tab_text': '  🔍 ریورس لک اپ  ',
+    'select_unit': 'یونٹ منتخب کریں:',
+    'enter_value': 'ویلیو درج کریں:',
+    'calc_btn': '🧮 تبدیل کریں',
+    'lookup_results_label': '🔍 لک اپ کے نتائج',
 }
 
 class LandConverterGUI:
@@ -207,22 +212,29 @@ class LandConverterGUI:
         self.standards_label.pack(pady=(5, 8))
         
         # ========== NOTEBOOK (TABS) ==========
-        notebook = ttk.Notebook(main_frame)
-        notebook.pack(fill='both', expand=True, padx=15, pady=10)
+        self.notebook = ttk.Notebook(main_frame)
+        self.notebook.pack(fill='both', expand=True, padx=15, pady=10)
         
         # Tab 1: Converter
-        converter_frame = tk.Frame(notebook, bg=self.colors['white'])
-        notebook.add(converter_frame, text="  📏 Converter  ")
+        converter_frame = tk.Frame(self.notebook, bg=self.colors['white'])
+        self.notebook.add(converter_frame, text="  📏 Converter  ")
         
         # Tab 2: Visualization
-        viz_frame = tk.Frame(notebook, bg=self.colors['white'])
-        notebook.add(viz_frame, text="  📈 Visualization  ")
+        viz_frame = tk.Frame(self.notebook, bg=self.colors['white'])
+        self.notebook.add(viz_frame, text="  📈 Visualization  ")
+        
+        # Tab 3: Reverse Lookup
+        lookup_frame = tk.Frame(self.notebook, bg=self.colors['white'])
+        self.notebook.add(lookup_frame, text="  🔍 Reverse Lookup  ")
         
         # Build Converter Tab
         self.build_converter_tab(converter_frame)
         
         # Build Visualization Tab
         self.build_viz_tab(viz_frame)
+        
+        # Build Lookup Tab
+        self.build_lookup_tab(lookup_frame)
         
         # ========== STATUS BAR ==========
         self.status_var = tk.StringVar()
@@ -569,6 +581,209 @@ class LandConverterGUI:
         self.canvas = FigureCanvasTkAgg(fig, master=self.chart_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill='both', expand=True)
+
+    def build_lookup_tab(self, parent):
+        """Build the reverse lookup tab"""
+        # ========== INPUT FRAME ==========
+        self.lookup_input_frame = tk.LabelFrame(
+            parent,
+            text=" 🔍 Reverse Measurement Lookup ",
+            font=('Arial', 15, 'bold'),
+            padx=25,
+            pady=20,
+            bg=self.colors['white'],
+            relief='groove',
+            borderwidth=3
+        )
+        self.lookup_input_frame.pack(fill='x', padx=20, pady=15)
+        
+        input_row = tk.Frame(self.lookup_input_frame, bg=self.colors['white'])
+        input_row.pack(fill='x', pady=10)
+        
+        # Unit selection
+        self.lookup_unit_label = tk.Label(
+            input_row,
+            text="Select Unit:",
+            font=('Arial', 16, 'bold'),
+            bg=self.colors['white'],
+            anchor='w'
+        )
+        self.lookup_unit_label.pack(side='left', padx=(0, 10))
+        
+        self.lookup_units = [
+            'Square Feet',
+            'Marla (Punjab Legal)',
+            'Kanal (Punjab Legal)',
+            'Marla (Trad Ref)',
+            'Kanal (KPK Ref)',
+            'Sq. Karam'
+        ]
+        self.lookup_unit_var = tk.StringVar(value=self.lookup_units[1])
+        self.lookup_unit_cb = ttk.Combobox(
+            input_row,
+            textvariable=self.lookup_unit_var,
+            values=self.lookup_units,
+            font=('Arial', 14),
+            width=22,
+            state='readonly'
+        )
+        self.lookup_unit_cb.pack(side='left', padx=(0, 20))
+        
+        # Value Input
+        self.lookup_value_label = tk.Label(
+            input_row,
+            text="Enter Value:",
+            font=('Arial', 16, 'bold'),
+            bg=self.colors['white'],
+            anchor='w'
+        )
+        self.lookup_value_label.pack(side='left', padx=(0, 10))
+        
+        self.lookup_val_var = tk.StringVar()
+        self.lookup_entry = tk.Entry(
+            input_row,
+            textvariable=self.lookup_val_var,
+            font=('Arial', 18),
+            width=15,
+            relief='solid',
+            borderwidth=2,
+            justify='center',
+            bg=self.colors['trad_yellow']
+        )
+        self.lookup_entry.pack(side='left', padx=(0, 20))
+        self.lookup_entry.bind('<Return>', lambda e: self.calculate_lookup())
+        
+        self.lookup_calc_btn = tk.Button(
+            input_row,
+            text="🧮 Convert",
+            command=self.calculate_lookup,
+            font=('Arial', 14, 'bold'),
+            bg=self.colors['dark_blue'],
+            fg=self.colors['white'],
+            padx=20,
+            pady=8,
+            relief='raised',
+            cursor='hand2'
+        )
+        self.lookup_calc_btn.pack(side='left', padx=(10, 0))
+        
+        # ========== RESULTS FRAME ==========
+        self.lookup_results_frame = tk.LabelFrame(
+            parent,
+            text=" 🔍 Lookup Results ",
+            font=('Arial', 15, 'bold'),
+            padx=20,
+            pady=15,
+            bg=self.colors['white'],
+            relief='groove',
+            borderwidth=3
+        )
+        self.lookup_results_frame.pack(fill='both', expand=True, padx=20, pady=15)
+        
+        # Treeview for displaying lookup results
+        tree_frame = tk.Frame(self.lookup_results_frame, bg=self.colors['white'])
+        tree_frame.pack(fill='both', expand=True)
+        
+        tree_scroll_y = tk.Scrollbar(tree_frame, orient='vertical')
+        tree_scroll_y.pack(side='right', fill='y')
+        
+        columns = ('Unit', 'Value')
+        self.lookup_tree = ttk.Treeview(
+            tree_frame,
+            columns=columns,
+            show='headings',
+            yscrollcommand=tree_scroll_y.set,
+            height=8
+        )
+        tree_scroll_y.config(command=self.lookup_tree.yview)
+        self.lookup_tree.pack(fill='both', expand=True)
+        
+        self.lookup_tree.heading('Unit', text='Measurement Unit')
+        self.lookup_tree.heading('Value', text='Converted Value')
+        
+        self.lookup_tree.column('Unit', width=300, anchor='w')
+        self.lookup_tree.column('Value', width=400, anchor='center')
+        
+        # Configure tags for tree rows
+        self.lookup_tree.tag_configure('highlight_legal', background=self.colors['light_blue'], font=('Arial', 14, 'bold'))
+        self.lookup_tree.tag_configure('highlight_trad', background=self.colors['trad_yellow'], font=('Arial', 14, 'bold'))
+        self.lookup_tree.tag_configure('normal_row', background=self.colors['gray'], font=('Arial', 13))
+
+    def calculate_lookup(self):
+        """Calculate and display all units based on the selected reverse lookup input"""
+        try:
+            val_input = self.lookup_val_var.get().strip()
+            
+            if not val_input:
+                msg = URDU_TEXT['input_required_msg'] if self.is_urdu else "Please enter a value!"
+                messagebox.showwarning(URDU_TEXT['input_required'] if self.is_urdu else "Input Required", msg)
+                self.lookup_entry.focus()
+                return
+            
+            val = float(val_input)
+            if val <= 0:
+                msg = URDU_TEXT['invalid_positive'] if self.is_urdu else "Value must be greater than zero!"
+                messagebox.showerror(URDU_TEXT['invalid_input'] if self.is_urdu else "Invalid Input", msg)
+                return
+                
+            unit = self.lookup_unit_var.get()
+            sqft = 0.0
+            
+            # Identify input unit and map to sqft
+            if unit == 'Square Feet' or unit == 'مربع فٹ':
+                sqft = val
+            elif unit == 'Marla (Punjab Legal)' or unit == URDU_TEXT.get('marla_legal', ''):
+                sqft = val * SQFT_PER_MARLA_LEGAL
+            elif unit == 'Kanal (Punjab Legal)' or unit == URDU_TEXT.get('kanal_legal', ''):
+                sqft = val * SQFT_PER_KANAL_LEGAL
+            elif unit == 'Marla (Trad Ref)' or unit == URDU_TEXT.get('marla_trad', ''):
+                sqft = val * SQFT_PER_MARLA_TRAD
+            elif unit == 'Kanal (KPK Ref)' or unit == URDU_TEXT.get('kanal_kpk', ''):
+                sqft = val * SQFT_PER_KANAL_TRAD
+            elif unit == 'Sq. Karam' or unit == URDU_TEXT.get('sq_karam', ''):
+                sqft = val * SQFT_PER_SQ_KARAM
+            else:
+                sqft = val # Fallback
+                
+            marla_legal = sqft / SQFT_PER_MARLA_LEGAL
+            kanal_legal = sqft / SQFT_PER_KANAL_LEGAL
+            marla_trad = sqft / SQFT_PER_MARLA_TRAD
+            kanal_kpk = sqft / SQFT_PER_KANAL_TRAD
+            sq_karam = sqft / SQFT_PER_SQ_KARAM
+            
+            # Clear previous
+            for item in self.lookup_tree.get_children():
+                self.lookup_tree.delete(item)
+                
+            if self.is_urdu:
+                results = [
+                    ('مربع فٹ', f"{sqft:,.2f}", 'normal_row'),
+                    (URDU_TEXT['marla_legal'], f"{marla_legal:,.4f}", 'highlight_legal'),
+                    (URDU_TEXT['kanal_legal'], f"{kanal_legal:,.4f}", 'highlight_legal'),
+                    (URDU_TEXT['marla_trad'], f"{marla_trad:,.4f}", 'highlight_trad'),
+                    (URDU_TEXT['kanal_kpk'], f"{kanal_kpk:,.4f}", 'highlight_trad'),
+                    (URDU_TEXT['sq_karam'], f"{sq_karam:,.2f}", 'normal_row')
+                ]
+            else:
+                results = [
+                    ('Square Feet', f"{sqft:,.2f} sq ft", 'normal_row'),
+                    ('Marla (Punjab Legal)', f"{marla_legal:,.4f} Marla", 'highlight_legal'),
+                    ('Kanal (Punjab Legal)', f"{kanal_legal:,.4f} Kanal", 'highlight_legal'),
+                    ('Marla (Trad Ref)', f"{marla_trad:,.4f} Marla", 'highlight_trad'),
+                    ('Kanal (KPK Ref)', f"{kanal_kpk:,.4f} Kanal", 'highlight_trad'),
+                    ('Sq. Karam', f"{sq_karam:,.2f} Sq. Karam", 'normal_row')
+                ]
+            
+            for res_unit, res_val, tag in results:
+                if unit == res_unit:
+                    self.lookup_tree.insert('', 'end', values=(res_unit, "► " + res_val), tags=(tag,))
+                else:
+                    self.lookup_tree.insert('', 'end', values=(res_unit, res_val), tags=(tag,))
+                
+        except ValueError:
+            msg = URDU_TEXT['invalid_number'] if self.is_urdu else "Please enter a valid number!"
+            messagebox.showerror(URDU_TEXT['invalid_input'] if self.is_urdu else "Invalid Input", msg)
+            self.lookup_entry.focus()
     
     def add_conversion(self):
         """Add conversion with ALL reference values calculated"""
@@ -949,6 +1164,35 @@ class LandConverterGUI:
             
             self.status_var.set("تیار • مربع فٹ درج کریں | کنٹرول+A سے حوالہ گائیڈ کھولیں")
             
+            # Update reverse lookup tab
+            if hasattr(self, 'notebook'):
+                self.notebook.tab(2, text=URDU_TEXT['lookup_tab_text'])
+                self.lookup_input_frame.config(text=" 🔍 ریورس لک اپ ")
+                self.lookup_unit_label.config(text=URDU_TEXT['select_unit'])
+                self.lookup_value_label.config(text=URDU_TEXT['enter_value'])
+                self.lookup_calc_btn.config(text=URDU_TEXT['calc_btn'])
+                self.lookup_results_frame.config(text=f" {URDU_TEXT['lookup_results_label']} ")
+                
+                urdu_units = [
+                    'مربع فٹ',
+                    URDU_TEXT['marla_legal'],
+                    URDU_TEXT['kanal_legal'],
+                    URDU_TEXT['marla_trad'],
+                    URDU_TEXT['kanal_kpk'],
+                    URDU_TEXT['sq_karam']
+                ]
+                
+                current_unit_idx = 0
+                if self.lookup_unit_var.get() in self.lookup_units:
+                    current_unit_idx = self.lookup_units.index(self.lookup_unit_var.get())
+                elif self.lookup_unit_var.get() in urdu_units:
+                    current_unit_idx = urdu_units.index(self.lookup_unit_var.get())
+                
+                self.lookup_unit_cb.config(values=urdu_units)
+                self.lookup_unit_var.set(urdu_units[current_unit_idx])
+                self.lookup_tree.heading('Unit', text='پیمائش کی اکائی')
+                self.lookup_tree.heading('Value', text='تبدیل شدہ ویلیو')
+            
         else:
             # English mode
             self.root.title("🇵🇰 ULTIMATE Pakistani Land Converter v3.1 - Punjab Legal + Traditional References")
@@ -986,6 +1230,34 @@ class LandConverterGUI:
             self.legal_text.config(state='disabled')
             
             self.status_var.set("Ready • Enter square feet for instant Punjab Legal + Traditional reference conversions | Ctrl+A for Reference Guide")
+            
+            # Update reverse lookup tab
+            if hasattr(self, 'notebook'):
+                self.notebook.tab(2, text="  🔍 Reverse Lookup  ")
+                self.lookup_input_frame.config(text=" 🔍 Reverse Measurement Lookup ")
+                self.lookup_unit_label.config(text="Select Unit:")
+                self.lookup_value_label.config(text="Enter Value:")
+                self.lookup_calc_btn.config(text="🧮 Convert")
+                self.lookup_results_frame.config(text=" 🔍 Lookup Results ")
+                
+                urdu_units = [
+                    'مربع فٹ',
+                    URDU_TEXT['marla_legal'],
+                    URDU_TEXT['kanal_legal'],
+                    URDU_TEXT['marla_trad'],
+                    URDU_TEXT['kanal_kpk'],
+                    URDU_TEXT['sq_karam']
+                ]
+                current_unit_idx = 0
+                if self.lookup_unit_var.get() in urdu_units:
+                    current_unit_idx = urdu_units.index(self.lookup_unit_var.get())
+                elif self.lookup_unit_var.get() in self.lookup_units:
+                    current_unit_idx = self.lookup_units.index(self.lookup_unit_var.get())
+                
+                self.lookup_unit_cb.config(values=self.lookup_units)
+                self.lookup_unit_var.set(self.lookup_units[current_unit_idx])
+                self.lookup_tree.heading('Unit', text='Measurement Unit')
+                self.lookup_tree.heading('Value', text='Converted Value')
     
     # ========== ABOUT WINDOW METHODS ==========
     def show_about_window(self):
