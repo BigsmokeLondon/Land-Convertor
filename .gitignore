@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyInstaller
+build/
+dist/
+*.spec
+*.exe
+
+# Windows
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# Support tools / Installers
+*.msi
+*.zip
+*.pkg
+*.toc
+*.html
+*.txt
+!GravityNotes.txt

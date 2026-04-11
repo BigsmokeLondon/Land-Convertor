@@ -1,0 +1,42 @@
+
+
+==Python script into a standalone `.exe`===
+Here is a step-by-step guide on how to use PyInstaller to turn your existing Python script into a standalone `.exe` file. 
+
+Since I don't know the exact name of your file, I will assume your python file is called `converter.py`. Simply replace `converter.py` with the actual name of your file in the steps below.
+
+### Step 1: Open Your Terminal or Command Prompt
+Open the Command Prompt (cmd) or PowerShell on your Windows machine. Navigate to the folder where your Python script is saved. You can do this using the `cd` command.
+```cmd
+cd C:\Path\To\Your\Python\Script
+```
+
+### Step 2: Install PyInstaller
+You need to install PyInstaller using `pip` (Python's package manager). Run the following command:
+```cmd
+pip install pyinstaller
+```
+
+### Step 3: Convert the Script to an `.exe`
+Once PyInstaller is installed, you can command it to bundle your script. We will use the `--onefile` flag so that everything is packaged into a **single** executable file.
+
+Run this command:
+```cmd
+pyinstaller --onefile converter.py
+```
+
+*(Note: If your application has a Graphical User Interface (GUI) like Tkinter or PyQt, and you want to hide the black command-prompt console window from showing up in the background, add the `--noconsole` flag like this: `pyinstaller --onefile --noconsole converter.py`)*
+
+### Step 4: Find your new `.exe` File!
+PyInstaller will process your file and generate a lot of text in the command line. This might take a minute or two. 
+
+Once it says **"completed successfully"**, look in the folder where your script is. You will notice PyInstaller created a few new things:
+1.  A `build` folder
+2.  A `converter.spec` file
+3.  A **`dist`** folder
+
+Open the **`dist`** folder. Inside, you will find your shiny new `converter.exe`! 
+
+### Step 5: Test and Share
+You can now double-click `converter.exe` to run it. 
+You can safely copy this `.exe` file, email it to friends, or put it on a USB drive. You can delete the `build` folder, the `.spec` file, and everything else; the only file you actually need to share with other people is the `.exe` file inside the `dist` folder. They will not need to install Python to run it!
