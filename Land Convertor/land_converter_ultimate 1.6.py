@@ -1053,7 +1053,7 @@ class LandConverterGUI:
             draw_label(pts[3][0], pts[3][1], pts[0][0], pts[0][1], "S4 (Opp 2)")
             
         elif '-Sided' in shape or 'اضلاع' in shape:
-            import re, math
+            import re
             m = re.search(r'(\d+)-Sided', shape)
             if not m: m = re.search(r'(\d+)', shape)
             n = int(m.group(1)) if m else 5
