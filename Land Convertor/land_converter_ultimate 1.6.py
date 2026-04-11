@@ -839,13 +839,16 @@ class LandConverterGUI:
             'Quadrilateral (Exact: 4 sides + 1 diagonal)',
             'Quadrilateral (Traditional Patwari Average)'
         ]
+        for i in range(5, 11):
+            self.area_shapes.append(f"{i}-Sided Polygon ({i} sides + {i-3} diagonals)")
+            
         self.area_shape_var = tk.StringVar(value=self.area_shapes[2])
         self.area_shape_cb = ttk.Combobox(
             row1,
             textvariable=self.area_shape_var,
             values=self.area_shapes,
             font=('Arial', 13),
-            width=38,
+            width=42,
             state='readonly'
         )
         self.area_shape_cb.pack(side='left', padx=(0, 20))
@@ -859,21 +862,18 @@ class LandConverterGUI:
         self.side_labels = {}
         self.side_entries = {}
         
-        for i in range(1, 6): # Up to 5 inputs (4 sides + diagonal)
+        for i in range(1, 25): # Support up to 24 inputs (e.g., 10 sides + 7 diagonals = 17)
             frame = tk.Frame(self.side_entries_frame, bg=self.colors['white'])
             
-            lbl = tk.Label(frame, text=f"Side {i}:", font=('Arial', 13, 'bold'), bg=self.colors['white'], width=18, anchor='w')
-            lbl.pack(side='left', padx=5)
+            lbl = tk.Label(frame, text=f"Input {i}:", font=('Arial', 11, 'bold'), bg=self.colors['white'], width=18, anchor='w')
+            lbl.pack(side='left', padx=2)
             self.side_labels[i] = lbl
             
             var = tk.StringVar()
             self.side_vars[i] = var
-            ent = tk.Entry(frame, textvariable=var, font=('Arial', 14), width=10, justify='center', bg=self.colors['trad_yellow'], relief='solid', borderwidth=1)
-            ent.pack(side='left', padx=5)
+            ent = tk.Entry(frame, textvariable=var, font=('Arial', 14), width=8, justify='center', bg=self.colors['trad_yellow'], relief='solid', borderwidth=1)
+            ent.pack(side='left', padx=2)
             self.side_entries[i] = ent
-            
-            # Pack initially hidden
-            # frame.pack(side='top', fill='x', pady=3)
         
         btn_frame = tk.Frame(self.area_input_frame, bg=self.colors['white'])
         btn_frame.pack(fill='x', pady=10)
@@ -936,33 +936,49 @@ class LandConverterGUI:
     def on_shape_change(self, event=None):
         """Dynamically update input fields based on selected shape"""
         shape = self.area_shape_var.get()
-        is_urdu = self.is_urdu if hasattr(self, 'is_urdu') else False
+        is_urdu = getattr(self, 'is_urdu', False)
         
         for frame in self.side_labels.values():
-            frame.master.pack_forget()
+            frame.master.grid_forget()
             
-        def show_input(idx, eng_label, urdu_label):
+        def show_input(idx, eng_label, urdu_label, row, col):
             self.side_labels[idx].config(text=urdu_label if is_urdu else eng_label)
-            self.side_labels[idx].master.pack(side='top', fill='x', pady=4)
+            self.side_labels[idx].master.grid(row=row, column=col, padx=4, pady=4, sticky='w')
 
         if 'Rectangle' in shape or 'مستطیل' in shape:
-            show_input(1, "Length (ft):", URDU_TEXT['side_1'] if is_urdu else "پہلا ضلع (فٹ):")
-            show_input(2, "Width (ft):", URDU_TEXT['side_2'] if is_urdu else "دوسرا ضلع (فٹ):")
+            show_input(1, "Length (ft):", URDU_TEXT['side_1'] if is_urdu else "پہلا ضلع (فٹ):", 0, 0)
+            show_input(2, "Width (ft):", URDU_TEXT['side_2'] if is_urdu else "دوسرا ضلع (فٹ):", 0, 1)
         elif 'Triangle' in shape or 'مثلث' in shape:
-            show_input(1, "Side 1 (ft):", URDU_TEXT['side_1'] if is_urdu else "پہلا ضلع (فٹ):")
-            show_input(2, "Side 2 (ft):", URDU_TEXT['side_2'] if is_urdu else "دوسرا ضلع (فٹ):")
-            show_input(3, "Side 3 (ft):", URDU_TEXT['side_3'] if is_urdu else "تیسرا ضلع (فٹ):")
+            show_input(1, "Side 1 (ft):", URDU_TEXT['side_1'] if is_urdu else "پہلا ضلع (فٹ):", 0, 0)
+            show_input(2, "Side 2 (ft):", URDU_TEXT['side_2'] if is_urdu else "دوسرا ضلع (فٹ):", 0, 1)
+            show_input(3, "Side 3 (ft):", URDU_TEXT['side_3'] if is_urdu else "تیسرا ضلع (فٹ):", 0, 2)
         elif 'Exact' in shape or 'درست' in shape:
-            show_input(1, "Side 1 (ft):", URDU_TEXT['side_1'] if is_urdu else "پہلا ضلع (فٹ):")
-            show_input(2, "Side 2 (ft):", URDU_TEXT['side_2'] if is_urdu else "دوسرا ضلع (فٹ):")
-            show_input(3, "Side 3 (ft):", URDU_TEXT['side_3'] if is_urdu else "تیسرا ضلع (فٹ):")
-            show_input(4, "Side 4 (ft):", URDU_TEXT['side_4'] if is_urdu else "چوتھا ضلع (فٹ):")
-            show_input(5, "Diagonal (ft):", URDU_TEXT['diagonal'] if is_urdu else "وتر/درمیان (فٹ):")
+            show_input(1, "Side 1 (ft):", URDU_TEXT['side_1'] if is_urdu else "پہلا ضلع (فٹ):", 0, 0)
+            show_input(2, "Side 2 (ft):", URDU_TEXT['side_2'] if is_urdu else "دوسرا ضلع (فٹ):", 0, 1)
+            show_input(3, "Side 3 (ft):", URDU_TEXT['side_3'] if is_urdu else "تیسرا ضلع (فٹ):", 0, 2)
+            show_input(4, "Side 4 (ft):", URDU_TEXT['side_4'] if is_urdu else "چوتھا ضلع (فٹ):", 0, 3)
+            show_input(5, "Diagonal (ft):", URDU_TEXT['diagonal'] if is_urdu else "وتر/درمیان (فٹ):", 1, 0)
         elif 'Average' in shape or 'اوسط' in shape:
-            show_input(1, "Side 1/Opposite 1 (ft):", URDU_TEXT['side_1'] if is_urdu else "پہلا ضلع (فٹ):")
-            show_input(2, "Side 2/Opposite 2 (ft):", URDU_TEXT['side_2'] if is_urdu else "دوسرا ضلع (فٹ):")
-            show_input(3, "Side 3/Opposite 1 (ft):", URDU_TEXT['side_3'] if is_urdu else "تیسرا ضلع (فٹ):")
-            show_input(4, "Side 4/Opposite 2 (ft):", URDU_TEXT['side_4'] if is_urdu else "چوتھا ضلع (فٹ):")
+            show_input(1, "Side 1/Opp1 (ft):", URDU_TEXT['side_1'] if is_urdu else "پہلا ضلع (فٹ):", 0, 0)
+            show_input(2, "Side 2/Opp2 (ft):", URDU_TEXT['side_2'] if is_urdu else "دوسرا ضلع (فٹ):", 0, 1)
+            show_input(3, "Side 3/Opp1 (ft):", URDU_TEXT['side_3'] if is_urdu else "تیسرا ضلع (فٹ):", 1, 0)
+            show_input(4, "Side 4/Opp2 (ft):", URDU_TEXT['side_4'] if is_urdu else "چوتھا ضلع (فٹ):", 1, 1)
+        elif '-Sided' in shape or 'اضلاع' in shape:
+            import re
+            m = re.search(r'(\d+)-Sided', shape)
+            if not m: m = re.search(r'(\d+)', shape)
+            n = int(m.group(1)) if m else 5
+            
+            # Show sides
+            for i in range(1, n+1):
+                show_input(i, f"Side {i} (ft):", f"ضلع {i} (فٹ):", row=(i-1)//4, col=(i-1)%4)
+            
+            # Show diagonals (n-3 diagonals)
+            for d in range(1, n-2):
+                idx = n + d
+                r = (idx-1)//4
+                c = (idx-1)%4
+                show_input(idx, f"Diag {d} (ft):", f"وتر {d} (فٹ):", row=r+1+(n//4), col=c)
 
     def calculate_polygon_area(self):
         """Calculate area based on shape and measurements"""
@@ -980,29 +996,43 @@ class LandConverterGUI:
             elif 'Triangle' in shape or 'مثلث' in shape:
                 a, b, c = get_val(1), get_val(2), get_val(3)
                 s = (a + b + c) / 2
-                if s*(s-a)*(s-b)*(s-c) <= 0:
-                    raise ValueError("Invalid triangle sides")
+                if s*(s-a)*(s-b)*(s-c) <= 0: raise ValueError("Invalid triangle sides")
                 sqft = math.sqrt(s*(s-a)*(s-b)*(s-c))
             elif 'Exact' in shape or 'درست' in shape:
-                # 4 sides + diagonal. Splitting into two triangles: (a,b,diag) and (c,d,diag)
                 a, b, c, d, diag = get_val(1), get_val(2), get_val(3), get_val(4), get_val(5)
-                # Triangle 1
                 s1 = (a + b + diag) / 2
-                term1 = s1*(s1-a)*(s1-b)*(s1-diag)
-                if term1 <= 0: raise ValueError("Invalid Triangle 1 sides")
-                area1 = math.sqrt(term1)
-                
-                # Triangle 2
+                t1 = s1*(s1-a)*(s1-b)*(s1-diag)
+                if t1 <= 0: raise ValueError("Invalid Triangle 1 sides")
                 s2 = (c + d + diag) / 2
-                term2 = s2*(s2-c)*(s2-d)*(s2-diag)
-                if term2 <= 0: raise ValueError("Invalid Triangle 2 sides")
-                area2 = math.sqrt(term2)
-                
-                sqft = area1 + area2
+                t2 = s2*(s2-c)*(s2-d)*(s2-diag)
+                if t2 <= 0: raise ValueError("Invalid Triangle 2 sides")
+                sqft = math.sqrt(t1) + math.sqrt(t2)
             elif 'Average' in shape or 'اوسط' in shape:
-                # Patwari Average: (s1+s3)/2 * (s2+s4)/2
                 s1, s2, s3, s4 = get_val(1), get_val(2), get_val(3), get_val(4)
                 sqft = ((s1 + s3) / 2) * ((s2 + s4) / 2)
+            elif '-Sided' in shape or 'اضلاع' in shape:
+                import re
+                m = re.search(r'(\d+)-Sided', shape)
+                if not m: m = re.search(r'(\d+)', shape)
+                n = int(m.group(1)) if m else 5
+                
+                sides = [get_val(i) for i in range(1, n+1)]
+                diags = [get_val(i) for i in range(n+1, 2*n-2)]
+                
+                total_sqft = 0.0
+                for i in range(n-2):
+                    if i == 0:
+                        a, b, c = sides[0], sides[1], diags[0]
+                    elif i == n - 3:
+                        a, b, c = diags[i-1], sides[i+1], sides[i+2]
+                    else:
+                        a, b, c = diags[i-1], sides[i+1], diags[i]
+                    
+                    s = (a + b + c) / 2
+                    term = s*(s-a)*(s-b)*(s-c)
+                    if term <= 0: raise ValueError(f"Invalid Triangle {i+1} sides")
+                    total_sqft += math.sqrt(term)
+                sqft = total_sqft
             
             if sqft <= 0:
                 raise ValueError("Area is zero or negative")
@@ -1043,7 +1073,7 @@ class LandConverterGUI:
                 self.area_tree.insert('', 'end', values=(res_unit, res_val), tags=(tag,))
                 
         except ValueError as e:
-            msg = URDU_TEXT['invalid_number'] if getattr(self, 'is_urdu', False) else "Please enter valid measurements! Ensure triangles forms a closed shape."
+            msg = URDU_TEXT['invalid_number'] if getattr(self, 'is_urdu', False) else f"Math Error: {str(e)}. Please check measurements so they form closed triangles."
             messagebox.showerror(URDU_TEXT['invalid_input'] if getattr(self, 'is_urdu', False) else "Invalid Input", msg)
 
 
@@ -1519,6 +1549,8 @@ class LandConverterGUI:
                             URDU_TEXT['shape_quad_tri'],
                             URDU_TEXT['shape_quad_avg']
                         ]
+                        for i in range(5, 11):
+                            urdu_shapes.append(f"{i} اضلاع والی شکل ({i} اضلاع + {i-3} وتر)")
                         if cur_shape in urdu_shapes:
                             current_idx = urdu_shapes.index(cur_shape)
                         self.area_shape_cb.config(values=self.area_shapes)
