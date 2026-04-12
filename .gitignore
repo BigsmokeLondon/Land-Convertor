@@ -8,6 +8,9 @@ build/
 dist/
 *.spec
 *.exe
+Notes/
+*.rtf
+*.txt
 
 # Windows
 Thumbs.db
