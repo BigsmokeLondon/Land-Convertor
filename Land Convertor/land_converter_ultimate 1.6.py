@@ -80,7 +80,8 @@ URDU_TEXT = {
     'choose_shape': 'شکل منتخب کریں:',
     'shape_rect': 'مستطیل (لمبائی × چوڑائی)',
     'shape_tri': 'مثلث (3 اضلاع - ہیرون کا فارمولا)',
-    'shape_quad_tri': 'چوکور (درست: 4 اضلاع + 1 وتر)',
+    'shape_irregular_coords': 'غیر منظم کثیر الاضلاع (کوآرڈینیٹس X, Y)',
+    'shape_quad_tri': 'غیر منظم چوکور (درست: 4 اضلاع + 1 وتر)',
     'shape_quad_avg': 'چوکور (روایتی پٹواری اوسط / کچا طریقہ)',
     'side_1': 'پہلا ضلع (فٹ):',
     'side_2': 'دوسرا ضلع (فٹ):',
@@ -95,8 +96,8 @@ class LandConverterGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("🇵🇰 ULTIMATE Pakistani Land Converter v3.1 - Punjab Legal + Traditional References")
-        self.root.geometry("1400x880")
-        self.root.minsize(1350, 830)
+        self.root.geometry("1500x880")
+        self.root.minsize(1450, 830)
         self.root.resizable(True, True)
         
         # Language state
@@ -836,11 +837,12 @@ class LandConverterGUI:
         self.area_shapes = [
             'Rectangle (Length × Width)',
             'Triangle (3 sides - Heron\'s Formula)',
-            'Quadrilateral (Exact: 4 sides + 1 diagonal)',
-            'Quadrilateral (Traditional Patwari Average)'
+            'Irregular Quadrilateral (Exact: 4 sides + 1 diagonal)',
+            'Quadrilateral (Traditional Patwari Average)',
+            'Irregular Polygon (Coordinates X, Y)'
         ]
         for i in range(5, 11):
-            self.area_shapes.append(f"{i}-Sided Polygon ({i} sides + {i-3} diagonals)")
+            self.area_shapes.append(f"Irregular {i}-Sided Polygon ({i} sides + {i-3} diagonals)")
             
         self.area_shape_var = tk.StringVar(value=self.area_shapes[2])
         self.area_shape_cb = ttk.Combobox(
@@ -873,7 +875,7 @@ class LandConverterGUI:
         self.side_labels = {}
         self.side_entries = {}
         
-        for i in range(1, 25): # Support up to 24 inputs (e.g., 10 sides + 7 diagonals = 17)
+        for i in range(1, 49): # Support up to 48 inputs (e.g., 24 vertices for coordinates)
             frame = tk.Frame(self.side_entries_frame, bg=self.colors['white'])
             
             lbl = tk.Label(frame, text=f"Input {i}:", font=('Arial', 11, 'bold'), bg=self.colors['white'], width=18, anchor='w')
@@ -990,6 +992,12 @@ class LandConverterGUI:
                 r = (idx-1)//4
                 c = (idx-1)%4
                 show_input(idx, f"Diag {d} (ft):", f"وتر {d} (فٹ):", row=r+1+(n//4), col=c)
+        elif 'Coordinate' in shape or 'کوآرڈینیٹس' in shape:
+            for i in range(12): # Show 12 vertices default
+                row_idx = i // 2
+                col_offset = (i % 2) * 2
+                show_input(2*i + 1, f"V{i+1} X:", f"کوآرڈینیٹ {i+1} X:", row=row_idx, col=col_offset)
+                show_input(2*i + 2, f"V{i+1} Y:", f"کوآرڈینیٹ {i+1} Y:", row=row_idx, col=col_offset + 1)
                 
         self._draw_shape_schematic()
 
@@ -1077,6 +1085,20 @@ class LandConverterGUI:
                 p2 = pts[i+2]
                 self.shape_canvas.create_line(p1[0], p1[1], p2[0], p2[1], fill='red', dash=(4,4), width=2)
                 draw_label(p1[0], p1[1], p2[0], p2[1], f"D{i+1}", color='red', offset=0)
+                
+        elif 'Coordinate' in shape or 'کوآرڈینیٹس' in shape:
+            pts = [(cx-60, cy-50), (cx+40, cy-70), (cx+80, cy+10), (cx+20, cy+60), (cx-50, cy+30)]
+            self.shape_canvas.create_polygon(pts, fill='#E8F5E9', outline='#2E7D32', width=2)
+            
+            # Draw axes
+            self.shape_canvas.create_line(cx-100, cy+80, cx+100, cy+80, arrow=tk.LAST, fill='black')
+            self.shape_canvas.create_line(cx-90, cy+90, cx-90, cy-90, arrow=tk.LAST, fill='black')
+            self.shape_canvas.create_text(cx+105, cy+80, text="X", font=('Arial', 10, 'bold'))
+            self.shape_canvas.create_text(cx-90, cy-95, text="Y", font=('Arial', 10, 'bold'))
+            
+            for i, p in enumerate(pts):
+                self.shape_canvas.create_oval(p[0]-3, p[1]-3, p[0]+3, p[1]+3, fill='red')
+                draw_label(p[0], p[1], p[0], p[1], f"(X{i+1}, Y{i+1})", color='blue')
 
     def calculate_polygon_area(self):
         """Calculate area based on shape and measurements"""
@@ -1131,6 +1153,23 @@ class LandConverterGUI:
                     if term <= 0: raise ValueError(f"Invalid Triangle {i+1} sides")
                     total_sqft += math.sqrt(term)
                 sqft = total_sqft
+            elif 'Coordinate' in shape or 'کوآرڈینیٹس' in shape:
+                pts = []
+                for i in range(1, 49, 2):
+                    vx_str = self.side_vars[i].get().strip()
+                    vy_str = self.side_vars[i+1].get().strip()
+                    if vx_str and vy_str:
+                        pts.append((float(vx_str), float(vy_str)))
+                
+                if len(pts) < 3:
+                    raise ValueError("At least 3 valid (X, Y) coordinate pairs are required.")
+                
+                area = 0.0
+                n = len(pts)
+                for i in range(n):
+                    j = (i + 1) % n
+                    area += pts[i][0] * pts[j][1] - pts[j][0] * pts[i][1]
+                sqft = abs(area) / 2.0
             
             if sqft <= 0:
                 raise ValueError("Area is zero or negative")
@@ -1596,10 +1635,11 @@ class LandConverterGUI:
                             URDU_TEXT['shape_rect'],
                             URDU_TEXT['shape_tri'],
                             URDU_TEXT['shape_quad_tri'],
-                            URDU_TEXT['shape_quad_avg']
+                            URDU_TEXT['shape_quad_avg'],
+                            URDU_TEXT['shape_irregular_coords']
                         ]
                         for i in range(5, 11):
-                            urdu_shapes.append(f"{i} اضلاع والی شکل ({i} اضلاع + {i-3} وتر)")
+                            urdu_shapes.append(f"غیر منظم {i} اضلاع والی شکل ({i} اضلاع + {i-3} وتر)")
                         
                         cur_shape = self.area_shape_var.get()
                         current_idx = 0
@@ -1859,6 +1899,32 @@ class LandConverterGUI:
         tk.Label(tools_frame, text="📐 Area Calculator (Survey Tool)", font=('Arial', 12, 'bold'), bg='#E8EAF6', fg='#283593', anchor='w').pack(fill='x', padx=10, pady=(5, 2))
         tk.Label(tools_frame, text="Calculate the exact square footage of any land parcel directly from the boundary side lengths. Uses the mathematically infallible Triangulation/Heron's Formula method for Polygons up to 10 sides to ensure total geometric accuracy on irregular plots. Also includes the Traditional Patwari Average Method solely for reference comparisons.",
                  font=('Arial', 10), bg='#E8EAF6', justify='left', wraplength=1000).pack(fill='x', padx=20, pady=(0, 10))
+
+        # Section 3.5: Example Measurement
+        self._add_section_header(scrollable_frame, "📝 Example Reading: Irregular 5-Sided Polygon (Using Triangulation)")
+        
+        example_text = (
+            "If you have an irregular 5-sided plot (Vertices A, B, C, D, E) with the following measurements (e.g., in feet):\n\n"
+            "Outer Sides:\n"
+            "• Side 1 (AB) = 5\n"
+            "• Side 2 (BC) = 4\n"
+            "• Side 3 (CD) = 5\n"
+            "• Side 4 (DE) = 5\n"
+            "• Side 5 (EA) = 6\n\n"
+            "Inner Diagonals (measured to split the shape into 3 triangles):\n"
+            "• Diag 1 (AC) = 5.5\n"
+            "• Diag 2 (CE) = 8\n\n"
+            "How to enter this into the Area Calculator:\n"
+            "1. Go to the \"Area Calculator\" tab.\n"
+            "2. Select \"Irregular 5-Sided Polygon (5 sides + 2 diags)\" from the Shape dropdown.\n"
+            "3. Enter the 5 Sides (5, 4, 5, 5, 6) in the Side 1 to Side 5 input boxes.\n"
+            "4. Enter the 2 Diagonals (5.5, 8) in the Diag 1 and Diag 2 input boxes.\n"
+            "5. Click \"Calculate Sq Ft Area\" – the tool will automatically apply Heron's formula "
+            "to calculate all 3 triangles, giving you the Exact Total Area (approx 38.12 sq ft) "
+            "and its Marla/Kanal equivalents instantly!"
+        )
+        
+        self._add_text_block(scrollable_frame, example_text)
 
         # Section 4: Legal Provisions
         self._add_section_header(scrollable_frame, "📜 Key Legal Provisions (Punjab Land Revenue Act 1967)")
