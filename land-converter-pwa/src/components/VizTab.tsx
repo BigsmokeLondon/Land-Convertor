@@ -1,6 +1,6 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-export function VizTab({ data, t }: { data: any[], t: any }) {
+export function VizTab({ data }: { data: any[] }) {
   if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center h-full">
