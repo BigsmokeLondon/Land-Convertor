@@ -66,31 +66,31 @@ export function ConverterTab({ t, onHistoryUpdate }: { t: any; onHistoryUpdate?:
         {/* Punjab Legal */}
         <div className="bg-[#E3F2FD] border border-[#1976D2] rounded-xl p-4 flex justify-between items-center shadow-sm">
           <span className="font-bold text-[#1976D2]">Marla (Punjab Legal 225)</span>
-          <span className="text-xl font-black">{results.legalMarla.toFixed(4)}</span>
+          <span className="text-xl font-black">{results.legalMarla.toFixed(2)}</span>
         </div>
         <div className="bg-[#E3F2FD] border border-[#1976D2] rounded-xl p-4 flex justify-between items-center shadow-sm">
           <span className="font-bold text-[#1976D2]">Kanal (Punjab Legal)</span>
-          <span className="text-xl font-black">{results.legalKanal.toFixed(4)}</span>
+          <span className="text-xl font-black">{results.legalKanal.toFixed(2)}</span>
         </div>
 
         {/* Lahore LDA */}
         <div className="bg-[#E0F2F1] border border-[#00897B] rounded-xl p-4 flex justify-between items-center shadow-sm">
           <span className="font-bold text-[#00897B]">Marla (Lahore LDA 250)</span>
-          <span className="text-xl font-black">{results.ldaMarla.toFixed(4)}</span>
+          <span className="text-xl font-black">{results.ldaMarla.toFixed(2)}</span>
         </div>
         <div className="bg-[#E0F2F1] border border-[#00897B] rounded-xl p-4 flex justify-between items-center shadow-sm">
           <span className="font-bold text-[#00897B]">Kanal (Lahore LDA)</span>
-          <span className="text-xl font-black">{results.ldaKanal.toFixed(4)}</span>
+          <span className="text-xl font-black">{results.ldaKanal.toFixed(2)}</span>
         </div>
 
         {/* Traditional */}
         <div className="bg-[#FFF9C4] border border-[#F57F17] rounded-xl p-4 flex justify-between items-center shadow-sm text-[#F57F17]">
           <span className="font-bold">Marla (Trad Ref 272)</span>
-          <span className="text-xl font-black">{results.tradMarla.toFixed(4)}</span>
+          <span className="text-xl font-black">{results.tradMarla.toFixed(2)}</span>
         </div>
         <div className="bg-[#FFF9C4] border border-[#F57F17] rounded-xl p-4 flex justify-between items-center shadow-sm text-[#F57F17]">
           <span className="font-bold">Kanal (KPK Ref)</span>
-          <span className="text-xl font-black">{results.kpkKanal.toFixed(4)}</span>
+          <span className="text-xl font-black">{results.kpkKanal.toFixed(2)}</span>
         </div>
       </div>
       

@@ -39,7 +39,7 @@ export const generatePDF = (areaSqFt: number, regionalName: string, regionalArea
   doc.setFontSize(14);
   doc.setTextColor(46, 125, 50);
   doc.text(`Total Area: ${areaSqFt.toFixed(2)} Sq Ft`, 18, 93);
-  doc.text(`Converted: ${regionalArea.toFixed(4)} Marla (${regionalName})`, 100, 93);
+  doc.text(`Converted: ${regionalArea.toFixed(2)} Marla (${regionalName})`, 100, 93);
 
   // Coordinates Table
   doc.setTextColor(0, 0, 0);
@@ -94,13 +94,13 @@ export const generateConverterPDF = (results: any) => {
   // Results Table
   const tableData = [
     ['Square Feet', results.sqft.toFixed(2), '—'],
-    ['Marla (Punjab Legal 225)', results.legalMarla.toFixed(4), 'Punjab Revenue Act'],
-    ['Kanal (Punjab Legal)', results.legalKanal.toFixed(4), 'Punjab Revenue Act'],
-    ['Marla (Lahore LDA 250)', results.ldaMarla.toFixed(4), 'Lahore Development Authority'],
-    ['Kanal (Lahore LDA)', results.ldaKanal.toFixed(4), 'Lahore Development Authority'],
-    ['Marla (Traditional 272)', results.tradMarla.toFixed(4), 'KPK / Rural Reference'],
-    ['Kanal (KPK Ref)', results.kpkKanal.toFixed(4), 'KPK / Rural Reference'],
-    ['Sq. Karam', results.karam.toFixed(4), 'Traditional Karam Unit'],
+    ['Marla (Punjab Legal 225)', results.legalMarla.toFixed(2), 'Punjab Revenue Act'],
+    ['Kanal (Punjab Legal)', results.legalKanal.toFixed(2), 'Punjab Revenue Act'],
+    ['Marla (Lahore LDA 250)', results.ldaMarla.toFixed(2), 'Lahore Development Authority'],
+    ['Kanal (Lahore LDA)', results.ldaKanal.toFixed(2), 'Lahore Development Authority'],
+    ['Marla (Traditional 272)', results.tradMarla.toFixed(2), 'KPK / Rural Reference'],
+    ['Kanal (KPK Ref)', results.kpkKanal.toFixed(2), 'KPK / Rural Reference'],
+    ['Sq. Karam', results.karam.toFixed(2), 'Traditional Karam Unit'],
   ];
 
   autoTable(doc, {

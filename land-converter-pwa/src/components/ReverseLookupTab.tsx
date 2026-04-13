@@ -70,7 +70,7 @@ export function ReverseLookupTab() {
           return (
             <div key={u.id} className={`border rounded-xl p-4 flex justify-between items-center shadow-sm ${colorClass}`}>
               <span className="font-bold">{u.label}</span>
-              <span className="text-xl font-black">{converted.toFixed(4)}</span>
+              <span className="text-xl font-black">{converted.toFixed(2)}</span>
             </div>
           );
         })}

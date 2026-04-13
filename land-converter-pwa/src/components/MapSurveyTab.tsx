@@ -156,19 +156,20 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
               <span className="text-sm font-bold text-gray-600">Sq Ft</span>
             </div>
             {/* Marla pill + inline search on same row */}
-            <div className="flex items-center gap-2 mt-1">
-              <p className="text-sm font-semibold text-gray-700 bg-green-50 px-2 py-0.5 rounded-md inline-block border border-green-100 whitespace-nowrap">{areaMarla.toFixed(4)} Marla</p>
-              {/* Mobile inline search - same height as Marla pill */}
-              <form onSubmit={handleSearch} className="md:hidden flex items-center gap-1 bg-gray-100 border border-gray-200 rounded-md px-2 py-0.5">
+            <div className="flex items-center gap-1 mt-1">
+              <p className="text-sm font-semibold text-gray-700 bg-green-50 px-2 py-0.5 rounded-md inline-block border border-green-100 whitespace-nowrap">{areaMarla.toFixed(2)} Marla</p>
+              
+              {/* Mobile inline search - same height as Marla pill, narrower */}
+              <form onSubmit={handleSearch} className="md:hidden flex items-center gap-1 bg-gray-100 border border-gray-200 rounded-md px-1.5 py-0.5 w-[76px]">
                 <input 
                   type="text" 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search city..."
-                  className="bg-transparent border-none text-[11px] font-semibold placeholder:text-gray-400 focus:outline-none w-24"
+                  placeholder="City..."
+                  className="bg-transparent border-none text-[10px] font-semibold placeholder:text-gray-400 focus:outline-none w-full"
                 />
                 <button type="submit" disabled={isSearching} className="text-[#2E7D32] flex-shrink-0 disabled:opacity-50">
-                  {isSearching ? <RotateCcw size={12} className="animate-spin" /> : <Search size={12} />}
+                  {isSearching ? <RotateCcw size={11} className="animate-spin" /> : <Search size={11} />}
                 </button>
               </form>
             </div>
