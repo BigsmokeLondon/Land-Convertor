@@ -245,27 +245,14 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
         
         <CompassTool />
 
-        {/* Map Style Toggle - floating pill top-right of map */}
-        <div className="absolute top-2 right-2 z-[500] flex rounded-lg overflow-hidden shadow-md border border-white/40">
+        {/* Map Style Toggle - single button top-right of map */}
+        <div className="absolute top-2 right-2 z-[500]">
           <button
-            onClick={() => setMapStyle('satellite')}
-            className={`px-2 py-1 text-[10px] font-black transition-colors ${
-              mapStyle === 'satellite'
-                ? 'bg-[#2E7D32] text-white'
-                : 'bg-white/90 text-gray-600 hover:bg-gray-100'
-            }`}
+            onClick={() => setMapStyle(s => s === 'satellite' ? 'street' : 'satellite')}
+            className="flex items-center gap-1 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-gray-300 text-[10px] font-black text-gray-700 hover:bg-white transition-colors active:scale-95"
+            title="Toggle map style"
           >
-            🛰 SAT
-          </button>
-          <button
-            onClick={() => setMapStyle('street')}
-            className={`px-2 py-1 text-[10px] font-black transition-colors ${
-              mapStyle === 'street'
-                ? 'bg-[#2E7D32] text-white'
-                : 'bg-white/90 text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            🗺 MAP
+            {mapStyle === 'satellite' ? '🛰 SAT' : '🗺 MAP'}
           </button>
         </div>
 

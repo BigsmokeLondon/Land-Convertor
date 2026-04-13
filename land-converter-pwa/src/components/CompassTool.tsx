@@ -6,7 +6,6 @@ export function CompassTool() {
 
   useEffect(() => {
     const handleOrientation = (e: DeviceOrientationEvent) => {
-      // webkitCompassHeading is for iOS, alpha is for Android
       const h = (e as any).webkitCompassHeading || (e.alpha ? Math.abs(e.alpha - 360) : null);
       if (h !== null) setHeading(h);
     };
@@ -23,14 +22,17 @@ export function CompassTool() {
   if (heading === null) return null;
 
   return (
-    <div className="absolute top-4 right-4 bg-white p-2 rounded-full shadow-lg z-[1000] flex flex-col items-center justify-center border border-gray-200">
+    // Moved down to top-12 on mobile to avoid overlapping the SAT/MAP toggle
+    <div className="absolute top-12 md:top-4 right-2 md:right-4 bg-white/95 px-2 py-1.5 rounded-xl shadow-lg z-[500] flex flex-col items-center justify-center border border-gray-200 min-w-[46px]">
+      {/* N label for North */}
+      <span className="text-[9px] font-black text-red-600 tracking-widest leading-none">N</span>
       <div 
-        className="transition-transform duration-200"
+        className="transition-transform duration-200 my-0.5"
         style={{ transform: `rotate(${-heading}deg)` }}
       >
-        <Compass size={28} className="text-[#2E7D32]" />
+        <Compass size={24} className="text-[#2E7D32]" />
       </div>
-      <span className="text-[10px] font-bold mt-1">{Math.round(heading)}&deg;</span>
+      <span className="text-[9px] font-bold text-gray-600">{Math.round(heading)}&deg;</span>
     </div>
   );
 }
