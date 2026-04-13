@@ -55,6 +55,29 @@ export function AboutTab() {
         </p>
       </div>
 
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+        <h3 className="text-xl font-bold text-emerald-700 mb-3">📡 Field Map Surveying & GPS Tracking</h3>
+        <p className="text-sm leading-relaxed text-gray-600 mb-4">
+          The new "Map Survey" tab upgrades this calculator into a professional field app. You can use this to survey plots visually or on foot.
+        </p>
+        <ul className="list-disc list-inside text-sm text-gray-700 space-y-2">
+          <li><strong>Manual Pinning (Target):</strong> Pan the satellite view underneath the central crosshair and tap "ADD PIN" for extreme accuracy, completely independent of GPS hardware.</li>
+          <li><strong>GPS Geofencing (Walk Mode):</strong> Tap the blue "GPS PIN" button while physically on the land. As you walk the perimeter, your phone's GPS will track your coordinates and draw the polygon automatically. Tap STOP to finish. You can toggle this on and off freely.</li>
+          <li><strong>Orientation:</strong> A digital compass is provided in the top right to help you align with official Patwari North/South drawings.</li>
+        </ul>
+      </div>
+
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+        <h3 className="text-xl font-bold text-teal-700 mb-3">💾 Professional Exports</h3>
+        <p className="text-sm leading-relaxed text-gray-600">
+          Once a polygon is drawn on the Map, you can export the data directly:
+        </p>
+        <ul className="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
+          <li><strong>PDF Report:</strong> Generates a printer-friendly A4 document detailing the total Area, Region Standard, Coordinate table, and Liability warnings.</li>
+          <li><strong>KML Export:</strong> Downloads a `.kml` file. You can drag and drop this file into Google Earth Pro or AutoCAD to permanently overlay your survey on professional models.</li>
+        </ul>
+      </div>
+
       <div className="bg-red-50 p-6 rounded-2xl shadow-sm border border-red-200">
         <h3 className="text-xl font-bold text-red-700 mb-3">⚠️ Liability Notice</h3>
         <p className="text-sm leading-relaxed text-red-900">
@@ -62,6 +85,12 @@ export function AboutTab() {
           Providing false information to a public servant (e.g., using 272 sq ft standard in a mutation) is punishable with imprisonment or fines under Section 182 PPC.
           Always verify boundaries physically with a jarib before mutating.
         </p>
+      </div>
+
+      <div className="text-center pt-8 pb-4">
+        <p className="text-xs text-gray-500 font-semibold tracking-wider">SOFTWARE DEVELOPED AND BROUGHT TO YOU BY</p>
+        <p className="text-sm font-black text-gray-800 tracking-widest mt-1">M.A. INDUSTRIES INC. &copy; {new Date().getFullYear()}</p>
+        <p className="text-[10px] text-gray-400 mt-2">All Rights Reserved</p>
       </div>
     </div>
   );

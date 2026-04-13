@@ -2,6 +2,23 @@ import { useState } from 'react';
 import { calculateHerons, calculateShoelace, SQFT_PER_MARLA_LEGAL, SQFT_PER_MARLA_TRAD } from '../utils/calculations';
 
 export function AreaCalculatorTab({ t }: { t: any }) {
+  const renderShapeIcon = (id: string) => {
+    switch (id) {
+        case 'rect': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><rect x="10" y="20" width="80" height="60" stroke="currentColor" strokeWidth="4" fill="none"/></svg>;
+        case 'sq': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><rect x="20" y="20" width="60" height="60" stroke="currentColor" strokeWidth="4" fill="none"/></svg>;
+        case 'circle': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="4" fill="none"/></svg>;
+        case 'tri': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><polygon points="50,10 90,90 10,90" stroke="currentColor" strokeWidth="4" fill="none"/></svg>;
+        case 'rect-tri': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><polygon points="10,10 10,90 90,90" stroke="currentColor" strokeWidth="4" fill="none"/></svg>;
+        case 'equi-tri': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><polygon points="50,15 90,85 10,85" stroke="currentColor" strokeWidth="4" fill="none"/></svg>;
+        case 'parallelogram': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><polygon points="30,20 90,20 70,80 10,80" stroke="currentColor" strokeWidth="4" fill="none"/></svg>;
+        case 'trapezoid': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><polygon points="30,20 70,20 90,80 10,80" stroke="currentColor" strokeWidth="4" fill="none"/></svg>;
+        case 'irr4': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><polygon points="20,10 80,30 90,90 10,70" stroke="currentColor" strokeWidth="4" fill="none"/><line x1="20" y1="10" x2="90" y2="90" stroke="currentColor" strokeWidth="2" strokeDasharray="4" /></svg>;
+        case 'irr5': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><polygon points="50,10 90,40 70,90 30,90 10,40" stroke="currentColor" strokeWidth="4" fill="none"/><line x1="50" y1="10" x2="70" y2="90" stroke="currentColor" strokeWidth="2" strokeDasharray="4" /><line x1="50" y1="10" x2="30" y2="90" stroke="currentColor" strokeWidth="2" strokeDasharray="4" /></svg>;
+        case 'irr6': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><polygon points="30,10 70,10 90,50 70,90 30,90 10,50" stroke="currentColor" strokeWidth="4" fill="none"/><line x1="30" y1="10" x2="70" y2="90" stroke="currentColor" strokeWidth="2" strokeDasharray="4" /><line x1="70" y1="10" x2="30" y2="90" stroke="currentColor" strokeWidth="2" strokeDasharray="4" /><line x1="30" y1="10" x2="70" y2="10" stroke="currentColor" strokeWidth="2" strokeDasharray="4" /></svg>;
+        case 'coords': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><polygon points="40,20 80,30 70,70 20,80 10,40" stroke="currentColor" strokeWidth="4" fill="none"/><circle cx="40" cy="20" r="4" fill="red"/><circle cx="80" cy="30" r="4" fill="red"/><circle cx="70" cy="70" r="4" fill="red"/><circle cx="20" cy="80" r="4" fill="red"/><circle cx="10" cy="40" r="4" fill="red"/></svg>;
+        default: return null;
+    }
+  };
   const [shape, setShape] = useState('rect');
   const [inputs, setInputs] = useState<Record<string, number>>({});
   
@@ -57,11 +74,15 @@ export function AreaCalculatorTab({ t }: { t: any }) {
     <div className="max-w-2xl mx-auto space-y-6 pb-20">
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
         <label className="block text-gray-700 font-bold mb-3">{t.chooseShape}</label>
-        <select 
-          className="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg p-3 font-semibold outline-none focus:ring-2 focus:ring-green-500"
-          value={shape}
-          onChange={e => { setShape(e.target.value); setInputs({}); }}
-        >
+        <div className="flex flex-col md:flex-row items-center gap-4">
+          <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 flex-shrink-0 shadow-inner">
+              {renderShapeIcon(shape)}
+          </div>
+          <select 
+            className="flex-1 w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg p-3 font-semibold outline-none focus:ring-2 focus:ring-green-500"
+            value={shape}
+            onChange={e => { setShape(e.target.value); setInputs({}); }}
+          >
           <option value="rect">Rectangle (Length × Width)</option>
           <option value="sq">Square (Side × Side)</option>
           <option value="circle">Circle (Radius)</option>
@@ -75,6 +96,7 @@ export function AreaCalculatorTab({ t }: { t: any }) {
           <option value="irr6">Irregular 6-Sided (Triangulation)</option>
           <option value="coords">Irregular Polygon (Coordinates X, Y)</option>
         </select>
+        </div>
       </div>
 
       <div className="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-300 min-h-[140px] flex items-center justify-center">

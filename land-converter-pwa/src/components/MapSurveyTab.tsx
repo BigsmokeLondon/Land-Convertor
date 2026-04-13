@@ -1,0 +1,266 @@
+import { useState, useCallback, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Polygon, useMapEvents } from 'react-leaflet';
+import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search } from 'lucide-react';
+import 'leaflet/dist/leaflet.css';
+import * as L from 'leaflet';
+import html2canvas from 'html2canvas';
+import { generateKML, generatePDF } from '../utils/exporting';
+import { CompassTool } from './CompassTool';
+
+// Area calculation spherical
+const calculateAreaSqFt = (points: any[]) => {
+  try {
+    if (!points || points.length < 3) return 0;
+    let area = 0;
+    for (let i = 0; i < points.length; i++) {
+        const p1 = points[i];
+        const p2 = points[(i + 1) % points.length];
+        if (!p1 || !p2) continue;
+        area += ((p2.lng - p1.lng) * Math.PI / 180) * 
+                (2 + Math.sin(p1.lat * Math.PI / 180) + Math.sin(p2.lat * Math.PI / 180));
+    }
+    area = area * 6378137.0 * 6378137.0 / 2.0;
+    return Math.abs(area) * 10.7639; // sq meters to sq ft
+  } catch (e) {
+    console.error("Area Calculation Error:", e);
+    return 0;
+  }
+};
+
+function LocationMarker({ onPointAdd }: { onPointAdd: (latlng: any) => void }) {
+  useMapEvents({
+    click(e) {
+      if (e && e.latlng) {
+        onPointAdd(e.latlng);
+      }
+    },
+  });
+  return null;
+}
+
+function MapController({ onMapInit }: { onMapInit: (map: L.Map) => void }) {
+  const map = useMapEvents({});
+  useEffect(() => {
+    if (map) onMapInit(map);
+  }, [map, onMapInit]);
+  return null;
+}
+
+export function MapSurveyTab({ t, regionalDenominator }: { t: any, regionalDenominator: number }) {
+  const [points, setPoints] = useState<any[]>([]);
+  const [tracking, setTracking] = useState(false);
+  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    // Safely fix Icons only once after mount
+    try {
+        const LeafletID = L as any;
+        if (LeafletID && LeafletID.Icon && LeafletID.Icon.Default) {
+            delete LeafletID.Icon.Default.prototype._getIconUrl;
+            LeafletID.Icon.Default.mergeOptions({
+                iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            });
+        }
+    } catch (err) {
+        console.warn("Leaflet Icon Fix failed (non-critical):", err);
+    }
+  }, []);
+
+  const addPoint = useCallback((latlng: any) => {
+    if (latlng) setPoints(prev => [...prev, latlng]);
+  }, []);
+
+  const dropCenterPin = () => {
+    if (mapInstance) {
+      const center = mapInstance.getCenter();
+      addPoint({ lat: center.lat, lng: center.lng });
+    }
+  };
+
+  const captureScreenshot = async () => {
+    const element = document.getElementById('map-survey-capture-area');
+    if (!element) return;
+    try {
+      const canvas = await html2canvas(element, { useCORS: true, allowTaint: true });
+      const link = document.createElement('a');
+      link.download = 'Land_Survey_Screenshot.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (e) {
+      console.error(e);
+      alert('Screenshot failed. Note: strict browser security might block satellite images.');
+    }
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim() || !mapInstance) return;
+    
+    setIsSearching(true);
+    try {
+      // Prioritize results in Pakistan by adding it to query
+      const query = searchQuery.toLowerCase().includes('pakistan') ? searchQuery : `${searchQuery}, Pakistan`;
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0];
+        mapInstance.flyTo([parseFloat(lat), parseFloat(lon)], 14);
+      } else {
+        alert("Location not found. Try adding more details like city name.");
+      }
+    } catch (err) {
+      alert("Search failed. Please check your internet connection.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const undoPoint = () => setPoints(prev => prev.slice(0, -1));
+  const clearPoints = () => setPoints([]);
+
+  const toggleTracking = () => {
+    if (!tracking) {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition((position) => {
+           if (position && position.coords) {
+             addPoint({ lat: position.coords.latitude, lng: position.coords.longitude });
+           }
+        }, (err) => alert("GPS Error: " + err.message), { enableHighAccuracy: true });
+      } else {
+          alert("Geolocation not supported on this browser");
+      }
+    }
+    setTracking(!tracking);
+  };
+
+  const areaSqFt = calculateAreaSqFt(points);
+  const denom = regionalDenominator || 225;
+  const areaMarla = areaSqFt / denom;
+
+  return (
+    <div id="map-survey-capture-area" className="flex flex-col h-[calc(100vh-180px)] md:h-[600px] w-full relative bg-gray-50 rounded-xl overflow-hidden mb-8 shadow-inner border border-gray-200">
+      
+      {/* Top Stats Bar */}
+      <div className="bg-white p-3 shadow z-[1001] flex justify-between items-center border-b border-gray-200 relative">
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Total Estimated Area</p>
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-2xl font-black text-[#2E7D32]">{areaSqFt.toFixed(2)}</h2>
+            <span className="text-sm font-bold text-gray-600">Sq Ft</span>
+          </div>
+          <p className="text-sm font-semibold text-gray-700 bg-green-50 px-2 py-0.5 rounded-md inline-block mt-1 border border-green-100">{areaMarla.toFixed(4)} Marla</p>
+        </div>
+        
+        <div className="flex gap-2">
+          <button onClick={captureScreenshot} className="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 transition-colors" title="Save Screenshot">
+            <Camera size={20} />
+          </button>
+          <button onClick={() => generateKML(points)} disabled={points.length < 3} className="p-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-colors" title="Export KML">
+            <Download size={20} />
+          </button>
+          <button onClick={() => generatePDF(areaSqFt, 'Regional Standard', areaMarla, points, false)} disabled={points.length < 3} className="p-2.5 bg-[#2E7D32] text-white rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm" title="Export Report PDF">
+            <Save size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Search Bar Overlay */}
+      <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-[1001] w-[60%] max-w-[280px]">
+        <form onSubmit={handleSearch} className="flex gap-1 bg-white/95 backdrop-blur-md p-1 rounded-xl shadow-xl border border-gray-200">
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="City/Region..."
+            className="flex-1 bg-transparent border-none px-2 py-1 text-[11px] focus:outline-none font-bold placeholder:text-gray-400"
+          />
+          <button 
+            type="submit" 
+            disabled={isSearching}
+            className="bg-[#2E7D32] text-white p-1.5 rounded-lg hover:bg-green-700 transition shadow-sm disabled:opacity-50"
+          >
+            {isSearching ? <RotateCcw size={14} className="animate-spin" /> : <Search size={14} />}
+          </button>
+        </form>
+      </div>
+
+      {/* Map Container */}
+      <div className="flex-1 relative z-0">
+        <MapContainer 
+          center={[31.5204, 74.3587]} 
+          zoom={18} 
+          style={{ height: '100%', width: '100%' }}
+        >
+          <MapController onMapInit={setMapInstance} />
+          <TileLayer
+            attribution='&copy; ESRI & OpenStreetMap'
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            maxZoom={19}
+          />
+          <LocationMarker onPointAdd={addPoint} />
+          
+          {points.length > 0 && points.map((p, i) => (
+            p && p.lat && p.lng ? <Marker key={`p-${i}`} position={[p.lat, p.lng]} /> : null
+          ))}
+          
+          {points.length > 2 && (
+            <Polygon 
+                positions={points.filter(p => p && p.lat && p.lng).map(p => [p.lat, p.lng])} 
+                pathOptions={{ color: '#2E7D32', fillColor: '#4CAF50', fillOpacity: 0.5, weight: 3 }} 
+            />
+          )}
+        </MapContainer>
+        
+        <CompassTool />
+
+        {/* Center Crosshair for Manual Targeting */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[400] text-yellow-400 drop-shadow-[0_0_3px_rgba(0,0,0,1)]">
+           <Crosshair size={32} strokeWidth={2.5} />
+        </div>
+      </div>
+
+      {/* Map Helper Text Overlay */}
+      {points.length === 0 && (
+         <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium z-[400] pointer-events-none backdrop-blur-sm shadow-lg whitespace-nowrap">
+           Pan map & tap Add Pin (Target)
+         </div>
+      )}
+
+      {/* Bottom Controls */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[1000] flex justify-center items-center gap-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-xl border border-gray-200/50 w-[95%] max-w-sm">
+        <button onClick={undoPoint} disabled={points.length === 0} className="flex flex-col items-center p-2 text-gray-700 disabled:opacity-40 hover:text-[#2E7D32] transition-colors">
+          <RotateCcw size={20} />
+          <span className="text-[9px] mt-1 font-bold uppercase tracking-wider">Undo</span>
+        </button>
+        
+        {/* Manual Target Drop Button */}
+        <button 
+          onClick={dropCenterPin} 
+          className="flex flex-col items-center justify-center -mt-6 p-3 rounded-full shadow-lg border-4 border-white transition-all transform hover:scale-105 active:scale-95 bg-teal-600 text-white"
+        >
+          <Crosshair size={24} />
+          <span className="text-[9px] mt-1 font-black tracking-widest leading-tight">ADD<br/>PIN</span>
+        </button>
+
+        {/* GPS Button */}
+        <button 
+          onClick={toggleTracking} 
+          className={`flex flex-col items-center justify-center -mt-6 p-3 rounded-full shadow-lg border-4 border-white transition-all transform hover:scale-105 active:scale-95 ${tracking ? 'bg-red-500 text-white' : 'bg-blue-600 text-white'}`}
+        >
+          {tracking ? <Navigation size={24} className="animate-pulse" /> : <MapPin size={24} />}
+          <span className="text-[9px] mt-1 font-black tracking-widest leading-tight">{tracking ? 'STOP' : 'GPS<br/>PIN'}</span>
+        </button>
+
+        <button onClick={clearPoints} disabled={points.length === 0} className="flex flex-col items-center p-2 text-red-500 disabled:opacity-40 hover:text-red-700 transition-colors">
+          <Trash2 size={20} />
+          <span className="text-[9px] mt-1 font-bold uppercase tracking-wider">Clear</span>
+        </button>
+      </div>
+    </div>
+  );
+}
