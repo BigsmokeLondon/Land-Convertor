@@ -52,6 +52,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [mapStyle, setMapStyle] = useState<'satellite' | 'street'>('satellite');
 
   useEffect(() => {
     // Safely fix Icons only once after mount
@@ -215,11 +216,19 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
           style={{ height: '100%', width: '100%' }}
         >
           <MapController onMapInit={setMapInstance} />
-          <TileLayer
-            attribution='&copy; ESRI & OpenStreetMap'
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-            maxZoom={19}
-          />
+          {mapStyle === 'satellite' ? (
+            <TileLayer
+              attribution='&copy; ESRI'
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              maxZoom={19}
+            />
+          ) : (
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              maxZoom={19}
+            />
+          )}
           <LocationMarker onPointAdd={addPoint} />
           
           {points.length > 0 && points.map((p, i) => (
@@ -235,6 +244,30 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
         </MapContainer>
         
         <CompassTool />
+
+        {/* Map Style Toggle - floating pill top-right of map */}
+        <div className="absolute top-2 right-2 z-[500] flex rounded-lg overflow-hidden shadow-md border border-white/40">
+          <button
+            onClick={() => setMapStyle('satellite')}
+            className={`px-2 py-1 text-[10px] font-black transition-colors ${
+              mapStyle === 'satellite'
+                ? 'bg-[#2E7D32] text-white'
+                : 'bg-white/90 text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            🛰 SAT
+          </button>
+          <button
+            onClick={() => setMapStyle('street')}
+            className={`px-2 py-1 text-[10px] font-black transition-colors ${
+              mapStyle === 'street'
+                ? 'bg-[#2E7D32] text-white'
+                : 'bg-white/90 text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            🗺 MAP
+          </button>
+        </div>
 
         {/* Center Crosshair for Manual Targeting */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[400] text-yellow-400 drop-shadow-[0_0_3px_rgba(0,0,0,1)]">
