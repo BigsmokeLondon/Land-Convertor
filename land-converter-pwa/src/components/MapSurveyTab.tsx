@@ -155,7 +155,23 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
               <h2 className="text-2xl font-black text-[#2E7D32]">{areaSqFt.toFixed(2)}</h2>
               <span className="text-sm font-bold text-gray-600">Sq Ft</span>
             </div>
-            <p className="text-sm font-semibold text-gray-700 bg-green-50 px-2 py-0.5 rounded-md inline-block mt-1 border border-green-100">{areaMarla.toFixed(4)} Marla</p>
+            {/* Marla pill + inline search on same row */}
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-sm font-semibold text-gray-700 bg-green-50 px-2 py-0.5 rounded-md inline-block border border-green-100 whitespace-nowrap">{areaMarla.toFixed(4)} Marla</p>
+              {/* Mobile inline search - same height as Marla pill */}
+              <form onSubmit={handleSearch} className="md:hidden flex items-center gap-1 bg-gray-100 border border-gray-200 rounded-md px-2 py-0.5">
+                <input 
+                  type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search city..."
+                  className="bg-transparent border-none text-[11px] font-semibold placeholder:text-gray-400 focus:outline-none w-24"
+                />
+                <button type="submit" disabled={isSearching} className="text-[#2E7D32] flex-shrink-0 disabled:opacity-50">
+                  {isSearching ? <RotateCcw size={12} className="animate-spin" /> : <Search size={12} />}
+                </button>
+              </form>
+            </div>
           </div>
 
           {/* Desktop inline search - hidden on mobile */}
@@ -188,25 +204,6 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
             </button>
           </div>
         </div>
-
-        {/* Row 2: Mobile-only full-width search bar */}
-        <form onSubmit={handleSearch} className="md:hidden flex gap-2 bg-gray-50 border-t border-gray-100 px-3 py-2">
-          <input 
-            type="text" 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search city or region (e.g. Lahore, Jhelum)..."
-            className="flex-1 bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none font-semibold placeholder:text-gray-400 focus:ring-2 focus:ring-green-400"
-          />
-          <button 
-            type="submit" 
-            disabled={isSearching}
-            className="bg-[#2E7D32] text-white px-4 py-2 rounded-xl hover:bg-green-700 transition shadow-sm disabled:opacity-50 flex items-center gap-1.5 font-bold text-sm flex-shrink-0"
-          >
-            {isSearching ? <RotateCcw size={16} className="animate-spin" /> : <Search size={16} />}
-            <span>Go</span>
-          </button>
-        </form>
       </div>
 
       {/* Map Container */}
