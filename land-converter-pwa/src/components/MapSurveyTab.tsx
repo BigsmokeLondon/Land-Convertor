@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Polygon, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polygon, Polyline, useMapEvents } from 'react-leaflet';
 import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import * as L from 'leaflet';
@@ -75,6 +75,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [mapStyle, setMapStyle] = useState<'satellite' | 'street'>('satellite');
+  const [surveyMode, setSurveyMode] = useState<'area' | 'path'>('area');
 
   useEffect(() => {
     // Safely fix Icons only once after mount
@@ -174,17 +175,37 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
         {/* Row 1: Stats + Buttons */}
         <div className="p-3 flex justify-between items-center gap-2">
           <div className="flex-shrink-0">
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Total Estimated Area</p>
+            {/* Label changes based on mode */}
+            <p className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">
+              {surveyMode === 'area' ? 'Total Estimated Area' : '📏 Path Length'}
+            </p>
             <div className="flex items-baseline gap-1.5 flex-wrap">
-              <h2 className="text-lg md:text-2xl font-black text-[#2E7D32]">{areaSqFt.toFixed(2)}</h2>
-              <span className="text-sm font-bold text-gray-600">Sq Ft</span>
-              {perimeterFt > 0 && (
-                <span className="text-sm font-black text-red-600 whitespace-nowrap">{perimeterFt.toFixed(1)} ft</span>
+              {surveyMode === 'area' ? (
+                <>
+                  <h2 className="text-lg md:text-2xl font-black text-[#2E7D32]">{areaSqFt.toFixed(2)}</h2>
+                  <span className="text-sm font-bold text-gray-600">Sq Ft</span>
+                  {perimeterFt > 0 && (
+                    <span className="text-sm font-black text-red-600 whitespace-nowrap">{perimeterFt.toFixed(1)} ft</span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <h2 className="text-lg md:text-2xl font-black text-red-600">{perimeterFt.toFixed(1)}</h2>
+                  <span className="text-sm font-bold text-gray-600">ft</span>
+                  {perimeterFt > 0 && (
+                    <span className="text-sm font-semibold text-gray-500 whitespace-nowrap">({(perimeterFt / 3.281).toFixed(1)} m)</span>
+                  )}
+                </>
               )}
             </div>
-            {/* Marla pill + inline search on same row */}
+            {/* Marla pill + inline search — only in area mode */}
             <div className="flex items-center gap-1 mt-1">
-              <p className="text-sm font-semibold text-gray-700 bg-green-50 px-2 py-0.5 rounded-md inline-block border border-green-100 whitespace-nowrap">{areaMarla.toFixed(2)} Marla</p>
+              {surveyMode === 'area' && (
+                <p className="text-sm font-semibold text-gray-700 bg-green-50 px-2 py-0.5 rounded-md inline-block border border-green-100 whitespace-nowrap">{areaMarla.toFixed(2)} Marla</p>
+              )}
+              {surveyMode === 'path' && points.length >= 2 && (
+                <p className="text-xs font-semibold text-gray-500 bg-red-50 px-2 py-0.5 rounded-md inline-block border border-red-100 whitespace-nowrap">{points.length - 1} segment{points.length > 2 ? 's' : ''}</p>
+              )}
               
               {/* Mobile inline search - same height as Marla pill, narrower */}
               <form onSubmit={handleSearch} className="md:hidden flex items-center gap-1 bg-gray-100 border border-gray-200 rounded-md px-1.5 py-0.5 w-[76px]">
@@ -261,10 +282,17 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
             p && p.lat && p.lng ? <Marker key={`p-${i}`} position={[p.lat, p.lng]} /> : null
           ))}
           
-          {points.length > 2 && (
+          {/* In area mode: render filled polygon. In path mode: render open polyline */}
+          {surveyMode === 'area' && points.length > 2 && (
             <Polygon 
                 positions={points.filter(p => p && p.lat && p.lng).map(p => [p.lat, p.lng])} 
                 pathOptions={{ color: '#2E7D32', fillColor: '#4CAF50', fillOpacity: 0.5, weight: 3 }} 
+            />
+          )}
+          {surveyMode === 'path' && points.length > 1 && (
+            <Polyline
+              positions={points.filter(p => p && p.lat && p.lng).map(p => [p.lat, p.lng])}
+              pathOptions={{ color: '#DC2626', weight: 3, dashArray: '8 4' }}
             />
           )}
         </MapContainer>
@@ -337,8 +365,21 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
           </button>
         </div>
 
-        {/* Right side spacer for symmetry or future zoom controls */}
-        <div className="w-12 invisible" />
+        {/* Right: Mode Toggle - AREA / PATH */}
+        <div className="flex flex-col gap-2 pointer-events-auto items-center">
+          <button
+            onClick={() => { setSurveyMode(m => m === 'area' ? 'path' : 'area'); clearPoints(); }}
+            className={`w-12 h-12 flex flex-col items-center justify-center rounded-full shadow-lg border-2 text-[9px] font-black uppercase transition-colors ${
+              surveyMode === 'path'
+                ? 'bg-red-500 text-white border-white'
+                : 'bg-white text-gray-700 border-gray-200'
+            }`}
+            title={surveyMode === 'area' ? 'Switch to Path mode' : 'Switch to Area mode'}
+          >
+            {surveyMode === 'area' ? '📐' : '📏'}
+            <span className="mt-0.5">{surveyMode === 'area' ? 'AREA' : 'PATH'}</span>
+          </button>
+        </div>
       </div>
     </div>
   );
