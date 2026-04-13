@@ -279,7 +279,19 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
           <LocationMarker onPointAdd={addPoint} />
           
           {points.length > 0 && points.map((p, i) => (
-            p && p.lat && p.lng ? <Marker key={`p-${i}`} position={[p.lat, p.lng]} /> : null
+            p && p.lat && p.lng ? (
+              <Marker
+                key={`p-${i}`}
+                position={[p.lat, p.lng]}
+                draggable={true}
+                eventHandlers={{
+                  dragend: (e) => {
+                    const { lat, lng } = e.target.getLatLng();
+                    setPoints(prev => prev.map((pt, idx) => idx === i ? { lat, lng } : pt));
+                  }
+                }}
+              />
+            ) : null
           ))}
           
           {/* In area mode: render filled polygon. In path mode: render open polyline */}
