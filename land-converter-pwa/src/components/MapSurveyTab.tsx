@@ -146,8 +146,8 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
     <div id="map-survey-capture-area" className="flex flex-col h-[calc(100vh-180px)] md:h-[600px] w-full relative bg-gray-50 rounded-xl overflow-hidden mb-8 shadow-inner border border-gray-200">
       
       {/* Top Stats Bar */}
-      <div className="bg-white p-3 shadow z-[1001] flex justify-between items-center border-b border-gray-200 relative">
-        <div>
+      <div className="bg-white p-3 shadow z-[1001] flex justify-between items-center border-b border-gray-200 relative gap-2">
+        <div className="flex-shrink-0">
           <p className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Total Estimated Area</p>
           <div className="flex items-baseline gap-2">
             <h2 className="text-2xl font-black text-[#2E7D32]">{areaSqFt.toFixed(2)}</h2>
@@ -155,8 +155,26 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
           </div>
           <p className="text-sm font-semibold text-gray-700 bg-green-50 px-2 py-0.5 rounded-md inline-block mt-1 border border-green-100">{areaMarla.toFixed(4)} Marla</p>
         </div>
+
+        {/* Compact Search Bar - inline in header */}
+        <form onSubmit={handleSearch} className="flex gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200 flex-1 mx-2 max-w-[180px]">
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="City..."
+            className="flex-1 bg-transparent border-none px-2 py-1 text-[11px] focus:outline-none font-bold placeholder:text-gray-400 w-0 min-w-0"
+          />
+          <button 
+            type="submit" 
+            disabled={isSearching}
+            className="bg-[#2E7D32] text-white p-1.5 rounded-lg hover:bg-green-700 transition shadow-sm disabled:opacity-50 flex-shrink-0"
+          >
+            {isSearching ? <RotateCcw size={13} className="animate-spin" /> : <Search size={13} />}
+          </button>
+        </form>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <button onClick={captureScreenshot} className="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 transition-colors" title="Save Screenshot">
             <Camera size={20} />
           </button>
@@ -167,26 +185,6 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
             <Save size={20} />
           </button>
         </div>
-      </div>
-
-      {/* Search Bar Overlay */}
-      <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-[1001] w-[60%] max-w-[280px]">
-        <form onSubmit={handleSearch} className="flex gap-1 bg-white/95 backdrop-blur-md p-1 rounded-xl shadow-xl border border-gray-200">
-          <input 
-            type="text" 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="City/Region..."
-            className="flex-1 bg-transparent border-none px-2 py-1 text-[11px] focus:outline-none font-bold placeholder:text-gray-400"
-          />
-          <button 
-            type="submit" 
-            disabled={isSearching}
-            className="bg-[#2E7D32] text-white p-1.5 rounded-lg hover:bg-green-700 transition shadow-sm disabled:opacity-50"
-          >
-            {isSearching ? <RotateCcw size={14} className="animate-spin" /> : <Search size={14} />}
-          </button>
-        </form>
       </div>
 
       {/* Map Container */}

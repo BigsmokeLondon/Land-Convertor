@@ -74,6 +74,63 @@ export const generatePDF = (areaSqFt: number, regionalName: string, regionalArea
   doc.save('Land_Survey_Report.pdf');
 }
 
+export const generateConverterPDF = (results: any) => {
+  const doc = new jsPDF();
+
+  // Header
+  doc.setFillColor(46, 125, 50);
+  doc.rect(0, 0, 210, 30, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.text("Land Conversion Report", 14, 20);
+
+  // Date
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, 14, 38);
+
+  // Results Table
+  const tableData = [
+    ['Square Feet', results.sqft.toFixed(2), '—'],
+    ['Marla (Punjab Legal 225)', results.legalMarla.toFixed(4), 'Punjab Revenue Act'],
+    ['Kanal (Punjab Legal)', results.legalKanal.toFixed(4), 'Punjab Revenue Act'],
+    ['Marla (Lahore LDA 250)', results.ldaMarla.toFixed(4), 'Lahore Development Authority'],
+    ['Kanal (Lahore LDA)', results.ldaKanal.toFixed(4), 'Lahore Development Authority'],
+    ['Marla (Traditional 272)', results.tradMarla.toFixed(4), 'KPK / Rural Reference'],
+    ['Kanal (KPK Ref)', results.kpkKanal.toFixed(4), 'KPK / Rural Reference'],
+    ['Sq. Karam', results.karam.toFixed(4), 'Traditional Karam Unit'],
+  ];
+
+  autoTable(doc, {
+    startY: 48,
+    head: [['Unit', 'Value', 'Standard / Jurisdiction']],
+    body: tableData,
+    theme: 'grid',
+    headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [249, 250, 251] },
+    margin: { left: 14, right: 14 },
+  });
+
+  const finalY = (doc as any).lastAutoTable.finalY || 48;
+
+  // Legal Warning
+  doc.setFontSize(9);
+  doc.setTextColor(180, 0, 0);
+  doc.setFont("helvetica", "italic");
+  doc.text("DISCLAIMER: This report is for reference only. Always verify with official revenue records.", 14, finalY + 14);
+
+  // Footer
+  const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont("helvetica", "normal");
+  doc.text("Software developed and brought to you by M.A. Industries Inc. © " + new Date().getFullYear(), 14, pageHeight - 10);
+
+  doc.save('Conversion_Report.pdf');
+};
+
 export const generateKML = (points: {lat: number, lng: number}[]) => {
   if (points.length < 3) return;
   

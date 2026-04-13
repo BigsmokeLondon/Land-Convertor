@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { translations } from './locales';
-import { Settings, BarChart2, Calculator, ArrowLeftRight, Info, Map as MapIcon, Globe } from 'lucide-react';
+import { Settings, BarChart2, Calculator, ArrowLeftRight, Info, Map as MapIcon, Globe, NotebookPen } from 'lucide-react';
 import { ConverterTab } from './components/ConverterTab';
 import { AreaCalculatorTab } from './components/AreaCalculatorTab';
 import { VizTab } from './components/VizTab';
 import { ReverseLookupTab } from './components/ReverseLookupTab';
 import { AboutTab } from './components/AboutTab';
 import { MapSurveyTab } from './components/MapSurveyTab';
+import { NotesTab } from './components/NotesTab';
 
 const REGIONAL_STANDARDS = [
   { id: 'punjab_legal', name: 'Punjab Legal', unit: 225 },
@@ -16,8 +17,9 @@ const REGIONAL_STANDARDS = [
 
 export default function App() {
   const [isUrdu, setIsUrdu] = useState(false);
-  const [activeTab, setActiveTab] = useState('map'); // Default to map field app!
+  const [activeTab, setActiveTab] = useState('map');
   const [region, setRegion] = useState(REGIONAL_STANDARDS[0]);
+  const [converterHistory, setConverterHistory] = useState<any[]>([]);
   
   const t = isUrdu ? translations.ur : translations.en;
 
@@ -27,6 +29,7 @@ export default function App() {
     { id: 'converter', icon: <ArrowLeftRight size={20} />, label: t.tabConverter },
     { id: 'lookup', icon: <Settings size={20} />, label: t.tabLookup },
     { id: 'viz', icon: <BarChart2 size={20} />, label: t.tabViz },
+    { id: 'notes', icon: <NotebookPen size={20} />, label: 'Notes' },
     { id: 'about', icon: <Info size={20} />, label: t.tabAbout }
   ];
 
@@ -36,8 +39,8 @@ export default function App() {
       <header className="bg-[#2E7D32] text-white p-3 shadow-md sticky top-0 z-50">
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
           <div>
-            <h1 className="text-xl md:text-2xl font-black tracking-tight flex items-center gap-2">
-              <Globe size={24} /> {t.appTitle}
+            <h1 className="text-xs md:text-sm font-black tracking-tight flex items-center gap-2">
+              <Globe size={18} /> {t.appTitle}
             </h1>
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto">
@@ -63,10 +66,11 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-4xl mx-auto p-3 md:p-6 bg-white md:rounded-xl md:shadow-sm md:mt-4">
         {activeTab === 'map' && <MapSurveyTab regionalDenominator={region.unit} />}
-        {activeTab === 'converter' && <ConverterTab t={t} />}
-        {activeTab === 'viz' && <VizTab data={[{legalMarla: 12, tradMarla: 14}, {legalMarla: 3, tradMarla: 3.5}]} />}
+        {activeTab === 'converter' && <ConverterTab t={t} onHistoryUpdate={setConverterHistory} />}
+        {activeTab === 'viz' && <VizTab data={converterHistory} />}
         {activeTab === 'lookup' && <ReverseLookupTab />}
         {activeTab === 'area' && <AreaCalculatorTab t={t} />}
+        {activeTab === 'notes' && <NotesTab />}
         {activeTab === 'about' && <AboutTab />}
       </main>
 
@@ -76,10 +80,10 @@ export default function App() {
           <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex flex-col items-center min-w-[70px] p-2 rounded-xl transition-colors ${activeTab === tab.id ? 'text-[#2E7D32] bg-green-50 shadow-inner' : 'text-gray-500'}`}
+            className={`flex flex-col items-center min-w-[60px] p-2 rounded-xl transition-colors ${activeTab === tab.id ? 'text-[#2E7D32] bg-green-50 shadow-inner' : 'text-gray-500'}`}
           >
             {tab.icon}
-            <span className="text-[10px] mt-1 font-bold whitespace-nowrap">{tab.label}</span>
+            <span className="text-[9px] mt-1 font-bold whitespace-nowrap">{tab.label}</span>
           </button>
         ))}
       </nav>
