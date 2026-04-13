@@ -231,35 +231,50 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
          </div>
       )}
 
-      {/* Bottom Controls */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[1000] flex justify-center items-center gap-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-xl border border-gray-200/50 w-[95%] max-w-sm">
-        <button onClick={undoPoint} disabled={points.length === 0} className="flex flex-col items-center p-2 text-gray-700 disabled:opacity-40 hover:text-[#2E7D32] transition-colors">
-          <RotateCcw size={20} />
-          <span className="text-[9px] mt-1 font-bold uppercase tracking-wider">Undo</span>
-        </button>
+      {/* Bottom Controls - Responsive Layout */}
+      <div className="absolute bottom-6 left-0 right-0 z-[1000] flex justify-between px-6 pointer-events-none">
         
-        {/* Manual Target Drop Button */}
-        <button 
-          onClick={dropCenterPin} 
-          className="flex flex-col items-center justify-center -mt-6 p-3 rounded-full shadow-lg border-4 border-white transition-all transform hover:scale-105 active:scale-95 bg-teal-600 text-white"
-        >
-          <Crosshair size={24} />
-          <span className="text-[9px] mt-1 font-black tracking-widest leading-tight">ADD<br/>PIN</span>
-        </button>
+        {/* Left: Undo/Clear Group */}
+        <div className="flex flex-col gap-3 pointer-events-auto">
+          <button 
+            onClick={undoPoint} 
+            disabled={points.length === 0} 
+            className="w-12 h-12 flex items-center justify-center bg-white text-gray-700 rounded-full shadow-lg border border-gray-200 disabled:opacity-40 active:scale-90 transition-transform"
+            title="Undo"
+          >
+            <RotateCcw size={22} />
+          </button>
+          <button 
+            onClick={clearPoints} 
+            disabled={points.length === 0} 
+            className="w-12 h-12 flex items-center justify-center bg-white text-red-500 rounded-full shadow-lg border border-gray-200 disabled:opacity-40 active:scale-90 transition-transform"
+            title="Clear"
+          >
+            <Trash2 size={22} />
+          </button>
+        </div>
 
-        {/* GPS Button */}
-        <button 
-          onClick={toggleTracking} 
-          className={`flex flex-col items-center justify-center -mt-6 p-3 rounded-full shadow-lg border-4 border-white transition-all transform hover:scale-105 active:scale-95 ${tracking ? 'bg-red-500 text-white' : 'bg-blue-600 text-white'}`}
-        >
-          {tracking ? <Navigation size={24} className="animate-pulse" /> : <MapPin size={24} />}
-          <span className="text-[9px] mt-1 font-black tracking-widest leading-tight">{tracking ? 'STOP' : 'GPS<br/>PIN'}</span>
-        </button>
+        {/* Center: Main Survey Actions */}
+        <div className="flex items-center gap-4 pointer-events-auto -mt-4">
+          <button 
+            onClick={dropCenterPin} 
+            className="flex flex-col items-center justify-center w-16 h-16 bg-teal-600 text-white rounded-full shadow-2xl border-4 border-white active:scale-95 transition-transform"
+          >
+            <Crosshair size={28} />
+            <span className="hidden md:block text-[9px] mt-0.5 font-black uppercase tracking-tighter">ADD PIN</span>
+          </button>
 
-        <button onClick={clearPoints} disabled={points.length === 0} className="flex flex-col items-center p-2 text-red-500 disabled:opacity-40 hover:text-red-700 transition-colors">
-          <Trash2 size={20} />
-          <span className="text-[9px] mt-1 font-bold uppercase tracking-wider">Clear</span>
-        </button>
+          <button 
+            onClick={toggleTracking} 
+            className={`flex flex-col items-center justify-center w-16 h-16 rounded-full shadow-2xl border-4 border-white active:scale-95 transition-transform ${tracking ? 'bg-red-500 text-white animate-pulse' : 'bg-blue-600 text-white'}`}
+          >
+            {tracking ? <Navigation size={28} /> : <MapPin size={28} />}
+            <span className="hidden md:block text-[9px] mt-0.5 font-black uppercase tracking-tighter">{tracking ? 'STOP' : 'GPS PIN'}</span>
+          </button>
+        </div>
+
+        {/* Right side spacer for symmetry or future zoom controls */}
+        <div className="w-12 invisible" />
       </div>
     </div>
   );
