@@ -62,7 +62,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-4xl mx-auto p-3 md:p-6 bg-white md:rounded-xl md:shadow-sm md:mt-4">
-        {activeTab === 'map' && <MapSurveyTab t={t} regionalDenominator={region.unit} />}
+        {activeTab === 'map' && <MapSurveyTab regionalDenominator={region.unit} />}
         {activeTab === 'converter' && <ConverterTab t={t} />}
         {activeTab === 'viz' && <VizTab data={[{legalMarla: 12, tradMarla: 14}, {legalMarla: 3, tradMarla: 3.5}]} />}
         {activeTab === 'lookup' && <ReverseLookupTab />}

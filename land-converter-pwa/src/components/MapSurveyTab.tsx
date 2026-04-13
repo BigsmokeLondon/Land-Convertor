@@ -46,7 +46,7 @@ function MapController({ onMapInit }: { onMapInit: (map: L.Map) => void }) {
   return null;
 }
 
-export function MapSurveyTab({ t, regionalDenominator }: { t: any, regionalDenominator: number }) {
+export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: number }) {
   const [points, setPoints] = useState<any[]>([]);
   const [tracking, setTracking] = useState(false);
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
