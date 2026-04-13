@@ -1,97 +1,194 @@
 export function AboutTab() {
+  const version = '1.4.0';
   return (
-    <div className="max-w-3xl mx-auto space-y-6 text-gray-800 pb-10">
-      <div className="bg-[#2E7D32] text-white p-6 rounded-2xl shadow-md">
-        <h2 className="text-2xl font-bold mb-2">ULTIMATE PAKISTANI LAND CONVERTER</h2>
-        <p className="text-green-100">Patwari/Lawyer Reference Guide • Punjab Revenue Act Compliant</p>
+    <div className="max-w-3xl mx-auto space-y-5 text-gray-800 pb-12">
+
+      {/* Hero Banner */}
+      <div className="bg-gradient-to-br from-[#1B5E20] to-[#2E7D32] text-white p-6 rounded-2xl shadow-lg">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-black tracking-tight leading-tight mb-1">ULTIMATE PAKISTANI<br />LAND CONVERTER</h2>
+            <p className="text-green-200 text-xs font-semibold">Patwari / Lawyer / Field Surveyor Reference Tool</p>
+            <p className="text-green-300 text-[10px] mt-1">Punjab Revenue Act Compliant · Lahore LDA Aware</p>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <span className="bg-white/20 text-white text-[10px] font-black px-2 py-1 rounded-full">v{version}</span>
+          </div>
+        </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-        <h3 className="text-xl font-bold text-[#1976D2] mb-3">🔷 Purpose of This Tool</h3>
+      {/* Purpose */}
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+        <h3 className="text-base font-bold text-[#1976D2] mb-2">🔷 Purpose</h3>
         <p className="text-sm leading-relaxed text-gray-600">
-          This application provides instant, court-admissible land unit conversions for Pakistani revenue officials, lawyers, and property professionals.
-          It solves the critical problem of measurement confusion between the Punjab Legal Standard (225 sq ft) and Traditional builder measurements (272 sq ft).
+          This application provides instant, professionally accurate land unit conversions for Pakistani revenue officials, lawyers, and property professionals.
+          It solves the critical problem of measurement confusion between three competing regional standards used across Punjab.
         </p>
       </div>
 
+      {/* Legal Standards */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="bg-gray-100 p-4 border-b border-gray-200">
-          <h3 className="font-bold text-gray-800">⚖️ Critical Legal Standards</h3>
+        <div className="bg-gray-50 px-5 py-3 border-b border-gray-200">
+          <h3 className="font-bold text-gray-800">⚖️ Regional Measurement Standards</h3>
         </div>
-        <div className="p-4 space-y-4">
-          <div className="bg-[#E3F2FD] p-4 rounded-xl border border-blue-200">
-            <h4 className="font-bold text-[#1976D2]">Punjab Legal (Revenue Act Standard)</h4>
-            <p className="text-sm mt-1"><strong>1 Marla = 225 sq ft</strong></p>
-            <p className="text-xs text-blue-800 mt-2">This is the ONLY standard accepted for Fard (Record of Rights), Mutations (Int انتقال), and official land registration. It is exactly 272.25 sq ft if calculated using Karam, but for practical revenue purposes, it is locked at 225 sq ft in modern urban areas.</p>
+        <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="bg-[#E3F2FD] p-3 rounded-xl border border-blue-200">
+            <h4 className="font-black text-[#1565C0] text-sm">Punjab Legal</h4>
+            <p className="text-xl font-black text-[#1976D2] mt-1">225 <span className="text-sm font-bold">sq ft</span></p>
+            <p className="text-[10px] text-blue-700 mt-1">Official standard for Fard, Mutations (Intiqal), and urban land registration across Punjab.</p>
           </div>
-          <div className="bg-[#FFF9C4] p-4 rounded-xl border border-yellow-300">
-            <h4 className="font-bold text-[#F57F17]">Traditional Reference (KPK/Builders)</h4>
-            <p className="text-sm mt-1"><strong>1 Marla = 272 sq ft</strong></p>
-            <p className="text-xs text-yellow-800 mt-2">Often used in rural areas and KPK. It is NOT legally valid in Punjab's official urban records. Buying a "5 Marla" plot at 272 sq ft vs 225 sq ft yields a massive difference. Always check the deed measurement system.</p>
+          <div className="bg-[#E0F2F1] p-3 rounded-xl border border-teal-200">
+            <h4 className="font-black text-[#00695C] text-sm">Lahore LDA</h4>
+            <p className="text-xl font-black text-teal-700 mt-1">250 <span className="text-sm font-bold">sq ft</span></p>
+            <p className="text-[10px] text-teal-700 mt-1">Used by Lahore Development Authority (LDA) in approved housing schemes and planned developments.</p>
+          </div>
+          <div className="bg-[#FFF9C4] p-3 rounded-xl border border-yellow-300">
+            <h4 className="font-black text-[#E65100] text-sm">Traditional</h4>
+            <p className="text-xl font-black text-orange-600 mt-1">272 <span className="text-sm font-bold">sq ft</span></p>
+            <p className="text-[10px] text-yellow-800 mt-1">Rural / KPK builders' reference. NOT legally valid in Punjab urban records. Always check which standard applies.</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-        <h3 className="text-xl font-bold text-green-700 mb-3">📐 Measuring Irregular Local Plots (Triangulation)</h3>
-        <p className="text-sm leading-relaxed text-gray-600 mb-4">
-          Pakistani plots are rarely perfect rectangles. When measuring an irregular 5-sided or 6-sided plot on the ground, do not just average the sides (this is mathematically inaccurate and leads to litigation). Instead, divide the shape into triangles using Diagonals. This software supports Triangulation modes exactly for this reason.
-        </p>
-        <div className="bg-gray-50 border border-gray-300 p-4 rounded-lg">
-          <h4 className="font-bold text-sm mb-2">Example: 5-Sided Plot</h4>
-          <ol className="list-decimal list-inside text-xs space-y-1 text-gray-700">
-            <li>Measure all 5 outer boundary lines (Sides 1-5).</li>
-            <li>Stand at Corner A and measure straight across the plot to Corner C (Diagonal 1).</li>
-            <li>Stand at Corner A and measure straight to Corner D (Diagonal 2).</li>
-            <li>Enter these 7 values into the <strong>Irregular 5-Sided</strong> mode in the Area Calculator tab. The app breaks it down into 3 perfect Heron's triangles dynamically.</li>
-          </ol>
+      {/* Features Grid */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-gray-50 px-5 py-3 border-b border-gray-200">
+          <h3 className="font-bold text-gray-800">🛠️ Features & Modules</h3>
+        </div>
+        <div className="divide-y divide-gray-100">
+
+          {/* Converter */}
+          <div className="px-5 py-4 flex gap-3">
+            <span className="text-2xl flex-shrink-0">🔄</span>
+            <div>
+              <h4 className="font-bold text-sm text-gray-800">Unit Converter</h4>
+              <p className="text-xs text-gray-500 mt-0.5">Instantly converts between Sq Ft, Marla, Kanal, and Sq Karam across all three regional standards simultaneously. Supports Sq Ft → Marla and reverse. Export results to <strong>PDF</strong> or <strong>Excel</strong>.</p>
+            </div>
+          </div>
+
+          {/* Reverse Lookup */}
+          <div className="px-5 py-4 flex gap-3">
+            <span className="text-2xl flex-shrink-0">↔️</span>
+            <div>
+              <h4 className="font-bold text-sm text-gray-800">Reverse Lookup</h4>
+              <p className="text-xs text-gray-500 mt-0.5">Enter a value in <em>any</em> unit and instantly see all other unit equivalents colour-coded by standard — blue (Punjab Legal), teal (LDA), amber (Traditional).</p>
+            </div>
+          </div>
+
+          {/* Area Calculator */}
+          <div className="px-5 py-4 flex gap-3">
+            <span className="text-2xl flex-shrink-0">📐</span>
+            <div>
+              <h4 className="font-bold text-sm text-gray-800">Area Calculator (Irregular Plots)</h4>
+              <p className="text-xs text-gray-500 mt-0.5">Supports rectangles, right triangles, 4-sided and 5-sided irregular plots via Heron's Triangulation. Also includes a Shoelace (X/Y Coordinates) mode for data sourced from Patwari maps or AutoCAD drawings.</p>
+            </div>
+          </div>
+
+          {/* Visualization */}
+          <div className="px-5 py-4 flex gap-3">
+            <span className="text-2xl flex-shrink-0">📊</span>
+            <div>
+              <h4 className="font-bold text-sm text-gray-800">Visualisation</h4>
+              <p className="text-xs text-gray-500 mt-0.5">Bar chart comparing the same plot area expressed in Marla under all three regional standards side-by-side — instantly shows how much the standard chosen affects your recorded size.</p>
+            </div>
+          </div>
+
+          {/* Map Survey */}
+          <div className="px-5 py-4 flex gap-3">
+            <span className="text-2xl flex-shrink-0">🗺️</span>
+            <div>
+              <h4 className="font-bold text-sm text-gray-800">Map Survey (Field Tool)</h4>
+              <p className="text-xs text-gray-500 mt-0.5 space-y-1">
+                A professional field survey tool built on satellite imagery. Key features:
+              </p>
+              <ul className="text-xs text-gray-500 mt-1 space-y-0.5 list-disc list-inside">
+                <li><strong>Precision Crosshair Pinning</strong> — pan map under yellow crosshair, tap Add Pin for GPS-independent accuracy</li>
+                <li><strong>GPS Walk Mode</strong> — walk the perimeter, pins drop from your phone's GPS automatically</li>
+                <li><strong>📐 Area Mode</strong> — draws a filled polygon and calculates total area in Sq Ft + Marla</li>
+                <li><strong>📏 Path Mode</strong> — Google Earth-style open polyline, measures cumulative boundary length in feet and metres as you go</li>
+                <li><strong>🛰 SAT / 🗺 MAP Toggle</strong> — switch between ESRI satellite imagery and OpenStreetMap street view</li>
+                <li><strong>City Search</strong> — fly to any Pakistani city or region by name</li>
+                <li><strong>Digital Compass with N marker</strong> — align with Patwari north/south orientation</li>
+                <li><strong>Screenshot, KML and PDF exports</strong> — field-ready documentation</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div className="px-5 py-4 flex gap-3">
+            <span className="text-2xl flex-shrink-0">📝</span>
+            <div>
+              <h4 className="font-bold text-sm text-gray-800">Field Notes</h4>
+              <p className="text-xs text-gray-500 mt-0.5">Private, per-device notes tab — create, edit and save as many notes as needed. Stores khasra numbers, owner names, next steps or measurements between sessions. <strong>Data is held locally on your device only</strong> and is never transmitted to any server.</p>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-        <h3 className="text-xl font-bold text-indigo-700 mb-3">🧭 Shoelace (Coordinates) Method</h3>
-        <p className="text-sm leading-relaxed text-gray-600">
-          The Shoelace Calculator allows entering (X, Y) coordinates of plot vertices directly from a Patwari map or AutoCAD data. To use it, simply enter the coordinates in **clockwise or counter-clockwise** order. Leaving the last boxes blank on smaller shapes will automatically terminate the calculation ring correctly.
-        </p>
+      {/* Exports */}
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+        <h3 className="text-base font-bold text-teal-700 mb-3">💾 Professional Exports</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+            <div className="text-2xl mb-1">📄</div>
+            <div className="font-bold text-sm text-red-700">Map PDF Report</div>
+            <div className="text-[10px] text-red-600 mt-1">A4 report with coordinates table, area stats, legal warning & M.A. Industries branding</div>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+            <div className="text-2xl mb-1">📊</div>
+            <div className="font-bold text-sm text-blue-700">Excel Export</div>
+            <div className="text-[10px] text-blue-600 mt-1">Converter history exported as a formatted .xlsx spreadsheet for records</div>
+          </div>
+          <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+            <div className="text-2xl mb-1">🌐</div>
+            <div className="font-bold text-sm text-green-700">KML File</div>
+            <div className="text-[10px] text-green-600 mt-1">Import into Google Earth Pro or AutoCAD to overlay your survey on professional models</div>
+          </div>
+        </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-        <h3 className="text-xl font-bold text-emerald-700 mb-3">📡 Field Map Surveying & GPS Tracking</h3>
-        <p className="text-sm leading-relaxed text-gray-600 mb-4">
-          The new "Map Survey" tab upgrades this calculator into a professional field app. You can use this to survey plots visually or on foot.
-        </p>
-        <ul className="list-disc list-inside text-sm text-gray-700 space-y-2">
-          <li><strong>Manual Pinning (Target):</strong> Pan the satellite view underneath the central crosshair and tap "ADD PIN" for extreme accuracy, completely independent of GPS hardware.</li>
-          <li><strong>GPS Geofencing (Walk Mode):</strong> Tap the blue "GPS PIN" button while physically on the land. As you walk the perimeter, your phone's GPS will track your coordinates and draw the polygon automatically. Tap STOP to finish. You can toggle this on and off freely.</li>
-          <li><strong>Orientation:</strong> A digital compass is provided in the top right to help you align with official Patwari North/South drawings.</li>
-        </ul>
-      </div>
-
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-        <h3 className="text-xl font-bold text-teal-700 mb-3">💾 Professional Exports</h3>
-        <p className="text-sm leading-relaxed text-gray-600">
-          Once a polygon is drawn on the Map, you can export the data directly:
-        </p>
-        <ul className="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
-          <li><strong>PDF Report:</strong> Generates a printer-friendly A4 document detailing the total Area, Region Standard, Coordinate table, and Liability warnings.</li>
-          <li><strong>KML Export:</strong> Downloads a `.kml` file. You can drag and drop this file into Google Earth Pro or AutoCAD to permanently overlay your survey on professional models.</li>
-        </ul>
-      </div>
-
-      <div className="bg-red-50 p-6 rounded-2xl shadow-sm border border-red-200">
-        <h3 className="text-xl font-bold text-red-700 mb-3">⚠️ Liability Notice</h3>
+      {/* Liability Notice */}
+      <div className="bg-red-50 p-5 rounded-2xl shadow-sm border border-red-200">
+        <h3 className="text-base font-bold text-red-700 mb-2">⚠️ Liability Notice</h3>
         <p className="text-sm leading-relaxed text-red-900">
-          This tool provides mathematical conversions only. It does NOT constitute legal advice. 
-          Providing false information to a public servant (e.g., using 272 sq ft standard in a mutation) is punishable with imprisonment or fines under Section 182 PPC.
-          Always verify boundaries physically with a jarib before mutating.
+          This tool provides mathematical conversions and visual estimations only. It does <strong>NOT</strong> constitute legal or surveying advice.
+          Providing false measurements to a public servant is punishable under <em>Section 182 PPC</em>.
+          Always verify plot boundaries physically with a jarib and a licensed surveyor before executing any mutation or sale deed.
         </p>
       </div>
 
-      <div className="text-center pt-8 pb-4">
-        <p className="text-xs text-gray-500 font-semibold tracking-wider">SOFTWARE DEVELOPED AND BROUGHT TO YOU BY</p>
-        <p className="text-sm font-black text-gray-800 tracking-widest mt-1">M.A. INDUSTRIES INC. &copy; {new Date().getFullYear()}</p>
-        <p className="text-[10px] text-gray-400 mt-2">All Rights Reserved</p>
+      {/* Version History */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-gray-50 px-5 py-3 border-b border-gray-200">
+          <h3 className="font-bold text-gray-800">📋 Version History</h3>
+        </div>
+        <div className="divide-y divide-gray-100 text-xs">
+          {[
+            { v: '1.4', label: 'Path Mode, SAT/MAP Toggle, Compass N, Perimeter Ft readout' },
+            { v: '1.3', label: 'Notes Tab, Lahore LDA standard, Converter PDF & Excel, VizTab LDA bar, Map search bar' },
+            { v: '1.2', label: 'Floating mobile map controls, yellow crosshair, GPS toggle, City/Region search, Screenshot export' },
+            { v: '1.1', label: 'Map Survey Tab, KML export, Area Calculator polygon modes, digital compass' },
+            { v: '1.0', label: 'Core converter, Reverse Lookup, Visualization chart, Urdu/English toggle, Excel export' },
+          ].map(r => (
+            <div key={r.v} className="px-5 py-3 flex gap-3 items-start">
+              <span className="bg-[#2E7D32] text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0 mt-0.5">v{r.v}</span>
+              <span className="text-gray-600">{r.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Footer */}
+      <div className="bg-[#1B5E20] text-white p-6 rounded-2xl text-center shadow-lg">
+        <p className="text-green-300 text-[10px] uppercase tracking-widest font-bold mb-2">Software developed and brought to you by</p>
+        <p className="text-xl font-black tracking-widest">M.A. INDUSTRIES INC.</p>
+        <p className="text-green-300 text-xs mt-1">© {new Date().getFullYear()} · All Rights Reserved</p>
+        <div className="mt-4 pt-4 border-t border-white/20">
+          <p className="text-[10px] text-green-400">Built as a Progressive Web App (PWA) · Works offline · No data collected</p>
+        </div>
+      </div>
+
     </div>
   );
 }
