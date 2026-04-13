@@ -27,6 +27,28 @@ const calculateAreaSqFt = (points: any[]) => {
   }
 };
 
+// Haversine: distance between two GPS points in feet
+const haversineDistanceFt = (p1: any, p2: any): number => {
+  const R = 6378137; // Earth radius in meters
+  const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+  const dLng = (p2.lng - p1.lng) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 3.28084; // meters → feet
+};
+
+// Total boundary/perimeter length (open polyline, NOT closed back to start)
+const calculatePerimeterFt = (points: any[]): number => {
+  if (!points || points.length < 2) return 0;
+  let total = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    total += haversineDistanceFt(points[i], points[i + 1]);
+  }
+  return total;
+};
+
 function LocationMarker({ onPointAdd }: { onPointAdd: (latlng: any) => void }) {
   useMapEvents({
     click(e) {
@@ -140,6 +162,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
   };
 
   const areaSqFt = calculateAreaSqFt(points);
+  const perimeterFt = calculatePerimeterFt(points);
   const denom = regionalDenominator || 225;
   const areaMarla = areaSqFt / denom;
 
@@ -152,9 +175,12 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
         <div className="p-3 flex justify-between items-center gap-2">
           <div className="flex-shrink-0">
             <p className="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Total Estimated Area</p>
-            <div className="flex items-baseline gap-2">
-              <h2 className="text-2xl font-black text-[#2E7D32]">{areaSqFt.toFixed(2)}</h2>
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <h2 className="text-lg md:text-2xl font-black text-[#2E7D32]">{areaSqFt.toFixed(2)}</h2>
               <span className="text-sm font-bold text-gray-600">Sq Ft</span>
+              {perimeterFt > 0 && (
+                <span className="text-sm font-black text-red-600 whitespace-nowrap">{perimeterFt.toFixed(1)} ft</span>
+              )}
             </div>
             {/* Marla pill + inline search on same row */}
             <div className="flex items-center gap-1 mt-1">
