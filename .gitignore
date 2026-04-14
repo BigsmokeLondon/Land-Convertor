@@ -1,27 +1,22 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# 1. Block EVERYTHING in the root directory
+/*
 
-# PyInstaller
-build/
-dist/
-*.spec
-*.exe
-Notes/
-*.rtf
-*.txt
+# 2. ALLOW the PWA folder and its contents
+!/land-converter-pwa/
 
-# Windows
+# 3. ALLOW essential Git and GitHub configuration
+!/.gitignore
+!/.github/
+!/README.md
+
+# 4. Handle PWA specific ignores (standard Node/Vite)
+# These are usually handled by land-converter-pwa/.gitignore as well
+land-converter-pwa/node_modules/
+land-converter-pwa/dist/
+land-converter-pwa/.env*
+
+# 5. OS and Editor files (global ignore)
+.DS_Store
 Thumbs.db
-ehthumbs.db
-[Dd]esktop.ini
-
-# Support tools / Installers
-*.msi
-*.zip
-*.pkg
-*.toc
-*.html
-*.txt
-!GravityNotes.txt
+.vscode/
+.idea/
