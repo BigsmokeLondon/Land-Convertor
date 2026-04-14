@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Polygon, Polyline, useMapEvents } from 'react-leaflet';
-import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search } from 'lucide-react';
+import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search, Copy, Check } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import * as L from 'leaflet';
 import html2canvas from 'html2canvas';
@@ -13,11 +13,11 @@ const calculateAreaSqFt = (points: any[]) => {
     if (!points || points.length < 3) return 0;
     let area = 0;
     for (let i = 0; i < points.length; i++) {
-        const p1 = points[i];
-        const p2 = points[(i + 1) % points.length];
-        if (!p1 || !p2) continue;
-        area += ((p2.lng - p1.lng) * Math.PI / 180) * 
-                (2 + Math.sin(p1.lat * Math.PI / 180) + Math.sin(p2.lat * Math.PI / 180));
+      const p1 = points[i];
+      const p2 = points[(i + 1) % points.length];
+      if (!p1 || !p2) continue;
+      area += ((p2.lng - p1.lng) * Math.PI / 180) *
+        (2 + Math.sin(p1.lat * Math.PI / 180) + Math.sin(p2.lat * Math.PI / 180));
     }
     area = area * 6378137.0 * 6378137.0 / 2.0;
     return Math.abs(area) * 10.7639; // sq meters to sq ft
@@ -60,11 +60,18 @@ function LocationMarker({ onPointAdd }: { onPointAdd: (latlng: any) => void }) {
   return null;
 }
 
-function MapController({ onMapInit }: { onMapInit: (map: L.Map) => void }) {
-  const map = useMapEvents({});
+function MapController({ onMapInit, onMove }: { onMapInit: (map: L.Map) => void, onMove: (latlng: L.LatLng) => void }) {
+  const map = useMapEvents({
+    move() {
+      onMove(map.getCenter());
+    }
+  });
   useEffect(() => {
-    if (map) onMapInit(map);
-  }, [map, onMapInit]);
+    if (map) {
+      onMapInit(map);
+      onMove(map.getCenter());
+    }
+  }, [map, onMapInit, onMove]);
   return null;
 }
 
@@ -76,21 +83,23 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
   const [isSearching, setIsSearching] = useState(false);
   const [mapStyle, setMapStyle] = useState<'satellite' | 'street'>('satellite');
   const [surveyMode, setSurveyMode] = useState<'area' | 'path'>('area');
+  const [centerCoords, setCenterCoords] = useState({ lat: 31.3650, lng: 74.1850 });
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // Safely fix Icons only once after mount
     try {
-        const LeafletID = L as any;
-        if (LeafletID && LeafletID.Icon && LeafletID.Icon.Default) {
-            delete LeafletID.Icon.Default.prototype._getIconUrl;
-            LeafletID.Icon.Default.mergeOptions({
-                iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-            });
-        }
+      const LeafletID = L as any;
+      if (LeafletID && LeafletID.Icon && LeafletID.Icon.Default) {
+        delete LeafletID.Icon.Default.prototype._getIconUrl;
+        LeafletID.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        });
+      }
     } catch (err) {
-        console.warn("Leaflet Icon Fix failed (non-critical):", err);
+      console.warn("Leaflet Icon Fix failed (non-critical):", err);
     }
   }, []);
 
@@ -123,14 +132,14 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim() || !mapInstance) return;
-    
+
     setIsSearching(true);
     try {
       // Prioritize results in Pakistan by adding it to query
       const query = searchQuery.toLowerCase().includes('pakistan') ? searchQuery : `${searchQuery}, Pakistan`;
       const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
       const data = await response.json();
-      
+
       if (data && data.length > 0) {
         const { lat, lon } = data[0];
         mapInstance.flyTo([parseFloat(lat), parseFloat(lon)], 14);
@@ -151,15 +160,22 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
     if (!tracking) {
       if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition((position) => {
-           if (position && position.coords) {
-             addPoint({ lat: position.coords.latitude, lng: position.coords.longitude });
-           }
+          if (position && position.coords) {
+            addPoint({ lat: position.coords.latitude, lng: position.coords.longitude });
+          }
         }, (err) => alert("GPS Error: " + err.message), { enableHighAccuracy: true });
       } else {
-          alert("Geolocation not supported on this browser");
+        alert("Geolocation not supported on this browser");
       }
     }
     setTracking(!tracking);
+  };
+
+  const copyToClipboard = () => {
+    const text = `${centerCoords.lat.toFixed(6)}, ${centerCoords.lng.toFixed(6)}`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const areaSqFt = calculateAreaSqFt(points);
@@ -169,7 +185,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
 
   return (
     <div id="map-survey-capture-area" className="flex flex-col h-[calc(100vh-180px)] md:h-[600px] w-full relative bg-gray-50 rounded-xl overflow-hidden mb-8 shadow-inner border border-gray-200">
-      
+
       {/* Top Stats Bar */}
       <div className="bg-white shadow z-[1001] border-b border-gray-200 relative">
         {/* Row 1: Stats + Buttons */}
@@ -206,11 +222,11 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
               {surveyMode === 'path' && points.length >= 2 && (
                 <p className="text-xs font-semibold text-gray-500 bg-red-50 px-2 py-0.5 rounded-md inline-block border border-red-100 whitespace-nowrap">{points.length - 1} segment{points.length > 2 ? 's' : ''}</p>
               )}
-              
+
               {/* Mobile inline search - same height as Marla pill, narrower */}
               <form onSubmit={handleSearch} className="md:hidden flex items-center gap-1 bg-gray-100 border border-gray-200 rounded-md px-1.5 py-0.5 w-[76px]">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="City..."
@@ -225,22 +241,22 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
 
           {/* Desktop inline search - hidden on mobile */}
           <form onSubmit={handleSearch} className="hidden md:flex gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200 flex-1 mx-2 max-w-[220px]">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="City/Region..."
               className="flex-1 bg-transparent border-none px-2 py-1 text-[11px] focus:outline-none font-bold placeholder:text-gray-400 w-0 min-w-0"
             />
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isSearching}
               className="bg-[#2E7D32] text-white p-1.5 rounded-lg hover:bg-green-700 transition shadow-sm disabled:opacity-50 flex-shrink-0"
             >
               {isSearching ? <RotateCcw size={13} className="animate-spin" /> : <Search size={13} />}
             </button>
           </form>
-          
+
           <div className="flex gap-2 flex-shrink-0">
             <button onClick={captureScreenshot} className="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 transition-colors" title="Save Screenshot">
               <Camera size={20} />
@@ -257,12 +273,12 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
 
       {/* Map Container */}
       <div className="flex-1 relative z-0">
-        <MapContainer 
-          center={[31.5204, 74.3587]} 
-          zoom={18} 
+        <MapContainer
+          center={[31.3650, 74.1850]}
+          zoom={16}
           style={{ height: '100%', width: '100%' }}
         >
-          <MapController onMapInit={setMapInstance} />
+          <MapController onMapInit={setMapInstance} onMove={setCenterCoords} />
           {mapStyle === 'satellite' ? (
             <TileLayer
               attribution='&copy; ESRI'
@@ -277,7 +293,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
             />
           )}
           <LocationMarker onPointAdd={addPoint} />
-          
+
           {points.length > 0 && points.map((p, i) => (
             p && p.lat && p.lng ? (
               <Marker
@@ -293,12 +309,12 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
               />
             ) : null
           ))}
-          
+
           {/* In area mode: render filled polygon. In path mode: render open polyline */}
           {surveyMode === 'area' && points.length > 2 && (
-            <Polygon 
-                positions={points.filter(p => p && p.lat && p.lng).map(p => [p.lat, p.lng])} 
-                pathOptions={{ color: '#2E7D32', fillColor: '#4CAF50', fillOpacity: 0.5, weight: 3 }} 
+            <Polygon
+              positions={points.filter(p => p && p.lat && p.lng).map(p => [p.lat, p.lng])}
+              pathOptions={{ color: '#2E7D32', fillColor: '#4CAF50', fillOpacity: 0.5, weight: 3 }}
             />
           )}
           {surveyMode === 'path' && points.length > 1 && (
@@ -308,7 +324,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
             />
           )}
         </MapContainer>
-        
+
         <CompassTool />
 
         {/* Map Style Toggle - single button top-right of map */}
@@ -324,33 +340,52 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
 
         {/* Center Crosshair for Manual Targeting */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[400] text-yellow-400 drop-shadow-[0_0_3px_rgba(0,0,0,1)]">
-           <Crosshair size={32} strokeWidth={2.5} />
+          <Crosshair size={32} strokeWidth={2.5} />
+        </div>
+
+        {/* Real-time Coordinate Box */}
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-[500] pointer-events-auto">
+          <button 
+            onClick={copyToClipboard}
+            className="flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-gray-300 hover:bg-white transition-all active:scale-95 group"
+            title="Click to copy coordinates"
+          >
+            <div className="flex flex-col items-start leading-tight">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Target GPS</span>
+              <span className="text-[11px] font-mono font-bold text-gray-800">
+                {centerCoords.lat.toFixed(6)}, {centerCoords.lng.toFixed(6)}
+              </span>
+            </div>
+            <div className="pl-2 border-l border-gray-200 text-gray-400 group-hover:text-[#2E7D32]">
+              {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+            </div>
+          </button>
         </div>
       </div>
 
       {/* Map Helper Text Overlay */}
       {points.length === 0 && (
-         <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium z-[400] pointer-events-none backdrop-blur-sm shadow-lg whitespace-nowrap">
-           Pan map & tap Add Pin (Target)
-         </div>
+        <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium z-[400] pointer-events-none backdrop-blur-sm shadow-lg whitespace-nowrap">
+          Pan map & tap Add Pin (Target)
+        </div>
       )}
 
       {/* Bottom Controls - Responsive Layout */}
       <div className="absolute bottom-6 left-0 right-0 z-[1000] flex justify-between px-6 pointer-events-none">
-        
+
         {/* Left: Undo/Clear Group */}
         <div className="flex flex-col gap-3 pointer-events-auto">
-          <button 
-            onClick={undoPoint} 
-            disabled={points.length === 0} 
+          <button
+            onClick={undoPoint}
+            disabled={points.length === 0}
             className="w-12 h-12 flex items-center justify-center bg-white text-gray-700 rounded-full shadow-lg border border-gray-200 disabled:opacity-40 active:scale-90 transition-transform"
             title="Undo"
           >
             <RotateCcw size={22} />
           </button>
-          <button 
-            onClick={clearPoints} 
-            disabled={points.length === 0} 
+          <button
+            onClick={clearPoints}
+            disabled={points.length === 0}
             className="w-12 h-12 flex items-center justify-center bg-white text-red-500 rounded-full shadow-lg border border-gray-200 disabled:opacity-40 active:scale-90 transition-transform"
             title="Clear"
           >
@@ -360,16 +395,16 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
 
         {/* Center: Main Survey Actions */}
         <div className="flex items-center gap-4 pointer-events-auto -mt-4">
-          <button 
-            onClick={dropCenterPin} 
+          <button
+            onClick={dropCenterPin}
             className="flex flex-col items-center justify-center w-16 h-16 bg-teal-600 text-white rounded-full shadow-2xl border-4 border-white active:scale-95 transition-transform"
           >
             <Crosshair size={28} />
             <span className="hidden md:block text-[9px] mt-0.5 font-black uppercase tracking-tighter">ADD PIN</span>
           </button>
 
-          <button 
-            onClick={toggleTracking} 
+          <button
+            onClick={toggleTracking}
             className={`flex flex-col items-center justify-center w-16 h-16 rounded-full shadow-2xl border-4 border-white active:scale-95 transition-transform ${tracking ? 'bg-red-500 text-white animate-pulse' : 'bg-blue-600 text-white'}`}
           >
             {tracking ? <Navigation size={28} /> : <MapPin size={28} />}
@@ -381,11 +416,10 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
         <div className="flex flex-col gap-2 pointer-events-auto items-center">
           <button
             onClick={() => { setSurveyMode(m => m === 'area' ? 'path' : 'area'); clearPoints(); }}
-            className={`w-12 h-12 flex flex-col items-center justify-center rounded-full shadow-lg border-2 text-[9px] font-black uppercase transition-colors ${
-              surveyMode === 'path'
+            className={`w-12 h-12 flex flex-col items-center justify-center rounded-full shadow-lg border-2 text-[9px] font-black uppercase transition-colors ${surveyMode === 'path'
                 ? 'bg-red-500 text-white border-white'
                 : 'bg-white text-gray-700 border-gray-200'
-            }`}
+              }`}
             title={surveyMode === 'area' ? 'Switch to Path mode' : 'Switch to Area mode'}
           >
             {surveyMode === 'area' ? '📐' : '📏'}
