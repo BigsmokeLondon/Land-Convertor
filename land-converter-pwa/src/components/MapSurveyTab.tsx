@@ -274,7 +274,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
       {/* Map Container */}
       <div className="flex-1 relative z-0">
         <MapContainer
-          center={[31.3650, 74.1850]}
+          center={[31.3675, 74.2048]}
           zoom={16}
           style={{ height: '100%', width: '100%' }}
         >
@@ -345,7 +345,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
 
         {/* Real-time Coordinate Box */}
         <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-[500] pointer-events-auto">
-          <button 
+          <button
             onClick={copyToClipboard}
             className="flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-gray-300 hover:bg-white transition-all active:scale-95 group"
             title="Click to copy coordinates"
@@ -417,8 +417,8 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
           <button
             onClick={() => { setSurveyMode(m => m === 'area' ? 'path' : 'area'); clearPoints(); }}
             className={`w-12 h-12 flex flex-col items-center justify-center rounded-full shadow-lg border-2 text-[9px] font-black uppercase transition-colors ${surveyMode === 'path'
-                ? 'bg-red-500 text-white border-white'
-                : 'bg-white text-gray-700 border-gray-200'
+              ? 'bg-red-500 text-white border-white'
+              : 'bg-white text-gray-700 border-gray-200'
               }`}
             title={surveyMode === 'area' ? 'Switch to Path mode' : 'Switch to Area mode'}
           >
