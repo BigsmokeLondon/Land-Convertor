@@ -1,4 +1,5 @@
 import { useState } from 'react';
+// REDEPLOY PING: Restoring yesterday's stable version - cache invalidate
 import { translations } from './locales';
 import { Settings, BarChart2, Calculator, ArrowLeftRight, Info, Map as MapIcon, Globe, NotebookPen } from 'lucide-react';
 import { ConverterTab } from './components/ConverterTab';
