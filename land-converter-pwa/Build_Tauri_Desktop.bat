@@ -3,16 +3,21 @@
 :: Build_Tauri_Desktop.bat
 :: Syncs source from network drive to local C:\ then builds
 :: the Tauri desktop installer (.exe)
-::
-:: Usage: Double-click or run from admin command prompt
-:: Output: C:\LandConverterDev\src-tauri\target\release\bundle\
 :: ============================================================
 
 setlocal EnableDelayedExpansion
 
-set SOURCE=Z:\Data\Camwood Ondrive\OneDrive - Camwood Limited\Arena\AI\AntiGavity\land-converter-pwa
-set LOCAL=C:\Users\Admin\Documents\land-converter-pwa
-set LOG=%LOCAL%\build_log.txt
+:: ENSURE WE START IN THE CORRECT DRIVE/FOLDER
+cd /d "%~dp0"
+
+:: DEBUG PAUSE (Remove this line once you confirm the window stays open)
+echo [DEBUG] Script started from: %CD%
+pause
+
+:: QUOTED PATHS TO HANDLE SPACES/DASHES
+set "SOURCE=%~dp0"
+set "LOCAL=C:\Users\Admin\Documents\land-converter-pwa"
+set "LOG=%LOCAL%\build_log.txt"
 
 echo.
 set /p VERSION="Enter build version (e.g. 1.5.0): "
@@ -35,15 +40,15 @@ echo.
 
 :: ── STEP 1: Create local build dir if needed ─────────────
 if not exist "%LOCAL%" (
-    echo [1/5] Creating local build directory...
+    echo [1/6] Creating local build directory...
     mkdir "%LOCAL%"
 ) else (
-    echo [1/5] Local build directory exists. OK.
+    echo [1/6] Local build directory exists. OK.
 )
 
 :: ── STEP 2: Sync source files (exclude heavy dirs) ───────
 echo.
-echo [2/5] Syncing source files from network drive...
+echo [2/6] Syncing source files from network drive...
 echo       (Skipping node_modules, dist, src-tauri\target)
 echo.
 
@@ -75,14 +80,14 @@ powershell -Command "(Get-Content package.json) -replace '\"version\":\s*\".*?\"
 :: Patch tauri.conf.json
 powershell -Command "(Get-Content src-tauri\tauri.conf.json) -replace '\"version\":\s*\".*?\"', '\"version\": \"%VERSION%\"' | Set-Content src-tauri\tauri.conf.json"
 
-:: Patch AboutTab.tsx (UI)
-powershell -Command "(Get-Content src\components\AboutTab.tsx) -replace \"const version = '.*?'\", \"const version = '%VERSION%'\" | Set-Content src\components\AboutTab.tsx"
+:: Patch AboutTab.tsx (UI) - Handling single quotes carefully
+powershell -Command "$c = Get-Content src\components\AboutTab.tsx; $c -replace 'const version = \x27.*?\x27', 'const version = \x27%VERSION%\x27' | Set-Content src\components\AboutTab.tsx"
 
 echo        Successfully patched project to v%VERSION%.
 
 :: ── STEP 3: npm install (only if package.json changed) ───
 echo.
-echo [3/5] Checking npm packages...
+echo [3/6] Checking npm packages...
 cd /d "%LOCAL%"
 
 if not exist "node_modules\@tauri-apps\cli" (
@@ -102,7 +107,7 @@ if not exist "node_modules\@tauri-apps\cli" (
     echo       Packages installed OK.
 ) else (
     echo       Packages already installed. Skipping.
-    echo       (Delete C:\LandConverterDev\node_modules to force reinstall)
+    echo       (Delete %LOCAL%\node_modules to force reinstall)
 )
 
 :: ── STEP 4: Build Web assets ──────────────────────────────
@@ -154,7 +159,7 @@ echo =====================================================
 echo   BUILD COMPLETE (Version %VERSION%)
 echo =====================================================
 echo.
-echo   Check your USB stick or releases folder:
+echo   Check your releases folder:
 echo   %REL_DIR%
 echo.
 echo =====================================================
