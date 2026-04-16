@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { MapContainer, TileLayer, Marker, Polygon, Polyline, useMapEvents } from 'react-leaflet';
 import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search, Copy, Check } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
@@ -76,15 +77,17 @@ function MapController({ onMapInit, onMove }: { onMapInit: (map: L.Map) => void,
 }
 
 export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: number }) {
-  const [points, setPoints] = useState<any[]>([]);
+  const [points, setPoints] = useLocalStorage<any[]>('la_map_points', []);
   const [tracking, setTracking] = useState(false);
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [mapStyle, setMapStyle] = useState<'satellite' | 'street'>('satellite');
-  const [surveyMode, setSurveyMode] = useState<'area' | 'path'>('area');
-  const [centerCoords, setCenterCoords] = useState({ lat: 31.3650, lng: 74.1850 });
+  const [mapStyle, setMapStyle] = useLocalStorage<'satellite' | 'street'>('la_map_style', 'satellite');
+  const [surveyMode, setSurveyMode] = useLocalStorage<'area' | 'path'>('la_map_mode', 'area');
+  const [centerCoords, setCenterCoords] = useLocalStorage<{lat: number, lng: number}>('la_map_center', { lat: 31.3650, lng: 74.1850 });
   const [copied, setCopied] = useState(false);
+  const [watchId, setWatchId] = useState<number | null>(null);
+  const [autoFollow, setAutoFollow] = useLocalStorage('la_map_auto_follow', true);
 
   useEffect(() => {
     // Safely fix Icons only once after mount
@@ -102,6 +105,15 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
       console.warn("Leaflet Icon Fix failed (non-critical):", err);
     }
   }, []);
+
+  useEffect(() => {
+    // Cleanup GPS watch on unmount
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [watchId]);
 
   const addPoint = useCallback((latlng: any) => {
     if (latlng) setPoints(prev => [...prev, latlng]);
@@ -157,18 +169,47 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
   const clearPoints = () => setPoints([]);
 
   const toggleTracking = () => {
-    if (!tracking) {
+    if (watchId === null) {
       if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition((position) => {
-          if (position && position.coords) {
-            addPoint({ lat: position.coords.latitude, lng: position.coords.longitude });
-          }
-        }, (err) => alert("GPS Error: " + err.message), { enableHighAccuracy: true });
+        const id = navigator.geolocation.watchPosition(
+          (position) => {
+            const newPoint = { lat: position.coords.latitude, lng: position.coords.longitude };
+            
+            setPoints(prev => {
+              // Always add the first point
+              if (prev.length === 0) return [newPoint];
+              
+              const lastPoint = prev[prev.length - 1];
+              const dist = haversineDistanceFt(lastPoint, newPoint);
+              
+              // Only add if moved more than 5 feet (prevents jitter)
+              if (dist > 5) {
+                return [...prev, newPoint];
+              }
+              return prev;
+            });
+
+            if (autoFollow && mapInstance) {
+              mapInstance.panTo([newPoint.lat, newPoint.lng]);
+            }
+          },
+          (err) => {
+            alert("GPS Error: " + err.message);
+            setTracking(false);
+            setWatchId(null);
+          },
+          { enableHighAccuracy: true }
+        );
+        setWatchId(id);
+        setTracking(true);
       } else {
         alert("Geolocation not supported on this browser");
       }
+    } else {
+      navigator.geolocation.clearWatch(watchId);
+      setWatchId(null);
+      setTracking(false);
     }
-    setTracking(!tracking);
   };
 
   const copyToClipboard = () => {
@@ -335,6 +376,20 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
             title="Toggle map style"
           >
             {mapStyle === 'satellite' ? '🛰 SAT' : '🗺 MAP'}
+          </button>
+        </div>
+
+        {/* Auto-Follow Toggle */}
+        <div className="absolute top-12 right-2 z-[500]">
+          <button
+            onClick={() => setAutoFollow(!autoFollow)}
+            className={`flex items-center gap-1 px-2 py-1 rounded-lg shadow-md border text-[10px] font-black transition-all active:scale-95 ${autoFollow
+              ? 'bg-blue-600 text-white border-blue-400'
+              : 'bg-white/90 text-gray-400 border-gray-300'
+              }`}
+            title="Toggle Auto-Follow"
+          >
+            {autoFollow ? '📍 FOLLOWING' : '📍 FOLLOW'}
           </button>
         </div>
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { calculateHerons, calculateShoelace, SQFT_PER_MARLA_LEGAL, SQFT_PER_MARLA_TRAD } from '../utils/calculations';
 
 export function AreaCalculatorTab({ t }: { t: any }) {
@@ -19,8 +19,8 @@ export function AreaCalculatorTab({ t }: { t: any }) {
         default: return null;
     }
   };
-  const [shape, setShape] = useState('rect');
-  const [inputs, setInputs] = useState<Record<string, number>>({});
+  const [shape, setShape] = useLocalStorage('la_calc_shape', 'rect');
+  const [inputs, setInputs] = useLocalStorage<Record<string, number>>('la_calc_inputs', {});
   
   const updateInput = (key: string, val: string) => {
     setInputs(prev => ({ ...prev, [key]: parseFloat(val) || 0 }));

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { 
   SQFT_PER_MARLA_LEGAL, SQFT_PER_KANAL_LEGAL, 
   SQFT_PER_MARLA_LDA, SQFT_PER_KANAL_LDA,
@@ -28,8 +28,8 @@ const unitColors: Record<string, string> = {
 };
 
 export function ReverseLookupTab() {
-  const [unit, setUnit] = useState('sqft');
-  const [valStr, setValStr] = useState('');
+  const [unit, setUnit] = useLocalStorage('la_lookup_unit', 'sqft');
+  const [valStr, setValStr] = useLocalStorage('la_lookup_val', '');
 
   const val = parseFloat(valStr) || 0;
   const selectedUnit = units.find(u => u.id === unit) || units[0];

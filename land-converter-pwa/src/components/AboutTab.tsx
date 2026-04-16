@@ -1,5 +1,5 @@
 export function AboutTab() {
-  const version = '1.4.0';
+  const version = '1.5.0';
   return (
     <div className="max-w-3xl mx-auto space-y-5 text-gray-800 pb-12">
 
@@ -103,10 +103,11 @@ export function AboutTab() {
               </p>
               <ul className="text-xs text-gray-500 mt-1 space-y-0.5 list-disc list-inside">
                 <li><strong>Precision Crosshair Pinning</strong> — pan map under yellow crosshair, tap Add Pin for GPS-independent accuracy</li>
-                <li><strong>GPS Walk Mode</strong> — walk the perimeter, pins drop from your phone's GPS automatically</li>
+                <li><strong>GPS Walk-and-Track</strong> — record your walk with continuous tracking, 5ft anti-jitter filtering and Auto-Follow mode</li>
                 <li><strong>📐 Area Mode</strong> — draws a filled polygon and calculates total area in Sq Ft + Marla</li>
-                <li><strong>📏 Path Mode</strong> — Google Earth-style open polyline, measures cumulative boundary length in feet and metres as you go</li>
-                <li><strong>🛰 SAT / 🗺 MAP Toggle</strong> — switch between ESRI satellite imagery and OpenStreetMap street view</li>
+                <li><strong>📏 Path Mode</strong> — measures cumulative boundary length in feet and metres as you walk</li>
+                <li><strong>🛰 SAT / 🗺 MAP Toggle</strong> — switch between ESRI satellite imagery and OpenStreetMap</li>
+                <li><strong>📍 Auto-Follow</strong> — keep the map centered on your position during surveys</li>
                 <li><strong>City Search</strong> — fly to any Pakistani city or region by name</li>
                 <li><strong>Digital Compass with N marker</strong> — align with Patwari north/south orientation</li>
                 <li><strong>Screenshot, KML and PDF exports</strong> — field-ready documentation</li>
@@ -165,6 +166,7 @@ export function AboutTab() {
         </div>
         <div className="divide-y divide-gray-100 text-xs">
           {[
+            { v: '1.5', label: 'GPS Walk-and-Track (Continuous), Auto-Follow Map Mode, 5ft Jitter Filtering' },
             { v: '1.4', label: 'Path Mode, SAT/MAP Toggle, Compass N, Perimeter Ft readout' },
             { v: '1.3', label: 'Notes Tab, Lahore LDA standard, Converter PDF & Excel, VizTab LDA bar, Map search bar' },
             { v: '1.2', label: 'Floating mobile map controls, yellow crosshair, GPS toggle, City/Region search, Screenshot export' },
@@ -177,6 +179,18 @@ export function AboutTab() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Diagnostics */}
+      <div className="bg-gray-100 p-5 rounded-2xl shadow-sm border border-gray-200">
+        <h3 className="text-base font-bold text-gray-700 mb-2">🔧 Diagnostics</h3>
+        <p className="text-xs text-gray-500 mb-4">If the app is behaving unexpectedly or not remembering your settings, try resetting the local storage.</p>
+        <button 
+          onClick={() => { if(confirm('Reset all saved settings, notes and history?')) { localStorage.clear(); window.location.reload(); } }}
+          className="bg-white text-red-600 border border-red-200 px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-50 transition active:scale-95 shadow-sm"
+        >
+          Reset Application Data (Local)
+        </button>
       </div>
 
       {/* Footer */}

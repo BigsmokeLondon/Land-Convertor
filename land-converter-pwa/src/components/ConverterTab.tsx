@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { ArrowDown, Download, Plus, FileText } from 'lucide-react';
 import { SQFT_PER_MARLA_LEGAL, SQFT_PER_KANAL_LEGAL, SQFT_PER_MARLA_LDA, SQFT_PER_KANAL_LDA, SQFT_PER_MARLA_TRAD, SQFT_PER_KANAL_KPK, SQFT_PER_SQ_KARAM } from '../utils/calculations';
 import { exportToExcel } from '../utils/ExcelExport';
 import { generateConverterPDF } from '../utils/exporting';
 
-export function ConverterTab({ t, onHistoryUpdate }: { t: any; onHistoryUpdate?: (h: any[]) => void }) {
-  const [sqftMode, setSqftMode] = useState(true);
-  const [inputVal, setInputVal] = useState('');
-  const [history, setHistory] = useState<any[]>([]);
+export function ConverterTab({ t, initialHistory = [], onHistoryUpdate }: { t: any; initialHistory?: any[]; onHistoryUpdate?: (h: any[]) => void }) {
+  const [sqftMode, setSqftMode] = useLocalStorage('la_conv_mode', true);
+  const [inputVal, setInputVal] = useLocalStorage('la_conv_input', '');
+  const [history, setHistory] = useState<any[]>(initialHistory);
   
   const val = parseFloat(inputVal) || 0;
   

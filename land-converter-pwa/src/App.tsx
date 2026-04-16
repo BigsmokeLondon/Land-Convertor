@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useLocalStorage } from './hooks/useLocalStorage';
 // REDEPLOY PING: Restoring yesterday's stable version - cache invalidate
 import { translations } from './locales';
 import { Settings, BarChart2, Calculator, ArrowLeftRight, Info, Map as MapIcon, Globe, NotebookPen } from 'lucide-react';
@@ -17,10 +18,31 @@ const REGIONAL_STANDARDS = [
 ];
 
 export default function App() {
-  const [isUrdu, setIsUrdu] = useState(false);
-  const [activeTab, setActiveTab] = useState('map');
-  const [region, setRegion] = useState(REGIONAL_STANDARDS[0]);
-  const [converterHistory, setConverterHistory] = useState<any[]>([]);
+  const [isUrdu, setIsUrdu] = useLocalStorage('la_is_urdu', false);
+  const [activeTab, setActiveTab] = useLocalStorage('la_active_tab', 'map');
+  const [region, setRegion] = useLocalStorage('la_region', REGIONAL_STANDARDS[0]);
+  const [converterHistory, setConverterHistory] = useLocalStorage<any[]>('la_converter_history', []);
+  
+  // Debug Persistence & Sanitization
+  useEffect(() => {
+    const validTabs = ['map', 'area', 'converter', 'lookup', 'viz', 'notes', 'about'];
+    if (!validTabs.includes(activeTab)) {
+      console.warn('Invalid tab detected, resetting to map:', activeTab);
+      setActiveTab('map');
+    }
+    
+    // Ensure region is valid and matches its reference
+    const matched = REGIONAL_STANDARDS.find(r => r.unit === region.unit);
+    if (!matched) {
+       console.warn('Invalid region detected, resetting to default:', region);
+       setRegion(REGIONAL_STANDARDS[0]);
+    } else {
+       // Identity sync (ensures region === REGIONAL_STANDARDS[i])
+       setRegion(matched);
+    }
+
+    console.log('App Mounted & Sanitized. Active Tab:', activeTab);
+  }, []);
   
   const t = isUrdu ? translations.ur : translations.en;
 
@@ -67,7 +89,7 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-4xl mx-auto p-3 md:p-6 bg-white md:rounded-xl md:shadow-sm md:mt-4">
         {activeTab === 'map' && <MapSurveyTab regionalDenominator={region.unit} />}
-        {activeTab === 'converter' && <ConverterTab t={t} onHistoryUpdate={setConverterHistory} />}
+        {activeTab === 'converter' && <ConverterTab t={t} initialHistory={converterHistory} onHistoryUpdate={setConverterHistory} />}
         {activeTab === 'viz' && <VizTab data={converterHistory} />}
         {activeTab === 'lookup' && <ReverseLookupTab />}
         {activeTab === 'area' && <AreaCalculatorTab t={t} />}
