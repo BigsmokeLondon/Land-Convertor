@@ -107,7 +107,7 @@ if not exist "node_modules\@tauri-apps\cli" (
     echo       Packages installed OK.
 ) else (
     echo       Packages already installed. Skipping.
-    echo       (Delete %LOCAL%\node_modules to force reinstall)
+    echo       Note: Delete %LOCAL%\node_modules to force reinstall
 )
 
 :: ── STEP 4: Build Web assets ──────────────────────────────
