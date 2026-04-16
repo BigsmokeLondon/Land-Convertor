@@ -15,7 +15,8 @@ echo [DEBUG] Script started from: %CD%
 pause
 
 :: QUOTED PATHS TO HANDLE SPACES/DASHES
-set "SOURCE=%~dp0"
+:: We use %CD% instead of %~dp0 to avoid the trailing backslash escaping the quote
+set "SOURCE=%CD%"
 set "LOCAL=C:\Users\Admin\Documents\land-converter-pwa"
 set "LOG=%LOCAL%\build_log.txt"
 
