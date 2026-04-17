@@ -139,6 +139,69 @@ function GeomanControls({
   return null;
 }
 
+function ProMappingToolbox({ surveyMode }: { surveyMode: 'area' | 'path' }) {
+  const map = useMap();
+  
+  const toggleDraw = () => {
+    // @ts-ignore
+    if (!map.pm) return;
+    // @ts-ignore
+    const isDraw = map.pm.Draw.getActiveShape();
+    if (isDraw) {
+      // @ts-ignore
+      map.pm.disableDraw();
+    } else {
+      // @ts-ignore
+      map.pm.enableDraw(surveyMode === 'area' ? 'Polygon' : 'Polyline', {
+        snappable: true,
+        snapDistance: 20
+      });
+    }
+  };
+
+  const toggleEdit = () => {
+    // @ts-ignore
+    if (!map.pm) return;
+    // @ts-ignore
+    map.pm.toggleGlobalEditMode();
+  };
+
+  const toggleCut = () => {
+    // @ts-ignore
+    if (!map.pm) return;
+    // @ts-ignore
+    map.pm.enableDraw('Cut', { snappable: true });
+  };
+
+  return (
+    <div className="absolute top-24 right-2 z-[500] flex flex-col gap-2">
+      <button
+        onClick={toggleDraw}
+        className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-green-700 hover:bg-green-50 active:scale-95"
+        title="Continuous Draw Mode"
+      >
+        <Plus size={20} />
+      </button>
+      <button
+        onClick={toggleEdit}
+        className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-blue-700 hover:bg-blue-50 active:scale-95"
+        title="Edit / Drag Nodes"
+      >
+        <MapPin size={20} />
+      </button>
+      {surveyMode === 'area' && (
+        <button
+          onClick={toggleCut}
+          className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-red-700 hover:bg-red-50 active:scale-95"
+          title="Cut Hole (Subtract Area)"
+        >
+          <Trash2 size={20} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 function MapController({ onMapInit, onMove }: { onMapInit: (map: L.Map) => void, onMove: (latlng: L.LatLng) => void }) {
   const map = useMapEvents({
     move() {
@@ -461,6 +524,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
           )}
           <LocationMarker onPointAdd={addPoint} />
           <GeomanControls setPoints={setPoints} surveyMode={surveyMode} />
+          <ProMappingToolbox surveyMode={surveyMode} />
 
           {normalizedPoints[0] && normalizedPoints[0].length > 0 && normalizedPoints[0].map((p: any, i: number) => (
             p && p.lat && p.lng ? (
@@ -504,57 +568,6 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
 
         <CompassTool />
 
-        {/* Pro Mapping Toolbox */}
-        <div className="absolute top-24 right-2 z-[500] flex flex-col gap-2">
-            <button
-                onClick={() => {
-                  if (mapInstance) {
-                    // @ts-ignore
-                    const isDraw = mapInstance.pm.Draw.getActiveShape();
-                    if (isDraw) {
-                      // @ts-ignore
-                      mapInstance.pm.disableDraw();
-                    } else {
-                      // @ts-ignore
-                      mapInstance.pm.enableDraw(surveyMode === 'area' ? 'Polygon' : 'Polyline', {
-                        snappable: true,
-                        snapDistance: 20
-                      });
-                    }
-                  }
-                }}
-                className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-green-700 hover:bg-green-50 active:scale-95"
-                title="Continuous Draw Mode"
-            >
-                <Plus size={20} />
-            </button>
-            <button
-                onClick={() => {
-                   if (mapInstance) {
-                     // @ts-ignore
-                     mapInstance.pm.toggleGlobalEditMode();
-                   }
-                }}
-                className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-blue-700 hover:bg-blue-50 active:scale-95"
-                title="Edit / Drag Nodes"
-            >
-                <MapPin size={20} />
-            </button>
-            {surveyMode === 'area' && (
-              <button
-                  onClick={() => {
-                    if (mapInstance) {
-                      // @ts-ignore
-                      mapInstance.pm.enableDraw('Cut', { snappable: true });
-                    }
-                  }}
-                  className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-red-700 hover:bg-red-50 active:scale-95"
-                  title="Cut Hole (Subtract Area)"
-              >
-                  <Trash2 size={20} />
-              </button>
-            )}
-        </div>
 
         {/* Map Style Toggle - single button top-right of map */}
         <div className="absolute top-2 right-2 z-[500]">
