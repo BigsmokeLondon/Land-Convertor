@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 // Area calculation via Turf.js for high precision (supports holes)
 // Retrieve Turf from global window since it's loaded via CDN in index.html
 const getTurf = () => (window as any).turf;
@@ -154,17 +154,25 @@ function ProMappingToolbox({ surveyMode }: { surveyMode: 'area' | 'path' }) {
     pm.enableDraw('Cut', { snappable: true });
   };
 
+  const toolboxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (toolboxRef.current) {
+      L_Local.DomEvent.disableClickPropagation(toolboxRef.current);
+    }
+  }, []);
+
   return (
-    <div className="absolute top-24 right-2 z-[500] flex flex-col gap-2">
+    <div ref={toolboxRef} className="absolute top-24 right-2 z-[500] flex flex-col gap-2 pointer-events-auto">
       <button
-        onClick={toggleDraw}
+        onClick={(e) => { e.stopPropagation(); toggleDraw(); }}
         className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-green-700 hover:bg-green-50 active:scale-95"
         title="Continuous Draw Mode"
       >
         <Plus size={20} />
       </button>
       <button
-        onClick={toggleEdit}
+        onClick={(e) => { e.stopPropagation(); toggleEdit(); }}
         className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-blue-700 hover:bg-blue-50 active:scale-95"
         title="Edit / Drag Nodes"
       >
@@ -172,7 +180,7 @@ function ProMappingToolbox({ surveyMode }: { surveyMode: 'area' | 'path' }) {
       </button>
       {surveyMode === 'area' && (
         <button
-          onClick={toggleCut}
+          onClick={(e) => { e.stopPropagation(); toggleCut(); }}
           className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-red-700 hover:bg-red-50 active:scale-95"
           title="Cut Hole (Subtract Area)"
         >
@@ -448,10 +456,20 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
         <CompassTool />
 
         <div className="absolute top-2 right-2 z-[500]">
-          <button onClick={() => setMapStyle(s => s === 'satellite' ? 'street' : 'satellite')} className="flex items-center gap-1 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-gray-300 text-[10px] font-black">{mapStyle === 'satellite' ? '🛰 SAT' : '🗺 MAP'}</button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setMapStyle(s => s === 'satellite' ? 'street' : 'satellite'); }} 
+            className="flex items-center gap-1 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-gray-300 text-[10px] font-black pointer-events-auto"
+          >
+            {mapStyle === 'satellite' ? '🛰 SAT' : '🗺 MAP'}
+          </button>
         </div>
         <div className="absolute top-12 right-2 z-[500]">
-          <button onClick={() => setAutoFollow(!autoFollow)} className={`flex items-center gap-1 px-2 py-1 rounded-lg shadow-md border text-[10px] font-black transition-all ${autoFollow ? 'bg-blue-600 text-white' : 'bg-white/90 text-gray-400'}`}>{autoFollow ? '📍 FOLLOWING' : '📍 FOLLOW'}</button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setAutoFollow(!autoFollow); }} 
+            className={`flex items-center gap-1 px-2 py-1 rounded-lg shadow-md border text-[10px] font-black transition-all pointer-events-auto ${autoFollow ? 'bg-blue-600 text-white' : 'bg-white/90 text-gray-400'}`}
+          >
+            {autoFollow ? '📍 FOLLOWING' : '📍 FOLLOW'}
+          </button>
         </div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[400] text-yellow-400 drop-shadow-[0_0_3px_rgba(0,0,0,1)]"><Crosshair size={32} strokeWidth={2.5} /></div>
         <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-[500] pointer-events-auto w-[90%] md:w-auto">
