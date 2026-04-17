@@ -1,48 +1,60 @@
 import ExcelJS from 'exceljs';
 
 export async function exportToExcel(data: any[]) {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Conversions');
+  try {
+    if (!data || data.length === 0) {
+      alert("No data available to export to Excel.");
+      return;
+    }
 
-  // Add Columns
-  worksheet.columns = [
-    { header: 'ID', key: 'id', width: 5 },
-    { header: 'Square Feet', key: 'sqft', width: 15 },
-    { header: 'Marla (Legal)', key: 'legalMarla', width: 15 },
-    { header: 'Kanal (Legal)', key: 'legalKanal', width: 15 },
-    { header: 'Marla (Trad)', key: 'tradMarla', width: 15 },
-    { header: 'Kanal (KPK)', key: 'kpkKanal', width: 15 },
-  ];
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Conversions');
 
-  // Style Header Row
-  worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-  worksheet.getRow(1).fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FF2E7D32' } // Patwari Green
-  };
+    // Add Columns
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 5 },
+      { header: 'Square Feet', key: 'sqft', width: 15 },
+      { header: 'Marla (Legal)', key: 'legalMarla', width: 15 },
+      { header: 'Kanal (Legal)', key: 'legalKanal', width: 15 },
+      { header: 'Marla (Trad)', key: 'tradMarla', width: 15 },
+      { header: 'Kanal (KPK)', key: 'kpkKanal', width: 15 },
+    ];
 
-  // Add Data
-  data.forEach((row, i) => {
-    worksheet.addRow({
-      id: i + 1,
-      sqft: row.sqft,
-      legalMarla: row.legalMarla,
-      legalKanal: row.legalKanal,
-      tradMarla: row.tradMarla,
-      kpkKanal: row.kpkKanal
+    // Style Header Row
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF2E7D32' } // Patwari Green
+    };
+
+    // Add Data
+    data.forEach((row, i) => {
+      worksheet.addRow({
+        id: i + 1,
+        sqft: row.sqft,
+        legalMarla: row.legalMarla,
+        legalKanal: row.legalKanal,
+        tradMarla: row.tradMarla,
+        kpkKanal: row.kpkKanal
+      });
     });
-  });
 
-  // Generate File
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const url = window.URL.createObjectURL(blob);
-  
-  // Download automatically
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = 'Land_Conversions.xlsx';
-  anchor.click();
-  window.URL.revokeObjectURL(url);
+    // Generate File
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    
+    // Download automatically
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `Land_Conversions_${new Date().getTime()}.xlsx`;
+    document.body.appendChild(anchor); // Required for some browsers
+    anchor.click();
+    document.body.removeChild(anchor);
+    window.URL.revokeObjectURL(url);
+  } catch (err: any) {
+    console.error("Excel Export failed:", err);
+    alert("Excel Export failed: " + err.message);
+  }
 }

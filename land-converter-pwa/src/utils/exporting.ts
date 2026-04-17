@@ -2,143 +2,168 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { translations } from '../locales';
 
-export const generatePDF = (areaSqFt: number, regionalName: string, regionalArea: number, points: {lat: number, lng: number}[], isUrdu: boolean) => {
-  const t = isUrdu ? translations.ur : translations.en;
-  const doc = new jsPDF();
-  
-  // Header Box
-  doc.setFillColor(46, 125, 50); // Brand Green
-  doc.rect(0, 0, 210, 30, 'F');
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(22);
-  doc.setFont("helvetica", "bold");
-  doc.text("Official Land Survey Report", 14, 20);
-  
-  // Reset text for body
-  doc.setTextColor(0, 0, 0);
-  
-  // Form Details (Area, City, Town)
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
-  doc.text("Date: ________________________", 14, 45);
-  doc.text("Surveyor Name: ________________________", 100, 45);
-  
-  doc.text("Survey Location (Area/Town/City): _________________________________________________", 14, 55);
-  doc.text("Plot Reference/Khasra No: _________________________________________________________", 14, 65);
+export const generatePDF = (areaSqFt: number, regionalName: string, regionalArea: number, points: any, isUrdu: boolean) => {
+  try {
+    const t = isUrdu ? translations.ur : translations.en;
+    const doc = new jsPDF();
+    
+    // Flatten if points is a 2D array of rings
+    const flatPoints = (Array.isArray(points[0])) ? points.flat() : points;
+    if (!flatPoints || flatPoints.length === 0) {
+      alert("No points found to export.");
+      return;
+    }
 
-  // Measurement Results Box
-  doc.setDrawColor(200, 200, 200);
-  doc.setFillColor(245, 245, 245);
-  doc.rect(14, 75, 182, 25, 'FD');
-  
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("Measurement Results:", 18, 83);
-  
-  doc.setFontSize(14);
-  doc.setTextColor(46, 125, 50);
-  doc.text(`Total Area: ${areaSqFt.toFixed(2)} Sq Ft`, 18, 93);
-  doc.text(`Converted: ${regionalArea.toFixed(2)} Marla (${regionalName})`, 100, 93);
+    // Header Box
+    doc.setFillColor(46, 125, 50); // Brand Green
+    doc.rect(0, 0, 210, 30, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("Official Land Survey Report", 14, 20);
+    
+    // Reset text for body
+    doc.setTextColor(0, 0, 0);
+    
+    // Form Details (Area, City, Town)
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text("Date: ________________________", 14, 45);
+    doc.text("Surveyor Name: ________________________", 100, 45);
+    
+    doc.text("Survey Location (Area/Town/City): _________________________________________________", 14, 55);
+    doc.text("Plot Reference/Khasra No: _________________________________________________________", 14, 65);
 
-  // Coordinates Table
-  doc.setTextColor(0, 0, 0);
-  const tableData = points.map((p, i) => [`P${i + 1}`, p.lat.toFixed(6), p.lng.toFixed(6)]);
-  
-  autoTable(doc, {
-    startY: 110,
-    head: [['Boundary Point', 'Latitude (North)', 'Longitude (East)']],
-    body: tableData,
-    theme: 'grid',
-    headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [249, 250, 251] },
-    margin: { left: 14, right: 14 }
-  });
+    // Measurement Results Box
+    doc.setDrawColor(200, 200, 200);
+    doc.setFillColor(245, 245, 245);
+    doc.rect(14, 75, 182, 25, 'FD');
+    
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Measurement Results:", 18, 83);
+    
+    doc.setFontSize(14);
+    doc.setTextColor(46, 125, 50);
+    doc.text(`Total Area: ${areaSqFt.toFixed(2)} Sq Ft`, 18, 93);
+    doc.text(`Converted: ${regionalArea.toFixed(2)} Marla (${regionalName})`, 100, 93);
 
-  const finalY = (doc as any).lastAutoTable.finalY || 110;
-  
-  // Legal notice bounds
-  doc.setFontSize(10);
-  doc.setTextColor(200, 0, 0); // red warn
-  doc.setFont("helvetica", "italic");
-  const splitText = doc.splitTextToSize(t.legalAlert, 180);
-  doc.text(splitText, 14, finalY + 15);
+    // Coordinates Table
+    doc.setTextColor(0, 0, 0);
+    const tableData = flatPoints.map((p: any, i: number) => [`P${i + 1}`, (p.lat || 0).toFixed(6), (p.lng || 0).toFixed(6)]);
+    
+    autoTable(doc, {
+      startY: 110,
+      head: [['Boundary Point', 'Latitude (North)', 'Longitude (East)']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [249, 250, 251] },
+      margin: { left: 14, right: 14 }
+    });
 
-  // Footer - M.A. Industries
-  const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-  doc.setFontSize(9);
-  doc.setTextColor(100, 100, 100);
-  doc.setFont("helvetica", "normal");
-  doc.text("Software developed and brought to you by M.A. Industries Inc. © " + new Date().getFullYear(), 14, pageHeight - 10);
+    const finalY = (doc as any).lastAutoTable.finalY || 110;
+    
+    // Legal notice bounds
+    doc.setFontSize(10);
+    doc.setTextColor(200, 0, 0); // red warn
+    doc.setFont("helvetica", "italic");
+    const splitText = doc.splitTextToSize(t.legalAlert, 180);
+    doc.text(splitText, 14, finalY + 15);
 
-  doc.save('Land_Survey_Report.pdf');
+    // Footer - M.A. Industries
+    const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont("helvetica", "normal");
+    doc.text("Software developed and brought to you by M.A. Industries Inc. © " + new Date().getFullYear(), 14, pageHeight - 10);
+
+    doc.save('Land_Survey_Report.pdf');
+  } catch (err: any) {
+    console.error("PDF Export failed:", err);
+    alert("Official Report PDF failed: " + err.message);
+  }
 }
 
 export const generateConverterPDF = (results: any) => {
-  const doc = new jsPDF();
+  try {
+    const doc = new jsPDF();
+    if (!results) throw new Error("No data results found to export.");
 
-  // Header
-  doc.setFillColor(46, 125, 50);
-  doc.rect(0, 0, 210, 30, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.text("Land Conversion Report", 14, 20);
+    // Header
+    doc.setFillColor(46, 125, 50);
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text("Land Conversion Report", 14, 20);
 
-  // Date
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, 14, 38);
+    // Date
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, 14, 38);
 
-  // Results Table
-  const tableData = [
-    ['Square Feet', results.sqft.toFixed(2), '—'],
-    ['Marla (Punjab Legal 225)', results.legalMarla.toFixed(2), 'Punjab Revenue Act'],
-    ['Kanal (Punjab Legal)', results.legalKanal.toFixed(2), 'Punjab Revenue Act'],
-    ['Marla (Lahore LDA 250)', results.ldaMarla.toFixed(2), 'Lahore Development Authority'],
-    ['Kanal (Lahore LDA)', results.ldaKanal.toFixed(2), 'Lahore Development Authority'],
-    ['Marla (Traditional 272)', results.tradMarla.toFixed(2), 'KPK / Rural Reference'],
-    ['Kanal (KPK Ref)', results.kpkKanal.toFixed(2), 'KPK / Rural Reference'],
-    ['Sq. Karam', results.karam.toFixed(2), 'Traditional Karam Unit'],
-  ];
+    // Results Table
+    const tableData = [
+      ['Square Feet', (results.sqft || 0).toFixed(2), '—'],
+      ['Marla (Punjab Legal 225)', (results.legalMarla || 0).toFixed(2), 'Punjab Revenue Act'],
+      ['Kanal (Punjab Legal)', (results.legalKanal || 0).toFixed(2), 'Punjab Revenue Act'],
+      ['Marla (Lahore LDA 250)', (results.ldaMarla || 0).toFixed(2), 'Lahore Development Authority'],
+      ['Kanal (Lahore LDA)', (results.ldaKanal || 0).toFixed(2), 'Lahore Development Authority'],
+      ['Marla (Traditional 272)', (results.tradMarla || 0).toFixed(2), 'KPK / Rural Reference'],
+      ['Kanal (KPK Ref)', (results.kpkKanal || 0).toFixed(2), 'KPK / Rural Reference'],
+      ['Sq. Karam', (results.karam || 0).toFixed(2), 'Traditional Karam Unit'],
+    ];
 
-  autoTable(doc, {
-    startY: 48,
-    head: [['Unit', 'Value', 'Standard / Jurisdiction']],
-    body: tableData,
-    theme: 'grid',
-    headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [249, 250, 251] },
-    margin: { left: 14, right: 14 },
-  });
+    autoTable(doc, {
+      startY: 48,
+      head: [['Unit', 'Value', 'Standard / Jurisdiction']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [249, 250, 251] },
+      margin: { left: 14, right: 14 },
+    });
 
-  const finalY = (doc as any).lastAutoTable.finalY || 48;
+    const finalY = (doc as any).lastAutoTable.finalY || 48;
 
-  // Legal Warning
-  doc.setFontSize(9);
-  doc.setTextColor(180, 0, 0);
-  doc.setFont("helvetica", "italic");
-  doc.text("DISCLAIMER: This report is for reference only. Always verify with official revenue records.", 14, finalY + 14);
+    // Legal Warning
+    doc.setFontSize(9);
+    doc.setTextColor(180, 0, 0);
+    doc.setFont("helvetica", "italic");
+    doc.text("DISCLAIMER: This report is for reference only. Always verify with official revenue records.", 14, finalY + 14);
 
-  // Footer
-  const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-  doc.setFontSize(9);
-  doc.setTextColor(100, 100, 100);
-  doc.setFont("helvetica", "normal");
-  doc.text("Software developed and brought to you by M.A. Industries Inc. © " + new Date().getFullYear(), 14, pageHeight - 10);
+    // Footer
+    const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont("helvetica", "normal");
+    doc.text("Software developed and brought to you by M.A. Industries Inc. © " + new Date().getFullYear(), 14, pageHeight - 10);
 
-  doc.save('Conversion_Report.pdf');
+    doc.save('Conversion_Report.pdf');
+  } catch (err: any) {
+    console.error("Converter PDF failed:", err);
+    alert("Conversion PDF Export failed: " + err.message);
+  }
 };
 
-export const generateKML = (points: {lat: number, lng: number}[]) => {
-  if (points.length < 3) return;
-  
-  // Close the polygon
-  const kmlPoints = [...points, points[0]];
-  const coordinates = kmlPoints.map(p => `${p.lng},${p.lat},0`).join('\n              ');
+export const generateKML = (points: any) => {
+  try {
+    // Flatten if points is a 2D array of rings
+    const flatPoints = (Array.isArray(points[0])) ? points.flat() : points;
+    
+    if (!flatPoints || flatPoints.length < 3) {
+      alert("Require at least 3 points for KML boundary export.");
+      return;
+    }
+    
+    // Close the polygon
+    const kmlPoints = [...flatPoints, flatPoints[0]];
+    const coordinates = kmlPoints.map((p: any) => `${p.lng || 0},${p.lat || 0},0`).join('\n              ');
 
-  const kml = `<?xml version="1.0" encoding="UTF-8"?>
+    const kml = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
     <name>Land Survey Polygon</name>
@@ -167,29 +192,41 @@ export const generateKML = (points: {lat: number, lng: number}[]) => {
   </Document>
 </kml>`;
 
-  const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'Land_Survey.kml';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+    const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Land_Survey.kml';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err: any) {
+    console.error("KML Export failed:", err);
+    alert("KML Export failed: " + err.message);
+  }
 }
 
 export const generateCSV = (rings: {lat: number, lng: number}[][]) => {
-  const allPoints = rings.flat();
-  if (allPoints.length === 0) return;
-  
-  const headers = "Point,Latitude,Longitude\n";
-  const rows = allPoints.map((p, i) => `P${i + 1},${p.lat},${p.lng}`).join("\n");
-  const csvContent = "data:text/csv;charset=utf-8," + headers + rows;
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "Survey_Points.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  try {
+    const allPoints = rings.flat();
+    if (allPoints.length === 0) {
+      alert("No points to export.");
+      return;
+    }
+    
+    const headers = "Point,Latitude,Longitude\n";
+    const rows = allPoints.map((p, i) => `P${i + 1},${p.lat},${p.lng}`).join("\n");
+    const csvContent = "data:text/csv;charset=utf-8," + headers + rows;
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Survey_Points.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (err: any) {
+    console.error("CSV Export failed:", err);
+    alert("CSV Export failed: " + err.message);
+  }
 };
