@@ -12,8 +12,6 @@ import html2canvas from 'html2canvas';
 import { generateKML, generatePDF, generateCSV } from '../utils/exporting';
 import { CompassTool } from './CompassTool';
 
-// Crucial: Bridge the bundled Leaflet with the global Plugins
-const L = (window as any).L || L_Local;
 
 // Area calculation via Turf.js
 const calculateAreaSqFt = (rings: any[][]) => {
@@ -387,6 +385,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
           <form onSubmit={handleSearch} className="hidden md:flex gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200 flex-1 mx-2 max-w-[220px]">
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="City/Region..." className="flex-1 bg-transparent border-none px-2 py-1 text-[11px] focus:outline-none font-bold w-0 min-w-0" />
             <button type="submit" disabled={isSearching} className="bg-[#2E7D32] text-white p-1.5 rounded-lg active:scale-95 transition shadow-sm"><Search size={13} /></button>
+            <button type="button" onClick={repairMap} className="bg-red-50 text-red-600 p-1.5 rounded-lg border border-red-100 ml-1 active:scale-95" title="Repair Map View">🔧</button>
           </form>
 
           <div className="flex gap-1.5 flex-shrink-0">
