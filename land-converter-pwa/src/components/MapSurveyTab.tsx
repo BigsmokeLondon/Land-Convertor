@@ -76,11 +76,9 @@ function LocationMarker({ onPointAdd }: { onPointAdd: (latlng: any) => void }) {
 }
 
 function GeomanControls({ 
-  points, 
   setPoints, 
   surveyMode 
 }: { 
-  points: any[], 
   setPoints: (p: any[]) => void, 
   surveyMode: 'area' | 'path'
 }) {
@@ -462,7 +460,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
             />
           )}
           <LocationMarker onPointAdd={addPoint} />
-          <GeomanControls points={points} setPoints={setPoints} surveyMode={surveyMode} />
+          <GeomanControls setPoints={setPoints} surveyMode={surveyMode} />
 
           {normalizedPoints[0] && normalizedPoints[0].length > 0 && normalizedPoints[0].map((p: any, i: number) => (
             p && p.lat && p.lng ? (

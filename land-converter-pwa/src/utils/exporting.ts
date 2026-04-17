@@ -177,3 +177,19 @@ export const generateKML = (points: {lat: number, lng: number}[]) => {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+export const generateCSV = (rings: {lat: number, lng: number}[][]) => {
+  const allPoints = rings.flat();
+  if (allPoints.length === 0) return;
+  
+  const headers = "Point,Latitude,Longitude\n";
+  const rows = allPoints.map((p, i) => `P${i + 1},${p.lat},${p.lng}`).join("\n");
+  const csvContent = "data:text/csv;charset=utf-8," + headers + rows;
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "Survey_Points.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
