@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 // Area calculation via Turf.js for high precision (supports holes)
 // Retrieve Turf from global window since it's loaded via CDN in index.html
 const getTurf = () => (window as any).turf;
+// Bridge global L for TS visibility
+const getGeoman = (map: any) => map?.pm || map?.PM || (window as any).L?.PM;
 
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { MapContainer, TileLayer, Marker, Polygon, Polyline, useMapEvents, useMap } from 'react-leaflet';
@@ -79,20 +81,30 @@ function GeomanControls({
 
   useEffect(() => {
     if (!map) return;
-    // @ts-ignore
-    const pm = (map as any).pm || (map as any).PM;
-    if (!pm) {
-      console.warn("Geoman plugin not detected on Leaflet map instance.");
-      return;
-    }
     
-    pm.setLang('en');
-    pm.setGlobalOptions({ 
-      snappable: true, 
-      snapDistance: 20,
-      allowSelfIntersection: false,
-      markerStyle: { draggable: true }
-    });
+    const initGeoman = () => {
+      // @ts-ignore
+      const pm = map.pm || map.PM;
+      if (!pm) return false;
+      
+      pm.setLang('en');
+      pm.setGlobalOptions({ 
+        snappable: true, 
+        snapDistance: 20,
+        allowSelfIntersection: false,
+        markerStyle: { draggable: true }
+      });
+      return true;
+    };
+
+    // Try immediate
+    if (!initGeoman()) {
+      // If not ready, poll for a few seconds (synchronized bootstrap might be in progress)
+      const interval = setInterval(() => {
+        if (initGeoman()) clearInterval(interval);
+      }, 500);
+      setTimeout(() => clearInterval(interval), 5000);
+    }
 
     map.on('pm:create', (e: any) => {
       const layer = e.layer;
@@ -128,11 +140,18 @@ function GeomanControls({
 
 function ProMappingToolbox({ surveyMode }: { surveyMode: 'area' | 'path' }) {
   const map = useMap();
-  // @ts-ignore
-  const pm = (map as any).pm || (map as any).PM;
+  
+  const getPM = () => {
+    // @ts-ignore
+    return map.pm || map.PM;
+  };
   
   const toggleDraw = () => {
-    if (!pm) return;
+    const pm = getPM();
+    if (!pm) {
+      alert("GIS Engine is still warming up... Please wait a few seconds.");
+      return;
+    }
     const isDraw = pm.Draw.getActiveShape();
     if (isDraw) {
       pm.disableDraw();
@@ -145,11 +164,16 @@ function ProMappingToolbox({ surveyMode }: { surveyMode: 'area' | 'path' }) {
   };
 
   const toggleEdit = () => {
-    if (!pm) return;
+    const pm = getPM();
+    if (!pm) {
+      alert("GIS Engine is still warming up...");
+      return;
+    }
     pm.toggleGlobalEditMode();
   };
 
   const toggleCut = () => {
+    const pm = getPM();
     if (!pm) return;
     pm.enableDraw('Cut', { snappable: true });
   };
