@@ -1,7 +1,7 @@
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { calculateHerons, calculateShoelace, SQFT_PER_MARLA_LEGAL, SQFT_PER_MARLA_TRAD } from '../utils/calculations';
+import { calculateHerons, calculateShoelace, SQFT_PER_MARLA_LEGAL, SQFT_PER_MARLA_TRAD, SQFT_PER_MARLA_RURAL, SQFT_PER_MARLA_LDA } from '../utils/calculations';
 
-export function AreaCalculatorTab({ t }: { t: any }) {
+export function AreaCalculatorTab({ t, regionalDenominator = 225 }: { t: any; regionalDenominator?: number }) {
   const renderShapeIcon = (id: string) => {
     switch (id) {
         case 'rect': return <svg viewBox="0 0 100 100" className="w-16 h-16 text-blue-500"><rect x="10" y="20" width="80" height="60" stroke="currentColor" strokeWidth="4" fill="none"/></svg>;
@@ -161,15 +161,28 @@ export function AreaCalculatorTab({ t }: { t: any }) {
         <p className="text-green-100 font-medium mb-1">Calculated Area</p>
         <h2 className="text-4xl font-black mb-4">{sqftArea.toFixed(2)} <span className="text-xl font-normal">Sq Ft</span></h2>
         
-        <div className="grid grid-cols-2 gap-4 mt-6">
-          <div className="bg-white/10 p-3 rounded-xl border border-white/20">
-            <p className="text-xs text-green-200">Legal Marla</p>
-            <p className="text-lg font-bold">{(sqftArea / SQFT_PER_MARLA_LEGAL).toFixed(4)}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-6">
+          <div className="bg-white/10 p-2 rounded-xl border border-white/20">
+            <p className="text-[10px] text-green-200">Legal (225)</p>
+            <p className="text-sm font-bold">{(sqftArea / SQFT_PER_MARLA_LEGAL).toFixed(3)}</p>
           </div>
-          <div className="bg-white/10 p-3 rounded-xl border border-white/20">
-            <p className="text-xs text-green-200">Trad Marla</p>
-            <p className="text-lg font-bold">{(sqftArea / SQFT_PER_MARLA_TRAD).toFixed(4)}</p>
+          <div className="bg-white/10 p-2 rounded-xl border border-white/20">
+            <p className="text-[10px] text-green-200">LDA (250)</p>
+            <p className="text-sm font-bold">{(sqftArea / SQFT_PER_MARLA_LDA).toFixed(3)}</p>
           </div>
+          <div className="bg-white/10 p-2 rounded-xl border border-white/20">
+            <p className="text-[10px] text-green-200">Trad (272)</p>
+            <p className="text-sm font-bold">{(sqftArea / SQFT_PER_MARLA_TRAD).toFixed(3)}</p>
+          </div>
+          <div className="bg-white/10 p-2 rounded-xl border border-white/20">
+            <p className="text-[10px] text-green-200">Rural (272.25)</p>
+            <p className="text-sm font-bold">{(sqftArea / SQFT_PER_MARLA_RURAL).toFixed(3)}</p>
+          </div>
+        </div>
+        
+        <div className="mt-4 pt-4 border-t border-white/20">
+           <p className="text-xs text-green-200 italic">Focused Result (Selected Standard)</p>
+           <p className="text-2xl font-black">{(sqftArea / regionalDenominator).toFixed(4)} Marla</p>
         </div>
       </div>
     </div>

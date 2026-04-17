@@ -1,43 +1,57 @@
 import { useState, useCallback, useEffect } from 'react';
+// @ts-ignore
+// @ts-ignore
+const getTurf = () => (window as any).turf;
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { MapContainer, TileLayer, Marker, Polygon, Polyline, useMapEvents } from 'react-leaflet';
-import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search, Copy, Check } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Polygon, Polyline, useMapEvents, useMap } from 'react-leaflet';
+import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search, Copy, Check, Plus } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import * as L from 'leaflet';
 import html2canvas from 'html2canvas';
-import { generateKML, generatePDF } from '../utils/exporting';
+import { generateKML, generatePDF, generateCSV } from '../utils/exporting';
 import { CompassTool } from './CompassTool';
 
-// Area calculation spherical
-const calculateAreaSqFt = (points: any[]) => {
+// Glue: Share Leaflet with the Plugins
+// @ts-ignore
+if (typeof window !== 'undefined') {
+  (window as any).L = L;
+}
+
+// Area calculation via Turf.js for high precision (supports holes)
+const calculateAreaSqFt = (rings: any[][]) => {
+  const turf = getTurf();
   try {
-    if (!points || points.length < 3) return 0;
-    let area = 0;
-    for (let i = 0; i < points.length; i++) {
-      const p1 = points[i];
-      const p2 = points[(i + 1) % points.length];
-      if (!p1 || !p2) continue;
-      area += ((p2.lng - p1.lng) * Math.PI / 180) *
-        (2 + Math.sin(p1.lat * Math.PI / 180) + Math.sin(p2.lat * Math.PI / 180));
-    }
-    area = area * 6378137.0 * 6378137.0 / 2.0;
-    return Math.abs(area) * 10.7639; // sq meters to sq ft
+    if (!turf || !rings || rings.length === 0 || rings[0].length < 3) return 0;
+    
+    // Turf expects coordinates in [lng, lat] and the polygon rings must be closed
+    const geoJSONRings = rings.map(ring => {
+      const closed = [...ring.map(p => [p.lng, p.lat])];
+      if (closed[0][0] !== closed[closed.length-1][0] || closed[0][1] !== closed[closed.length-1][1]) {
+        closed.push([closed[0][0], closed[0][1]]);
+      }
+      return closed;
+    });
+
+    const poly = turf.polygon(geoJSONRings);
+    const areaSqMeters = turf.area(poly);
+    return areaSqMeters * 10.7639104; // sq meters to sq ft
   } catch (e) {
     console.error("Area Calculation Error:", e);
     return 0;
   }
 };
 
-// Haversine: distance between two GPS points in feet
+// Distance between two GPS points in feet via Turf.js
 const haversineDistanceFt = (p1: any, p2: any): number => {
-  const R = 6378137; // Earth radius in meters
-  const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-  const dLng = (p2.lng - p1.lng) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 3.28084; // meters → feet
+  const turf = getTurf();
+  if (!turf || !p1 || !p2) return 0;
+  try {
+    const from = turf.point([p1.lng, p1.lat]);
+    const to = turf.point([p2.lng, p2.lat]);
+    return turf.distance(from, to, { units: 'kilometers' }) * 3280.84; // km → feet
+  } catch (e) {
+    return 0;
+  }
 };
 
 // Total boundary/perimeter length (open polyline, NOT closed back to start)
@@ -58,6 +72,72 @@ function LocationMarker({ onPointAdd }: { onPointAdd: (latlng: any) => void }) {
       }
     },
   });
+  return null;
+}
+
+function GeomanControls({ 
+  points, 
+  setPoints, 
+  surveyMode 
+}: { 
+  points: any[], 
+  setPoints: (p: any[]) => void, 
+  surveyMode: 'area' | 'path'
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    // Initialize Geoman settings
+    // @ts-ignore
+    if (!map.pm) return;
+    
+    // @ts-ignore
+    map.pm.setLang('en');
+    
+    // @ts-ignore
+    map.pm.setGlobalOptions({ 
+      snappable: true, 
+      snapDistance: 20,
+      allowSelfIntersection: false,
+      markerStyle: { draggable: true }
+    });
+
+    // Listen for creation to sync back
+    map.on('pm:create', (e: any) => {
+      const layer = e.layer;
+      const latlngs = layer.getLatLngs();
+      
+      // Sync to React state
+      if (surveyMode === 'area') {
+        const rings = Array.isArray(latlngs[0]) ? latlngs : [latlngs];
+        setPoints(rings.map((ring: any[]) => ring.map((ll: any) => ({ lat: ll.lat, lng: ll.lng }))));
+      } else {
+        setPoints(latlngs.map((ll: any) => ({ lat: ll.lat, lng: ll.lng })));
+      }
+      
+      layer.remove(); // Let React-Leaflet handle permanent rendering
+    });
+
+    // Handle edits (vertex drags)
+    map.on('pm:edit', (e: any) => {
+      const layer = e.layer;
+      const latlngs = layer.getLatLngs();
+      if (surveyMode === 'area') {
+        const rings = Array.isArray(latlngs[0]) ? latlngs : [latlngs];
+        setPoints(rings.map((ring: any[]) => ring.map((ll: any) => ({ lat: ll.lat, lng: ll.lng }))));
+      } else {
+        setPoints(latlngs.map((ll: any) => ({ lat: ll.lat, lng: ll.lng })));
+      }
+    });
+
+    return () => {
+      map.off('pm:create');
+      map.off('pm:edit');
+    };
+  }, [map, surveyMode, setPoints]);
+
   return null;
 }
 
@@ -85,9 +165,22 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
   const [mapStyle, setMapStyle] = useLocalStorage<'satellite' | 'street'>('la_map_style', 'satellite');
   const [surveyMode, setSurveyMode] = useLocalStorage<'area' | 'path'>('la_map_mode', 'area');
   const [centerCoords, setCenterCoords] = useLocalStorage<{lat: number, lng: number}>('la_map_center', { lat: 31.3650, lng: 74.1850 });
+  
+  // Ensure we have a valid center even if storage is corrupted
+  const safeCenter: [number, number] = [
+    typeof centerCoords?.lat === 'number' ? centerCoords.lat : 31.3650,
+    typeof centerCoords?.lng === 'number' ? centerCoords.lng : 74.1850
+  ];
   const [copied, setCopied] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [autoFollow, setAutoFollow] = useLocalStorage('la_map_auto_follow', true);
+
+  const repairMap = () => {
+    localStorage.removeItem('la_map_center');
+    localStorage.removeItem('la_map_style');
+    localStorage.removeItem('la_active_tab');
+    window.location.reload();
+  };
 
   useEffect(() => {
     // Safely fix Icons only once after mount
@@ -219,10 +312,35 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const areaSqFt = calculateAreaSqFt(points);
-  const perimeterFt = calculatePerimeterFt(points);
+  // Convert legacy single-ring points to multi-ring format if needed
+  // Safety check: ensure points is an array
+  const safePoints = Array.isArray(points) ? points : [];
+  const normalizedPoints = (safePoints.length > 0 && Array.isArray(safePoints[0])) ? safePoints : [safePoints];
+  
+  const areaSqFt = calculateAreaSqFt(normalizedPoints);
+  const perimeterFt = calculatePerimeterFt(normalizedPoints[0] || []);
   const denom = regionalDenominator || 225;
   const areaMarla = areaSqFt / denom;
+
+  // Safety: Show loading if basic engines aren't ready
+  // @ts-ignore
+  const hasLeaflet = typeof window.L !== 'undefined';
+  // @ts-ignore
+  const hasTurf = typeof window.turf !== 'undefined';
+  // Note: Geoman (hasGeoman) is now optional for rendering, only needed for toolbox
+  // @ts-ignore
+  const hasGeoman = (L.pm || L.PM) || (hasLeaflet && ((window as any).L.pm || (window as any).L.PM));
+
+  // If even Leaflet isn't here, we really can't render
+  if (!hasLeaflet || !hasTurf) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[500px] bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+        <RotateCcw size={40} className="animate-spin text-green-600 mb-4" />
+        <p className="text-gray-500 font-bold">Connecting To Ultimate Pro Map Tools...</p>
+        <p className="text-xs text-gray-400 mt-2">Connecting to Leaflet & Turf.js CDNs</p>
+      </div>
+    );
+  }
 
   return (
     <div id="map-survey-capture-area" className="flex flex-col h-[calc(100vh-180px)] md:h-[600px] w-full relative bg-gray-50 rounded-xl overflow-hidden mb-8 shadow-inner border border-gray-200">
@@ -289,24 +407,34 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
               placeholder="City/Region..."
               className="flex-1 bg-transparent border-none px-2 py-1 text-[11px] focus:outline-none font-bold placeholder:text-gray-400 w-0 min-w-0"
             />
-            <button
-              type="submit"
-              disabled={isSearching}
+            <button 
+              type="submit" 
+              disabled={isSearching} 
               className="bg-[#2E7D32] text-white p-1.5 rounded-lg hover:bg-green-700 transition shadow-sm disabled:opacity-50 flex-shrink-0"
             >
               {isSearching ? <RotateCcw size={13} className="animate-spin" /> : <Search size={13} />}
             </button>
+            <button 
+              onClick={repairMap}
+              className="bg-red-50 text-red-600 p-1.5 rounded-lg border border-red-100 hover:bg-red-100 transition-colors flex-shrink-0 ml-1"
+              title="Repair Map (Reset Display)"
+            >
+              🔧
+            </button>
           </form>
 
-          <div className="flex gap-2 flex-shrink-0">
-            <button onClick={captureScreenshot} className="p-2.5 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 transition-colors" title="Save Screenshot">
-              <Camera size={20} />
+          <div className="flex gap-1.5 flex-shrink-0">
+            <button onClick={captureScreenshot} className="p-2 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors" title="Save Screenshot">
+              <Camera size={18} />
             </button>
-            <button onClick={() => generateKML(points)} disabled={points.length < 3} className="p-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-colors" title="Export KML">
-              <Download size={20} />
+            <button onClick={() => generateCSV(normalizedPoints)} disabled={points.length < 1} className="p-2 bg-amber-50 text-amber-700 rounded-lg border border-amber-100 hover:bg-amber-100 disabled:opacity-50 transition-colors" title="Export Coordinates (CSV)">
+              <Check size={18} />
             </button>
-            <button onClick={() => generatePDF(areaSqFt, 'Regional Standard', areaMarla, points, false)} disabled={points.length < 3} className="p-2.5 bg-[#2E7D32] text-white rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm" title="Export Report PDF">
-              <Save size={20} />
+            <button onClick={() => generateKML(normalizedPoints)} disabled={points.length < 3} className="p-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 hover:bg-blue-100 disabled:opacity-50 transition-colors" title="Export to Google Earth (KML)">
+              <Download size={18} />
+            </button>
+            <button onClick={() => generatePDF(areaSqFt, 'Regional Standard', areaMarla, normalizedPoints, false)} disabled={points.length < 3} className="p-2 bg-[#2E7D32] text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors shadow-sm" title="Export Official PDF Report">
+              <Save size={18} />
             </button>
           </div>
         </div>
@@ -315,7 +443,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
       {/* Map Container */}
       <div className="flex-1 relative z-0">
         <MapContainer
-          center={[31.3675, 74.2048]}
+          center={safeCenter}
           zoom={16}
           style={{ height: '100%', width: '100%' }}
         >
@@ -334,8 +462,9 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
             />
           )}
           <LocationMarker onPointAdd={addPoint} />
+          <GeomanControls points={points} setPoints={setPoints} surveyMode={surveyMode} />
 
-          {points.length > 0 && points.map((p, i) => (
+          {normalizedPoints[0] && normalizedPoints[0].length > 0 && normalizedPoints[0].map((p: any, i: number) => (
             p && p.lat && p.lng ? (
               <Marker
                 key={`p-${i}`}
@@ -344,29 +473,90 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
                 eventHandlers={{
                   dragend: (e) => {
                     const { lat, lng } = e.target.getLatLng();
-                    setPoints(prev => prev.map((pt, idx) => idx === i ? { lat, lng } : pt));
+                    setPoints(prev => {
+                      const newPoints = [...prev];
+                      if (Array.isArray(newPoints[0])) {
+                        newPoints[0][i] = { lat, lng };
+                      } else {
+                        newPoints[i] = { lat, lng };
+                      }
+                      return newPoints;
+                    });
                   }
                 }}
               />
             ) : null
           ))}
 
-          {/* In area mode: render filled polygon. In path mode: render open polyline */}
-          {surveyMode === 'area' && points.length > 2 && (
+          {/* In area mode: render filled polygon with potential holes */}
+          {surveyMode === 'area' && normalizedPoints[0] && normalizedPoints[0].length > 2 && (
             <Polygon
-              positions={points.filter(p => p && p.lat && p.lng).map(p => [p.lat, p.lng])}
+              positions={normalizedPoints.map(ring => ring.filter((p: any) => p && p.lat && p.lng).map((p: any) => [p.lat, p.lng]))}
               pathOptions={{ color: '#2E7D32', fillColor: '#4CAF50', fillOpacity: 0.5, weight: 3 }}
             />
           )}
-          {surveyMode === 'path' && points.length > 1 && (
+
+          {surveyMode === 'path' && normalizedPoints[0] && normalizedPoints[0].length > 1 && (
             <Polyline
-              positions={points.filter(p => p && p.lat && p.lng).map(p => [p.lat, p.lng])}
+              positions={normalizedPoints[0].filter((p: any) => p && p.lat && p.lng).map((p: any) => [p.lat, p.lng])}
               pathOptions={{ color: '#DC2626', weight: 3, dashArray: '8 4' }}
             />
           )}
         </MapContainer>
 
         <CompassTool />
+
+        {/* Pro Mapping Toolbox */}
+        <div className="absolute top-24 right-2 z-[500] flex flex-col gap-2">
+            <button
+                onClick={() => {
+                  if (mapInstance) {
+                    // @ts-ignore
+                    const isDraw = mapInstance.pm.Draw.getActiveShape();
+                    if (isDraw) {
+                      // @ts-ignore
+                      mapInstance.pm.disableDraw();
+                    } else {
+                      // @ts-ignore
+                      mapInstance.pm.enableDraw(surveyMode === 'area' ? 'Polygon' : 'Polyline', {
+                        snappable: true,
+                        snapDistance: 20
+                      });
+                    }
+                  }
+                }}
+                className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-green-700 hover:bg-green-50 active:scale-95"
+                title="Continuous Draw Mode"
+            >
+                <Plus size={20} />
+            </button>
+            <button
+                onClick={() => {
+                   if (mapInstance) {
+                     // @ts-ignore
+                     mapInstance.pm.toggleGlobalEditMode();
+                   }
+                }}
+                className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-blue-700 hover:bg-blue-50 active:scale-95"
+                title="Edit / Drag Nodes"
+            >
+                <MapPin size={20} />
+            </button>
+            {surveyMode === 'area' && (
+              <button
+                  onClick={() => {
+                    if (mapInstance) {
+                      // @ts-ignore
+                      mapInstance.pm.enableDraw('Cut', { snappable: true });
+                    }
+                  }}
+                  className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-red-700 hover:bg-red-50 active:scale-95"
+                  title="Cut Hole (Subtract Area)"
+              >
+                  <Trash2 size={20} />
+              </button>
+            )}
+        </div>
 
         {/* Map Style Toggle - single button top-right of map */}
         <div className="absolute top-2 right-2 z-[500]">
@@ -399,20 +589,20 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
         </div>
 
         {/* Real-time Coordinate Box */}
-        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-[500] pointer-events-auto">
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-[500] pointer-events-auto w-[90%] md:w-auto">
           <button
             onClick={copyToClipboard}
-            className="flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-gray-300 hover:bg-white transition-all active:scale-95 group"
+            className="flex items-center gap-2 px-2 md:px-3 py-1 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-gray-300 hover:bg-white transition-all active:scale-95 group mx-auto"
             title="Click to copy coordinates"
           >
             <div className="flex flex-col items-start leading-tight">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Target GPS</span>
-              <span className="text-[11px] font-mono font-bold text-gray-800">
-                {centerCoords.lat.toFixed(6)}, {centerCoords.lng.toFixed(6)}
+              <span className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-tighter">Target GPS</span>
+              <span className="text-[10px] md:text-[11px] font-mono font-bold text-gray-800">
+                {(centerCoords?.lat || 0).toFixed(6)}, {(centerCoords?.lng || 0).toFixed(6)}
               </span>
             </div>
             <div className="pl-2 border-l border-gray-200 text-gray-400 group-hover:text-[#2E7D32]">
-              {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+              {copied ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
             </div>
           </button>
         </div>
@@ -420,13 +610,13 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
 
       {/* Map Helper Text Overlay */}
       {points.length === 0 && (
-        <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium z-[400] pointer-events-none backdrop-blur-sm shadow-lg whitespace-nowrap">
-          Pan map & tap Add Pin (Target)
+        <div className="absolute top-[40%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-xs md:text-sm font-medium z-[400] pointer-events-none backdrop-blur-sm shadow-lg whitespace-nowrap">
+          Pan map & tap Add Pin
         </div>
       )}
 
       {/* Bottom Controls - Responsive Layout */}
-      <div className="absolute bottom-6 left-0 right-0 z-[1000] flex justify-between px-6 pointer-events-none">
+      <div className="absolute bottom-10 md:bottom-6 left-0 right-0 z-[1000] flex justify-between px-4 md:px-6 pointer-events-none">
 
         {/* Left: Undo/Clear Group */}
         <div className="flex flex-col gap-3 pointer-events-auto">

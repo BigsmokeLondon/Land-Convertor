@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { ArrowDown, Download, Plus, FileText } from 'lucide-react';
-import { SQFT_PER_MARLA_LEGAL, SQFT_PER_KANAL_LEGAL, SQFT_PER_MARLA_LDA, SQFT_PER_KANAL_LDA, SQFT_PER_MARLA_TRAD, SQFT_PER_KANAL_KPK, SQFT_PER_SQ_KARAM } from '../utils/calculations';
+import { 
+  SQFT_PER_MARLA_LEGAL, SQFT_PER_KANAL_LEGAL, 
+  SQFT_PER_MARLA_LDA, SQFT_PER_KANAL_LDA, 
+  SQFT_PER_MARLA_TRAD, SQFT_PER_KANAL_TRAD,
+  SQFT_PER_MARLA_RURAL, SQFT_PER_KANAL_RURAL,
+  SQFT_PER_SQ_KARAM 
+} from '../utils/calculations';
 import { exportToExcel } from '../utils/ExcelExport';
 import { generateConverterPDF } from '../utils/exporting';
 
@@ -19,16 +25,20 @@ export function ConverterTab({ t, initialHistory = [], onHistoryUpdate }: { t: a
     ldaMarla: val / SQFT_PER_MARLA_LDA,
     ldaKanal: val / SQFT_PER_KANAL_LDA,
     tradMarla: val / SQFT_PER_MARLA_TRAD,
-    kpkKanal: val / SQFT_PER_KANAL_KPK,
+    tradKanal: val / SQFT_PER_KANAL_TRAD,
+    ruralMarla: val / SQFT_PER_MARLA_RURAL,
+    ruralKanal: val / SQFT_PER_KANAL_RURAL,
     karam: val / SQFT_PER_SQ_KARAM,
   } : {
     sqft: val * SQFT_PER_MARLA_LEGAL,
     legalMarla: val,
-    legalKanal: val / 20,
+    legalKanal: val / 20.0,
     ldaMarla: (val * SQFT_PER_MARLA_LEGAL) / SQFT_PER_MARLA_LDA,
-    ldaKanal: (val * SQFT_PER_MARLA_LEGAL) / SQFT_PER_KANAL_LDA,
+    ldaKanal: ((val * SQFT_PER_MARLA_LEGAL) / SQFT_PER_MARLA_LDA) / 20.0,
     tradMarla: (val * SQFT_PER_MARLA_LEGAL) / SQFT_PER_MARLA_TRAD,
-    kpkKanal: (val * SQFT_PER_MARLA_LEGAL) / SQFT_PER_KANAL_KPK,
+    tradKanal: ((val * SQFT_PER_MARLA_LEGAL) / SQFT_PER_MARLA_TRAD) / 20.0,
+    ruralMarla: (val * SQFT_PER_MARLA_LEGAL) / SQFT_PER_MARLA_RURAL,
+    ruralKanal: ((val * SQFT_PER_MARLA_LEGAL) / SQFT_PER_MARLA_RURAL) / 20.0,
     karam: (val * SQFT_PER_MARLA_LEGAL) / SQFT_PER_SQ_KARAM,
   };
 
@@ -85,13 +95,19 @@ export function ConverterTab({ t, initialHistory = [], onHistoryUpdate }: { t: a
         </div>
 
         {/* Traditional */}
-        <div className="bg-[#FFF9C4] border border-[#F57F17] rounded-xl p-4 flex justify-between items-center shadow-sm text-[#F57F17]">
-          <span className="font-bold">Marla (Trad Ref 272)</span>
+        <div className="bg-[#FFF3E0] border border-[#E65100] rounded-xl p-4 flex justify-between items-center shadow-sm text-[#E65100]">
+          <span className="font-bold">Marla (Traditional 272)</span>
           <span className="text-xl font-black">{results.tradMarla.toFixed(2)}</span>
         </div>
-        <div className="bg-[#FFF9C4] border border-[#F57F17] rounded-xl p-4 flex justify-between items-center shadow-sm text-[#F57F17]">
-          <span className="font-bold">Kanal (KPK Ref)</span>
-          <span className="text-xl font-black">{results.kpkKanal.toFixed(2)}</span>
+        
+        {/* Rural / Revenue */}
+        <div className="bg-[#F3E5F5] border border-[#7B1FA2] rounded-xl p-4 flex justify-between items-center shadow-sm text-[#7B1FA2]">
+          <span className="font-bold">Marla (Rural/Revenue 272.25)</span>
+          <span className="text-xl font-black">{results.ruralMarla.toFixed(2)}</span>
+        </div>
+        <div className="bg-[#F3E5F5] border border-[#7B1FA2] rounded-xl p-4 flex justify-between items-center shadow-sm text-[#7B1FA2]">
+          <span className="font-bold">Kanal (Rural / Revenue)</span>
+          <span className="text-xl font-black">{results.ruralKanal.toFixed(2)}</span>
         </div>
       </div>
       

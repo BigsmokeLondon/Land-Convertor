@@ -1,5 +1,5 @@
 export function AboutTab() {
-  const version = '1.5.0';
+  const version = '1.6.0';
   return (
     <div className="max-w-3xl mx-auto space-y-5 text-gray-800 pb-12">
 
@@ -102,6 +102,9 @@ export function AboutTab() {
                 A professional field survey tool built on satellite imagery. Key features:
               </p>
               <ul className="text-xs text-gray-500 mt-1 space-y-0.5 list-disc list-inside">
+                <li><strong>Ultimate Pro Mapping Toolbox</strong> — one-tap access to advanced GIS drawing and cutting tools</li>
+                <li><strong>Continuous Draw Mode (Plus icon)</strong> — high-speed boundary sketching without manual panning</li>
+                <li><strong>Mobile-Optimized Layout</strong> — snap-navigation and compact GPS coordinate display for field use</li>
                 <li><strong>Precision Crosshair Pinning</strong> — pan map under yellow crosshair, tap Add Pin for GPS-independent accuracy</li>
                 <li><strong>GPS Walk-and-Track</strong> — record your walk with continuous tracking, 5ft anti-jitter filtering and Auto-Follow mode</li>
                 <li><strong>📐 Area Mode</strong> — draws a filled polygon and calculates total area in Sq Ft + Marla</li>
@@ -166,6 +169,7 @@ export function AboutTab() {
         </div>
         <div className="divide-y divide-gray-100 text-xs">
           {[
+            { v: '1.6', label: 'Pro Mapping Toolbox, Continuous Draw Mode, Mobile Nav Snapping, Hybrid GIS Engine' },
             { v: '1.5', label: 'GPS Walk-and-Track (Continuous), Auto-Follow Map Mode, 5ft Jitter Filtering' },
             { v: '1.4', label: 'Path Mode, SAT/MAP Toggle, Compass N, Perimeter Ft readout' },
             { v: '1.3', label: 'Notes Tab, Lahore LDA standard, Converter PDF & Excel, VizTab LDA bar, Map search bar' },

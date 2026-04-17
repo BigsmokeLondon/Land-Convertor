@@ -1,9 +1,15 @@
 export const SQFT_PER_MARLA_LEGAL = 225.0;
-export const SQFT_PER_KANAL_LEGAL = 4500.0;
+export const SQFT_PER_KANAL_LEGAL = 4500.0; // 225 * 20
+
 export const SQFT_PER_MARLA_LDA = 250.0;
-export const SQFT_PER_KANAL_LDA = 5000.0;
+export const SQFT_PER_KANAL_LDA = 5000.0; // 250 * 20
+
 export const SQFT_PER_MARLA_TRAD = 272.0;
-export const SQFT_PER_KANAL_KPK = 5440.0;
+export const SQFT_PER_KANAL_TRAD = 5440.0; // 272 * 20
+
+export const SQFT_PER_MARLA_RURAL = 272.25;
+export const SQFT_PER_KANAL_RURAL = 5445.0; // 272.25 * 20
+
 export const SQFT_PER_SQ_KARAM = 30.25;
 
 export function calculateHerons(a: number, b: number, c: number): number {

@@ -2,7 +2,9 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { 
   SQFT_PER_MARLA_LEGAL, SQFT_PER_KANAL_LEGAL, 
   SQFT_PER_MARLA_LDA, SQFT_PER_KANAL_LDA,
-  SQFT_PER_MARLA_TRAD, SQFT_PER_KANAL_KPK, SQFT_PER_SQ_KARAM 
+  SQFT_PER_MARLA_TRAD, SQFT_PER_KANAL_TRAD,
+  SQFT_PER_MARLA_RURAL, SQFT_PER_KANAL_RURAL,
+  SQFT_PER_SQ_KARAM 
 } from '../utils/calculations';
 
 const units = [
@@ -11,8 +13,10 @@ const units = [
   { id: 'legal_kanal', label: 'Kanal (Punjab Legal)', factor: SQFT_PER_KANAL_LEGAL },
   { id: 'lda_marla', label: 'Marla (Lahore LDA 250)', factor: SQFT_PER_MARLA_LDA },
   { id: 'lda_kanal', label: 'Kanal (Lahore LDA)', factor: SQFT_PER_KANAL_LDA },
-  { id: 'trad_marla', label: 'Marla (Trad Ref 272)', factor: SQFT_PER_MARLA_TRAD },
-  { id: 'kpk_kanal', label: 'Kanal (KPK Ref)', factor: SQFT_PER_KANAL_KPK },
+  { id: 'trad_marla', label: 'Marla (Traditional 272)', factor: SQFT_PER_MARLA_TRAD },
+  { id: 'trad_kanal', label: 'Kanal (Traditional)', factor: SQFT_PER_KANAL_TRAD },
+  { id: 'rural_marla', label: 'Marla (Rural/Revenue 272.25)', factor: SQFT_PER_MARLA_RURAL },
+  { id: 'rural_kanal', label: 'Kanal (Rural / Revenue)', factor: SQFT_PER_KANAL_RURAL },
   { id: 'karam', label: 'Sq. Karam', factor: SQFT_PER_SQ_KARAM }
 ];
 
@@ -22,8 +26,10 @@ const unitColors: Record<string, string> = {
   legal_kanal: 'bg-blue-50 border-blue-200 text-blue-800',
   lda_marla: 'bg-teal-50 border-teal-200 text-teal-800',
   lda_kanal: 'bg-teal-50 border-teal-200 text-teal-800',
-  trad_marla: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-  kpk_kanal: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+  trad_marla: 'bg-orange-50 border-orange-200 text-orange-800',
+  trad_kanal: 'bg-orange-50 border-orange-200 text-orange-800',
+  rural_marla: 'bg-purple-50 border-purple-200 text-purple-800',
+  rural_kanal: 'bg-purple-50 border-purple-200 text-purple-800',
   karam: 'bg-gray-50 border-gray-200 text-gray-700',
 };
 

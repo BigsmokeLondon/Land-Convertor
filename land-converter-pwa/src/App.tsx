@@ -14,7 +14,8 @@ import { NotesTab } from './components/NotesTab';
 const REGIONAL_STANDARDS = [
   { id: 'punjab_legal', name: 'Punjab Legal', unit: 225 },
   { id: 'lahore_lda', name: 'Lahore LDA', unit: 250 },
-  { id: 'traditional', name: 'Traditional', unit: 272.25 },
+  { id: 'traditional', name: 'Traditional', unit: 272 },
+  { id: 'rural_revenue', name: 'Rural/Revenue', unit: 272.25 },
 ];
 
 export default function App() {
@@ -32,13 +33,17 @@ export default function App() {
     }
     
     // Ensure region is valid and matches its reference
-    const matched = REGIONAL_STANDARDS.find(r => r.unit === region.unit);
-    if (!matched) {
-       console.warn('Invalid region detected, resetting to default:', region);
+    if (!region || typeof region.unit === 'undefined') {
        setRegion(REGIONAL_STANDARDS[0]);
     } else {
-       // Identity sync (ensures region === REGIONAL_STANDARDS[i])
-       setRegion(matched);
+       const matched = REGIONAL_STANDARDS.find(r => r.unit === region.unit);
+       if (!matched) {
+          console.warn('Invalid region detected, resetting to default:', region);
+          setRegion(REGIONAL_STANDARDS[0]);
+       } else {
+          // Identity sync (ensures region === REGIONAL_STANDARDS[i])
+          setRegion(matched);
+       }
     }
 
     console.log('App Mounted & Sanitized. Active Tab:', activeTab);
@@ -68,7 +73,7 @@ export default function App() {
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto">
             <select 
-              value={region.unit}
+              value={region?.unit || 225}
               onChange={(e) => setRegion(REGIONAL_STANDARDS.find(r => r.unit === Number(e.target.value))!)}
               className="bg-white/10 text-white border border-white/30 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-white flex-1 md:w-auto option-text-dark"
             >
@@ -92,20 +97,22 @@ export default function App() {
         {activeTab === 'converter' && <ConverterTab t={t} initialHistory={converterHistory} onHistoryUpdate={setConverterHistory} />}
         {activeTab === 'viz' && <VizTab data={converterHistory} />}
         {activeTab === 'lookup' && <ReverseLookupTab />}
-        {activeTab === 'area' && <AreaCalculatorTab t={t} />}
+        {activeTab === 'area' && <AreaCalculatorTab t={t} regionalDenominator={region.unit} />}
         {activeTab === 'notes' && <NotesTab />}
         {activeTab === 'about' && <AboutTab />}
       </main>
 
       {/* Mobile Bottom Navigation (Scrollable internally) */}
-      <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 md:hidden flex overflow-x-auto p-2 pb-safe z-50">
+      <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 md:hidden flex overflow-x-auto p-2 pb-safe z-50 snap-x">
         {tabs.map(tab => (
           <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex flex-col items-center min-w-[60px] p-2 rounded-xl transition-colors ${activeTab === tab.id ? 'text-[#2E7D32] bg-green-50 shadow-inner' : 'text-gray-500'}`}
+            className={`flex flex-col items-center min-w-[72px] p-2 rounded-xl transition-colors snap-center ${activeTab === tab.id ? 'text-[#2E7D32] bg-green-50 shadow-inner' : 'text-gray-500'}`}
           >
-            {tab.icon}
+            <div className={`transition-transform duration-200 ${activeTab === tab.id ? 'scale-110' : 'scale-100'}`}>
+              {tab.icon}
+            </div>
             <span className="text-[9px] mt-1 font-bold whitespace-nowrap">{tab.label}</span>
           </button>
         ))}
