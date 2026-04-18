@@ -3,7 +3,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 // Retrieve Turf from global window since it's loaded via CDN in index.html
 const getTurf = () => (window as any).turf;
 // Bridge global L for TS visibility
-const getGeoman = (map: any) => map?.pm || map?.PM || (window as any).L?.PM;
 
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { MapContainer, TileLayer, Marker, Polygon, Polyline, useMapEvents, useMap } from 'react-leaflet';
