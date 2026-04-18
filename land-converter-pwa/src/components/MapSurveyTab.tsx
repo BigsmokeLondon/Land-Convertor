@@ -60,8 +60,17 @@ const calculatePerimeterFt = (points: any[]): number => {
 };
 
 function LocationMarker({ onPointAdd }: { onPointAdd: (latlng: any) => void }) {
+  const map = useMap();
   useMapEvents({
     click(e) {
+      // @ts-ignore
+      const pm = map.pm || map.PM;
+      // Disable default point dropping if ANY Pro GIS mode is active
+      const isDrawing = pm?.Draw?.getActiveShape();
+      const isEditing = pm?.globalEditModeEnabled && pm.globalEditModeEnabled();
+      
+      if (isDrawing || isEditing) return;
+
       if (e && e.latlng) {
         onPointAdd(e.latlng);
       }
@@ -92,22 +101,35 @@ function GeomanControls({
         snappable: true, 
         snapDistance: 20,
         allowSelfIntersection: false,
-        markerStyle: { draggable: true }
+        markerStyle: { draggable: true },
+        continueDrawing: true
       });
       return true;
     };
 
-    // Try immediate
+    // Try immediate & polling
     if (!initGeoman()) {
-      // If not ready, poll for a few seconds (synchronized bootstrap might be in progress)
       const interval = setInterval(() => {
-        if (initGeoman()) clearInterval(interval);
-      }, 500);
+        if (initGeoman()) {
+          console.log("Geoman Late-Init Success");
+          clearInterval(interval);
+        } else {
+          // Manual binding attempt if scripts are loaded but instance is blank
+          // @ts-ignore
+          const L = (window as any).L;
+          if (L?.PM) {
+            try {
+              new L.PM.Map(map);
+              initGeoman();
+            } catch (e) {}
+          }
+        }
+      }, 300);
       setTimeout(() => clearInterval(interval), 5000);
     }
 
-    map.on('pm:create', (e: any) => {
-      const layer = e.layer;
+    const updatePointsFromLayer = (layer: any) => {
+      if (typeof layer.getLatLngs !== 'function') return;
       const latlngs = layer.getLatLngs();
       if (surveyMode === 'area') {
         const rings = Array.isArray(latlngs[0]) ? latlngs : [latlngs];
@@ -115,18 +137,15 @@ function GeomanControls({
       } else {
         setPoints(latlngs.map((ll: any) => ({ lat: ll.lat, lng: ll.lng })));
       }
-      layer.remove();
+    };
+
+    map.on('pm:create', (e: any) => {
+      updatePointsFromLayer(e.layer);
+      e.layer.remove(); // Transfer to React state
     });
 
     map.on('pm:edit', (e: any) => {
-      const layer = e.layer;
-      const latlngs = layer.getLatLngs();
-      if (surveyMode === 'area') {
-        const rings = Array.isArray(latlngs[0]) ? latlngs : [latlngs];
-        setPoints(rings.map((ring: any[]) => ring.map((ll: any) => ({ lat: ll.lat, lng: ll.lng }))));
-      } else {
-        setPoints(latlngs.map((ll: any) => ({ lat: ll.lat, lng: ll.lng })));
-      }
+      updatePointsFromLayer(e.layer);
     });
 
     return () => {
@@ -140,11 +159,33 @@ function GeomanControls({
 
 function ProMappingToolbox({ surveyMode }: { surveyMode: 'area' | 'path' }) {
   const map = useMap();
+  const [activeDraw, setActiveDraw] = useState(false);
+  const [activeEdit, setActiveEdit] = useState(false);
+  const [activeCut, setActiveCut] = useState(false);
   
   const getPM = () => {
     // @ts-ignore
-    return map.pm || map.PM;
+    let pm = map.pm || map.PM;
+    if (!pm && (window as any).L?.PM) {
+       try {
+         // @ts-ignore
+         pm = new (window as any).L.PM.Map(map);
+       } catch (e) {}
+    }
+    return pm;
   };
+
+  // Sync internal UI state with Geoman actual state
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const pm = getPM();
+      if (pm) {
+        setActiveDraw(!!pm.Draw.getActiveShape());
+        setActiveEdit(!!(pm.globalEditModeEnabled && pm.globalEditModeEnabled()));
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [map]);
   
   const toggleDraw = () => {
     const pm = getPM();
@@ -155,11 +196,14 @@ function ProMappingToolbox({ surveyMode }: { surveyMode: 'area' | 'path' }) {
     const isDraw = pm.Draw.getActiveShape();
     if (isDraw) {
       pm.disableDraw();
+      setActiveDraw(false);
     } else {
       pm.enableDraw(surveyMode === 'area' ? 'Polygon' : 'Polyline', {
         snappable: true,
         snapDistance: 20
       });
+      setActiveDraw(true);
+      setActiveEdit(false);
     }
   };
 
@@ -170,12 +214,15 @@ function ProMappingToolbox({ surveyMode }: { surveyMode: 'area' | 'path' }) {
       return;
     }
     pm.toggleGlobalEditMode();
+    setActiveEdit(!activeEdit);
+    if (pm.Draw.getActiveShape()) pm.disableDraw();
   };
 
   const toggleCut = () => {
     const pm = getPM();
     if (!pm) return;
     pm.enableDraw('Cut', { snappable: true });
+    setActiveCut(pm.Draw.getActiveShape() === 'Cut');
   };
 
   const toolboxRef = useRef<HTMLDivElement>(null);
@@ -190,14 +237,14 @@ function ProMappingToolbox({ surveyMode }: { surveyMode: 'area' | 'path' }) {
     <div ref={toolboxRef} className="absolute top-24 right-2 z-[500] flex flex-col gap-2 pointer-events-auto">
       <button
         onClick={(e) => { e.stopPropagation(); toggleDraw(); }}
-        className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-green-700 hover:bg-green-50 active:scale-95"
+        className={`w-10 h-10 flex items-center justify-center rounded-lg shadow-md border active:scale-95 transition-all ${activeDraw ? 'bg-green-600 text-white border-green-700' : 'bg-white text-green-700 border-gray-200 hover:bg-green-50'}`}
         title="Continuous Draw Mode"
       >
         <Plus size={20} />
       </button>
       <button
         onClick={(e) => { e.stopPropagation(); toggleEdit(); }}
-        className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-blue-700 hover:bg-blue-50 active:scale-95"
+        className={`w-10 h-10 flex items-center justify-center rounded-lg shadow-md border active:scale-95 transition-all ${activeEdit ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-blue-700 border-gray-200 hover:bg-blue-50'}`}
         title="Edit / Drag Nodes"
       >
         <MapPin size={20} />
@@ -205,7 +252,7 @@ function ProMappingToolbox({ surveyMode }: { surveyMode: 'area' | 'path' }) {
       {surveyMode === 'area' && (
         <button
           onClick={(e) => { e.stopPropagation(); toggleCut(); }}
-          className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-md border border-gray-200 text-red-700 hover:bg-red-50 active:scale-95"
+          className={`w-10 h-10 flex items-center justify-center rounded-lg shadow-md border active:scale-95 transition-all ${activeCut ? 'bg-red-600 text-white border-red-700' : 'bg-white text-red-700 border-gray-200 hover:bg-red-50'}`}
           title="Cut Hole (Subtract Area)"
         >
           <Trash2 size={20} />
@@ -292,15 +339,32 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
 
   const captureScreenshot = async () => {
     const element = document.getElementById('map-survey-capture-area');
-    if (!element) return;
+    if (!element || !mapInstance) return;
+    
     try {
-      const canvas = await html2canvas(element, { useCORS: true, allowTaint: true });
+      // Ensure map is stable
+      mapInstance.invalidateSize();
+      
+      const canvas = await html2canvas(element, { 
+        useCORS: true, 
+        allowTaint: true,
+        scale: 2, // High res
+        logging: false,
+        backgroundColor: '#ffffff',
+        ignoreElements: (el) => {
+          // Ignore zoom controls and other non-essential overlays during capture
+          return el.classList.contains('leaflet-control-zoom') || 
+                 el.classList.contains('leaflet-control-attribution');
+        }
+      });
+      
       const link = document.createElement('a');
       link.download = `Land_Survey_${new Date().getTime()}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = canvas.toDataURL('image/png', 1.0);
       link.click();
     } catch (e) {
-      alert('Screenshot blocked by browser security (CORS). Try Street view or save as KML.');
+      console.error("Screenshot capture failed:", e);
+      alert('Screenshot failed. Try Street view or save as KML/PDF.');
     }
   };
 
@@ -422,15 +486,20 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
 
           <div className="flex gap-1.5 flex-shrink-0">
             <button onClick={captureScreenshot} className="p-2 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100 active:scale-95" title="Save Screenshot"><Camera size={18} /></button>
-            <button onClick={() => generateCSV(normalizedPoints)} disabled={points.length < 1} className="p-2 bg-amber-50 text-amber-700 rounded-lg border border-amber-100 disabled:opacity-50" title="CSV"><Check size={18} /></button>
-            <button onClick={() => generateKML(normalizedPoints)} disabled={points.length < 3} className="p-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 disabled:opacity-50" title="KML"><Download size={18} /></button>
-            <button onClick={() => generatePDF(areaSqFt, 'Report', areaMarla, normalizedPoints, false)} disabled={points.length < 3} className="p-2 bg-[#2E7D32] text-white rounded-lg active:scale-95 disabled:opacity-50 shadow-sm" title="PDF"><Save size={18} /></button>
+            <button onClick={() => generateCSV(normalizedPoints)} disabled={normalizedPoints.flat().length < 1} className="p-2 bg-amber-50 text-amber-700 rounded-lg border border-amber-100 disabled:opacity-50" title="CSV"><Check size={18} /></button>
+            <button onClick={() => generateKML(normalizedPoints)} disabled={normalizedPoints.flat().length < 3} className="p-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 disabled:opacity-50" title="KML"><Download size={18} /></button>
+            <button onClick={() => generatePDF(areaSqFt, 'Report', areaMarla, normalizedPoints, false)} disabled={normalizedPoints.flat().length < 3} className="p-2 bg-[#2E7D32] text-white rounded-lg active:scale-95 disabled:opacity-50 shadow-sm" title="PDF"><Save size={18} /></button>
           </div>
         </div>
       </div>
 
       <div className="flex-1 relative z-0">
-        <MapContainer center={safeCenter} zoom={16} style={{ height: '100%', width: '100%' }}>
+        <MapContainer 
+          center={safeCenter} 
+          zoom={16} 
+          style={{ height: '100%', width: '100%' }}
+          preferCanvas={true}
+        >
           <MapController onMapInit={setMapInstance} onMove={setCenterCoords} />
           {mapStyle === 'satellite' ? (
             <TileLayer attribution='&copy; ESRI' url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" maxZoom={19} />
