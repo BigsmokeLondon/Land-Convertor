@@ -1,73 +1,63 @@
-# React + TypeScript + Vite
+# 🌍 Land Converter Pro (v1.5.0)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**The Ultimate Land Measurement & GIS Suite for Pakistan.**
 
-Currently, two official plugins are available:
+A high-performance Professional Web App (PWA) and Desktop Tool (Tauri) designed for precise land conversion, boundary surveying, and official report generation using Pakistan's legal and traditional standards.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🚀 Core Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 📐 Precision Converter
+- **Punjab Legal Scale**: Mastered at 225 sq ft per Marla.
+- **LDA/Revenue Standards**: Support for 250, 272, and 272.25 scales.
+- **Bi-Lingual**: Full support for English and Urdu with real-time switching.
 
-## Expanding the ESLint configuration
+### 🗺️ Pro Mapping Toolbox
+- **Continuous Draw**: Plot complex polygons with real-time area/perimeter calculations.
+- **Node Editing**: Drag and drop existing boundary points to refine surveys.
+- **Hole Cutting**: Subtract unwanted areas (roads, buildings) from larger plots.
+- **Satellite Capture**: High-resolution map screenshots with perfectly aligned overlays.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 📊 Professional Exports
+- **Official PDF Report**: Branded data sheets with point coordinates and legal disclaimers.
+- **GIS Boundary (KML)**: Export your data directly to Google Earth.
+- **Coordinate Sheet (CSV)**: Export raw GPS data for Excel.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 🔍 Utility Suite
+- **Reverse Lookup**: Identify standards based on square footage.
+- **Compass Tool**: Integrated field orientation.
+- **Data Persistence**: "Offline First" architecture—your pins and notes stay even after a refresh.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 🛠️ Technical Stack
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- **Core**: React 19 + TypeScript + Vite
+- **Styling**: Tailwind CSS + Lucide Icons
+- **Mapping**: Leaflet + React-Leaflet
+- **GIS Engines**: 
+  - **Turf.js**: High-precision geometric calculations (Area, Perimeter, Distance).
+  - **Leaflet-Geoman**: Professional-grade geometry editing and drawing.
+- **Exporting**: jsPDF, autoTable, html2canvas.
+- **Desktop**: Tauri (Rust) for Windows standalone installers.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 📦 Installation & Setup
+
+### For Development
+1. Clone the repository.
+2. Run `npm install`.
+3. Start dev server: `npm run dev`.
+
+### For Desktop Build
+1. Ensure Rust is installed.
+2. Run the automated build script: `.\Build_Tauri_Desktop_Runner.bat`.
+3. The script automatically syncs sources from network drives and patches version numbers.
+
+---
+
+## 🛡️ License & Credits
+Developed by **M.A. Industries Inc.**  
+© 2026 M.A. Industries. All rights reserved.

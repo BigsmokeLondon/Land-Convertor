@@ -1,49 +1,51 @@
-# Desktop Build & Packaging Guide
+# 🏗️ Desktop Build Guide: Land Converter Pro
 
-This guide explains how to generate the standalone Windows installer for the **Ultimate Pak Land Survey Tool**.
-
-## 🚀 The Build Workflow
-
-We use a "Local Build Pipeline" to avoid file-locking issues caused by network drives and cloud syncing.
-
-1.  **Work** as usual in your project on the `Z:` drive.
-2.  **Build** the desktop app by running **`Build_Tauri_Desktop.bat`** (Right-click -> **Run as Administrator**).
-3.  **Distribute** the generated `.exe` installer.
+This guide explains how to compile the Land Converter standalone Windows application (.exe) using the integrated Tauri and PowerShell automation pipeline.
 
 ---
 
-## 📂 Key Desktop Files
+## 📋 Prerequisites
 
-| File | Purpose |
-|---|---|
-| **`Build_Tauri_Desktop.bat`** | The main automation script. It syncs code from `Z:` to `C:\`, compiles the app, and provides the installer link. |
-| **`src-tauri/`** | Core desktop configuration (App name, window settings, and icons). |
-| **`vite.config.tauri.ts`** | A special build config that ensures paths work inside the native Windows container. |
+1.  **Rust**: Installed via [rustup.rs](https://rustup.rs/).
+2.  **Node.js**: v18 or higher.
+3.  **Visual Studio Build Tools**: 2022 recommended (C++ Build Tools).
 
 ---
 
-## 📦 Installer Location
+## 🚀 The Automated Build Pipeline
 
-After a successful build, your installer will be found at:
-`C:\LandConverterDev\src-tauri\target\release\bundle\nsis\Land Converter_1.0.0_x64-setup.exe`
+The project includes a robust automation script to handle the complexities of cloud/network drive file locking and versioning.
 
-- **Format**: NSIS (.exe)
-- **Size**: ~2.5 MB
-- **Installation**: Installs to `Program Files` and adds a Start Menu shortcut.
+### Step 1: Execute the Runner
+Double-click the **`Build_Tauri_Desktop_Runner.bat`** file in the root directory.
+
+### Step 2: Input Version
+A GUI prompt will appear asking for the build version (e.g., `1.5.0`).
+- The script automatically patches `package.json`, `tauri.conf.json`, and the `AboutTab.tsx` UI with this version.
+
+### Step 3: Local Drive Synchronization (The Bridge)
+Because Rust/Cargo compilation can fail or be extremely slow on network drives (like OneDrive Z:), the script:
+1. Uses **Robocopy** to sync all source files (excluding `node_modules` and `target`) to **`C:\Users\Admin\Documents\land-converter-pwa`**.
+2. Performs all compilation steps on the high-speed local drive.
+
+### Step 4: Full Compilation
+The script then executes:
+1. `npm run build` (Vite web assets).
+2. `npm run tauri:build` (Rust binary and NSIS/MSI installer bundling).
 
 ---
 
-## 🛠️ Maintenance & Troubleshooting
+## 📦 Resulting Files
 
-### Repacking Icons
-If you change the app icons, they are located in `src-tauri/icons`. Tauri uses these to brand the `.exe` and the taskbar icon.
+Once complete, the script will archive the installer to:
+`C:\Users\Admin\Documents\land-converter-pwa\releases\v[VERSION]\`
 
-### Mismatched Settings
-If you change the version number, update it in `src-tauri/tauri.conf.json`.
+- **NSIS Setup (.exe)**: The primary standalone installer.
 
 ---
 
-## ✅ System Prerequisites
-To build the app, the following must be installed on the PC:
-- **Rust**: [rustup.rs](https://rustup.rs) (Required for the `tauri build` step).
-- **Node.js**: Already installed.
+## 🛠️ Troubleshooting
+
+- **Sync Failure**: Ensure there are no open files in the local build directory that Robocopy might struggle to overwrite.
+- **Tauri/Cargo Errors**: Usually caused by a missing Rust target. Run `rustup target add x86_64-pc-windows-msvc`.
+- **CORS Errors in Built App**: The build process automatically configures Tauri to allow secure external CDN requests for GIS scripts.

@@ -1,63 +1,55 @@
-# Project Structure \& File Glossary
+# 📂 Project Structure: Land Converter Pro
 
-## Overview
+This document outlines the organization of the codebase, specifically highlighting the integration of the GIS engine and the build automation system.
 
-The **Ultimate Pak Land Survey Tool** is a Progressive Web App (PWA) designed for land measurements and conversions, specifically tailored for revenue officials and surveyors in Pakistan. It supports regional standards (Punjab Legal, Lahore LDA, etc.) and provides a bilingual interface (English/Urdu).
+---
 
-\---
+## 🏗️ Core Application Flow
 
-## 🛠️ Core Application Files
+### 1. Bootstrapping (`src/main.tsx`)
+The entry point of the application is synchronized to wait for external GIS dependencies.
+- **`injectGIS`**: Programmatically loads Turf.js and Leaflet-Geoman via CDN.
+- **Synchronized Launch**: The React application only renders once `window.L` is patched and ready.
 
-Located in `src/`
+### 2. Main Layout (`src/App.tsx`)
+Manages the tab switching logic and the state for high-level settings (Language, Legal Standard).
 
-* **`main.tsx`**: The entry point of the React application. It bootstraps the app and renders it into the DOM.
-* **`App.tsx`**: The main application component. It manages the global state (language, active tab, regional standards) and provides the navigation layout for both mobile and desktop.
-* **`locales.ts`**: Contains the dictionary for translations. This is where all English and Urdu text strings are stored and managed.
-* **`App.css`**: Contains global styles and custom utility classes for the application's unique visual identity.
-* **`index.css`**: Tailwind CSS directives and base styles.
+---
 
-\---
+## 🧩 Components (`src/components/`)
 
-## 🧩 Feature Components
+### 🛰️ `MapSurveyTab.tsx`
+The primary GIS interface.
+- **`GeomanControls`**: Bridge between the Leaflet-Geoman engine and React state. Handles the conversion of visual layers to coordinate data.
+- **`ProMappingToolbox`**: Custom floating UI for toggling Draw, Edit, and Cut modes. Syncs button styles with the engine's active state.
+- **`LocationMarker`**: Handles GPS tracking and "Click to Drop" logic with conflict prevention for drawing modes.
 
-Located in `src/components/`
+### 📐 `ConverterTab.tsx` & `AreaCalculatorTab.tsx`
+Handle the mathematical logic for unit conversions using `src/utils/calculations.ts`.
 
-* **`MapSurveyTab.tsx`**: 🌍 **The Flagship Feature.** An interactive map tool (using Leaflet) that allows users to mark points on a map to calculate land area or measure paths/perimeters in real-time using GPS or manual clicks.
-* **`AreaCalculatorTab.tsx`**: 📐 A manual calculator for irregular polygons. Users can input sides and diagonals to calculate complex field areas using Heron's formula.
-* **`ConverterTab.tsx`**: 🔄 A multi-unit converter for traditional Pakistani units like Kanal, Marla, Sarsai, and Karam, as well as modern units like Square Feet and Acres.
-* **`ReverseLookupTab.tsx`**: 🔍 Allows users to input a single value in one unit and see its equivalent across all other land measurement units simultaneously.
-* **`VizTab.tsx`**: 📊 Visualizes the history of conversions and calculations using charts, helping users track their work session.
-* **`NotesTab.tsx`**: 📝 A digital notepad for surveyors to record field observations directly within the app.
-* **`AboutTab.tsx`**: ℹ️ Provides legal references, unit definitions, and contact information for the tool.
-* **`CompassTool.tsx`**: 🧭 A utility component that helps surveyors with orientation (integrated into the map).
+### 🧪 `ReverseLookupTab.tsx` & `VizTab.tsx`
+Provide utility functions for identifying standards and visualizing comparative plot sizes.
 
-\---
+---
 
-## ⚙️ Project Configuration
+## 🧰 Utilities (`src/utils/`)
 
-Located in the root directory
+- **`calculations.ts`**: Core Haversine and area calculation logic.
+- **`exporting.ts`**: PDF generation (jsPDF) and KML/CSV formatting.
+- **`ExcelExport.ts`**: Specialized handler for Excel-ready coordinate sheets.
 
-* **`vite.config.ts`**: Configuration for the Vite build tool. Includes the PWA plugin configuration which enables offline capabilities and home-screen installation.
-* **`package.json`**: Lists all project dependencies (React, Leaflet, Lucide, Tailwind) and scripts for development and building.
-* **`tailwind.config.js`**: Customizes the Tailwind CSS framework colors, fonts, and responsive breakpoints.
-* **`tsconfig.json`**: TypeScript configuration for the project, ensuring code quality and type safety.
+---
 
-\---
+## ⚙️ Build & Synchronization
 
-## 🚀 Utility \& Support Scripts
+### Network-to-Local Bridge
+To bypass filesystem locking issues on network/cloud drives during the Rust build phase, the project uses a synchronization pipeline:
+- **`Build_Tauri_Desktop_Runner.bat`**: A wrapper that triggers the PowerShell sync.
+- **`Build_Tauri_Desktop.ps1`**:
+    1. **Sync**: Uses Robocopy to mirror the `Z:` master to `C:`.
+    2. **Patch**: Automatically updates versions in `package.json` and `tauri.conf.json`.
+    3. **Build**: Runs Vite build and Tauri compilation on the local high-speed drive.
 
-Located in the root directory
-
-* **`Launch\_Web\_App.bat`**: A Windows batch script to quickly start the development server locally.
-* **`Sync\_To\_Documents.bat`**: A custom script used to synchronize project files to a local Documents folder for backup or versioning outside of Git.
-* **`patch.py`, `patch2.py`, etc.**: Python scripts (likely from the legacy version) used for specific logic updates or data processing during the migration to the PWA.
-
-\---
-
-## 📱 Public Assets
-
-Located in `public/`
-
-* **`manifest.json`**: Defines how the PWA looks when installed on a mobile device (icons, theme colors, etc.).
-* **`icons/`**: Contains the app icons in various sizes required for mobile installation.
-
+### Versioning
+- **Current Development**: Version 1.5.0
+- **Standard**: Punjab Revenue Act (225) compliant.
