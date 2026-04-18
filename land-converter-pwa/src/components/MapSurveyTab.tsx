@@ -389,6 +389,35 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
   };
 
   const captureScreenshot = async () => {
+    const element = document.getElementById('map-survey-capture-area');
+    if (!element || !mapInstance) return;
+    
+    try {
+      // Ensure map is stable
+      mapInstance.invalidateSize();
+      
+      const canvas = await html2canvas(element, { 
+        useCORS: true, 
+        allowTaint: true,
+        scale: 2, // High res
+        logging: false,
+        backgroundColor: '#ffffff',
+        ignoreElements: (el) => {
+          // Ignore zoom controls and other non-essential overlays during capture
+          return el.classList.contains('leaflet-control-zoom') || 
+                 el.classList.contains('leaflet-control-attribution');
+        }
+      });
+      
+      const link = document.createElement('a');
+      link.download = `Land_Survey_${new Date().getTime()}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+    } catch (e) {
+      console.error("Screenshot capture failed:", e);
+      alert('Screenshot failed. Try Street view or save as KML/PDF.');
+    }
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
