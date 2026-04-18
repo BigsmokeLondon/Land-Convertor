@@ -294,6 +294,13 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
   const [watchId, setWatchId] = useState<number | null>(null);
   const [autoFollow, setAutoFollow] = useLocalStorage('la_map_auto_follow', true);
 
+  // Report Metadata
+  const [surveyorName, setSurveyorName] = useLocalStorage('la_report_surveyor', '');
+  const [locationName, setLocationName] = useLocalStorage('la_report_location', '');
+  const [clientName, setClientName] = useLocalStorage('la_report_client', '');
+  const [isExporting, setIsExporting] = useState(false);
+  const [showMeta, setShowMeta] = useState(false);
+
   const repairMap = () => {
     localStorage.removeItem('la_map_center');
     localStorage.removeItem('la_map_style');
@@ -336,36 +343,52 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
     }
   };
 
-  const captureScreenshot = async () => {
+  const exportToProfessionalPDF = async () => {
     const element = document.getElementById('map-survey-capture-area');
     if (!element || !mapInstance) return;
     
+    setIsExporting(true);
     try {
-      // Ensure map is stable
-      mapInstance.invalidateSize();
-      
+      // Small delay to ensure UI states settle
+      await new Promise(r => setTimeout(r, 100));
+
       const canvas = await html2canvas(element, { 
         useCORS: true, 
         allowTaint: true,
-        scale: 2, // High res
+        scale: 1.5, // Balanced for PDF size
         logging: false,
         backgroundColor: '#ffffff',
         ignoreElements: (el) => {
-          // Ignore zoom controls and other non-essential overlays during capture
           return el.classList.contains('leaflet-control-zoom') || 
-                 el.classList.contains('leaflet-control-attribution');
+                 el.classList.contains('leaflet-control-attribution') ||
+                 el.id === 'map-ui-controls'; // Hide buttons during capture
         }
       });
       
-      const link = document.createElement('a');
-      link.download = `Land_Survey_${new Date().getTime()}.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
-      link.click();
+      const mapImage = canvas.toDataURL('image/png', 0.8);
+      
+      generatePDF(
+        areaSqFt, 
+        'Marla', 
+        areaMarla, 
+        normalizedPoints, 
+        false, 
+        mapImage,
+        {
+          surveyorName,
+          location: locationName,
+          clientName
+        }
+      );
     } catch (e) {
-      console.error("Screenshot capture failed:", e);
-      alert('Screenshot failed. Try Street view or save as KML/PDF.');
+      console.error("PDF Export failed:", e);
+      alert('Professional PDF Export failed. Try saving a screenshot instead.');
+    } finally {
+      setIsExporting(false);
     }
   };
+
+  const captureScreenshot = async () => {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -483,13 +506,59 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
             <button type="button" onClick={repairMap} className="bg-red-50 text-red-600 p-1.5 rounded-lg border border-red-100 ml-1 active:scale-95" title="Repair Map View">🔧</button>
           </form>
 
-          <div className="flex gap-1.5 flex-shrink-0">
+          <div id="map-ui-controls" className="flex gap-1.5 flex-shrink-0">
+            <button onClick={() => setShowMeta(!showMeta)} className={`p-2 rounded-lg border active:scale-95 transition-all ${showMeta ? 'bg-green-600 text-white border-green-700' : 'bg-green-50 text-green-700 border-green-100'}`} title="Report Details">
+              <Plus size={18} className={showMeta ? 'rotate-45 transition-transform' : 'transition-transform'} />
+            </button>
             <button onClick={captureScreenshot} className="p-2 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100 active:scale-95" title="Save Screenshot"><Camera size={18} /></button>
             <button onClick={() => generateCSV(normalizedPoints)} disabled={normalizedPoints.flat().length < 1} className="p-2 bg-amber-50 text-amber-700 rounded-lg border border-amber-100 disabled:opacity-50" title="CSV"><Check size={18} /></button>
             <button onClick={() => generateKML(normalizedPoints)} disabled={normalizedPoints.flat().length < 3} className="p-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 disabled:opacity-50" title="KML"><Download size={18} /></button>
-            <button onClick={() => generatePDF(areaSqFt, 'Report', areaMarla, normalizedPoints, false)} disabled={normalizedPoints.flat().length < 3} className="p-2 bg-[#2E7D32] text-white rounded-lg active:scale-95 disabled:opacity-50 shadow-sm" title="PDF"><Save size={18} /></button>
+            <button 
+              onClick={exportToProfessionalPDF} 
+              disabled={normalizedPoints.flat().length < 3 || isExporting} 
+              className={`p-2 text-white rounded-lg active:scale-95 disabled:opacity-50 shadow-sm transition-all ${isExporting ? 'bg-gray-400' : 'bg-[#2E7D32]'}`} 
+              title="Official PDF Report"
+            >
+              {isExporting ? <RotateCcw size={18} className="animate-spin" /> : <Save size={18} />}
+            </button>
           </div>
         </div>
+
+        {/* Report Metadata Overlay */}
+        {showMeta && (
+          <div className="p-3 bg-green-50 border-t border-green-100 flex flex-col md:flex-row gap-3 animate-in slide-in-from-top duration-200">
+            <div className="flex-1">
+              <label className="text-[10px] font-black text-green-700 uppercase mb-1 block">Surveyor Name</label>
+              <input 
+                type="text" 
+                value={surveyorName} 
+                onChange={(e) => setSurveyorName(e.target.value)}
+                placeholder="Name or License #"
+                className="w-full bg-white border border-green-200 rounded-md px-2 py-1.5 text-xs font-bold focus:ring-2 focus:ring-green-500 outline-none"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] font-black text-green-700 uppercase mb-1 block">Property / Client Name</label>
+              <input 
+                type="text" 
+                value={clientName} 
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="e.g. Plot 42, Ali Ahmed"
+                className="w-full bg-white border border-green-200 rounded-md px-2 py-1.5 text-xs font-bold focus:ring-2 focus:ring-green-500 outline-none"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] font-black text-green-700 uppercase mb-1 block">General Location</label>
+              <input 
+                type="text" 
+                value={locationName} 
+                onChange={(e) => setLocationName(e.target.value)}
+                placeholder="Area/Town/City"
+                className="w-full bg-white border border-green-200 rounded-md px-2 py-1.5 text-xs font-bold focus:ring-2 focus:ring-green-500 outline-none"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 relative z-0">

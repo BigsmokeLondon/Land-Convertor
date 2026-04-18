@@ -2,10 +2,20 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { translations } from '../locales';
 
-export const generatePDF = (areaSqFt: number, regionalName: string, regionalArea: number, points: any, isUrdu: boolean) => {
+export const generatePDF = (
+  areaSqFt: number, 
+  regionalName: string, 
+  regionalArea: number, 
+  points: any, 
+  isUrdu: boolean,
+  mapImage?: string, // base64
+  metadata?: { surveyorName?: string, location?: string, clientName?: string, notes?: string }
+) => {
   try {
     const t = isUrdu ? translations.ur : translations.en;
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width || 210;
+    const pageHeight = doc.internal.pageSize.height || 297;
     
     // Flatten if points is a 2D array of rings
     const flatPoints = (Array.isArray(points[0])) ? points.flat() : points;
@@ -14,72 +24,179 @@ export const generatePDF = (areaSqFt: number, regionalName: string, regionalArea
       return;
     }
 
-    // Header Box
-    doc.setFillColor(46, 125, 50); // Brand Green
-    doc.rect(0, 0, 210, 30, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.text("Official Land Survey Report", 14, 20);
-    
-    // Reset text for body
-    doc.setTextColor(0, 0, 0);
-    
-    // Form Details (Area, City, Town)
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    doc.text("Date: ________________________", 14, 45);
-    doc.text("Surveyor Name: ________________________", 100, 45);
-    
-    doc.text("Survey Location (Area/Town/City): _________________________________________________", 14, 55);
-    doc.text("Plot Reference/Khasra No: _________________________________________________________", 14, 65);
+    // Helper: Header & Branding
+    const drawHeader = (doc: jsPDF, title: string) => {
+      doc.setFillColor(27, 94, 32); // Deep Professional Green
+      doc.rect(0, 0, pageWidth, 40, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont("helvetica", "bold");
+      doc.text("LAND CONVERTER PRO", 14, 18);
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text("OFFICIAL MEASUREMENT CERTIFICATE", 14, 25);
+      
+      doc.setFontSize(16);
+      doc.text(title, pageWidth - 14, 22, { align: 'right' });
+    };
 
-    // Measurement Results Box
-    doc.setDrawColor(200, 200, 200);
-    doc.setFillColor(245, 245, 245);
-    doc.rect(14, 75, 182, 25, 'FD');
+    // Helper: Footer
+    const drawFooter = (doc: jsPDF) => {
+      const pageCount = (doc as any).internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, pageHeight - 20, pageWidth - 14, pageHeight - 20);
+        
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont("helvetica", "normal");
+        doc.text("Software developed by M.A. Industries Inc. | © " + new Date().getFullYear(), 14, pageHeight - 12);
+        doc.text(`Page ${i} of ${pageCount}`, pageWidth - 14, pageHeight - 12, { align: 'right' });
+      }
+    };
+
+    // --- PAGE 1: OVERVIEW ---
+    drawHeader(doc, "Survey Summary");
     
-    doc.setFontSize(12);
+    // Metadata Section
+    doc.setTextColor(40, 40, 40);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("Measurement Results:", 18, 83);
+    doc.text("REPORT DETAILS", 14, 50);
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(27, 94, 32);
+    doc.line(14, 52, 50, 52);
+
+    doc.setFont("helvetica", "normal");
+    const labelX = 14;
+    const valX = 60;
+    let currentY = 60;
+
+    const addMetaRow = (label: string, value: string) => {
+      doc.setFont("helvetica", "bold");
+      doc.text(label, labelX, currentY);
+      doc.setFont("helvetica", "normal");
+      doc.text(value || "Not Specified", valX, currentY);
+      currentY += 8;
+    };
+
+    addMetaRow("Date:", new Date().toLocaleDateString('en-GB'));
+    addMetaRow("Surveyor Name:", metadata?.surveyorName || "____________________");
+    addMetaRow("Client Property:", metadata?.clientName || "____________________");
+    addMetaRow("Survey Location:", metadata?.location || "____________________");
+
+    // Summary Box
+    doc.setFillColor(245, 248, 245);
+    doc.setDrawColor(200, 210, 200);
+    doc.roundedRect(14, 95, pageWidth - 28, 35, 3, 3, 'FD');
+
+    doc.setFontSize(12);
+    doc.setTextColor(27, 94, 32);
+    doc.setFont("helvetica", "bold");
+    doc.text("TOTAL MEASURED AREA", 20, 105);
+
+    doc.setFontSize(22);
+    doc.text(`${areaSqFt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SQ FT`, 20, 118);
     
     doc.setFontSize(14);
-    doc.setTextColor(46, 125, 50);
-    doc.text(`Total Area: ${areaSqFt.toFixed(2)} Sq Ft`, 18, 93);
-    doc.text(`Converted: ${regionalArea.toFixed(2)} Marla (${regionalName})`, 100, 93);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`≈ ${regionalArea.toFixed(2)} Marla (${regionalName})`, pageWidth - 25, 118, { align: 'right' });
 
-    // Coordinates Table
-    doc.setTextColor(0, 0, 0);
-    const tableData = flatPoints.map((p: any, i: number) => [`P${i + 1}`, (p.lat || 0).toFixed(6), (p.lng || 0).toFixed(6)]);
+    // Map Image
+    if (mapImage) {
+      doc.setFontSize(10);
+      doc.setTextColor(40, 40, 40);
+      doc.setFont("helvetica", "bold");
+      doc.text("SITE PLAN / MAP VIEW", 14, 145);
+      
+      try {
+        // High quality map placement
+        const mapWidth = pageWidth - 28;
+        const mapHeight = 100;
+        doc.setDrawColor(200, 200, 200);
+        doc.rect(14, 148, mapWidth, mapHeight);
+        doc.addImage(mapImage, 'PNG', 14, 148, mapWidth, mapHeight);
+      } catch (e) {
+        console.warn("Map image embedding failed", e);
+      }
+    }
+
+    // --- PAGE 2: TECHNICAL DATA ---
+    doc.addPage();
+    
+    const tableData = flatPoints.map((p: any, i: number) => [
+      `P${i + 1}`, 
+      (p.lat || 0).toFixed(8), 
+      (p.lng || 0).toFixed(8)
+    ]);
     
     autoTable(doc, {
-      startY: 110,
-      head: [['Boundary Point', 'Latitude (North)', 'Longitude (East)']],
+      startY: 55,
+      head: [['Point ID', 'Latitude (North)', 'Longitude (East)']],
       body: tableData,
-      theme: 'grid',
-      headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [249, 250, 251] },
-      margin: { left: 14, right: 14 }
+      theme: 'striped',
+      headStyles: { fillColor: [27, 94, 32], textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 3 },
+      alternateRowStyles: { fillColor: [248, 250, 248] },
+      margin: { left: 14, right: 14, top: 45, bottom: 25 },
+      didDrawPage: (data) => {
+        drawHeader(doc, "Technical Data");
+        
+        // Label for the table on the first page it appears
+        if (data.pageNumber === 1) { // This is actually page 2 of the doc
+           // but AutoTable treats its first page as 1
+        }
+        doc.setFontSize(10);
+        doc.setTextColor(40, 40, 40);
+        doc.setFont("helvetica", "bold");
+        doc.text("BOUNDARY COORDINATES", 14, 50);
+      }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || 110;
+    const finalY = (doc as any).lastAutoTable.finalY || 55;
+
+    // Legal & Certification
+    // Ensure we are on the last page of the table
+    doc.setPage(doc.internal.getNumberOfPages());
     
-    // Legal notice bounds
+    if (finalY + 60 > pageHeight) {
+      doc.addPage();
+      drawHeader(doc, "Technical Data");
+    }
+    
+    const currentFinalY = (doc as any).lastAutoTable.finalY || 55;
+    const certY = Math.max(currentFinalY + 20, 70);
+    
     doc.setFontSize(10);
-    doc.setTextColor(200, 0, 0); // red warn
-    doc.setFont("helvetica", "italic");
-    const splitText = doc.splitTextToSize(t.legalAlert, 180);
-    doc.text(splitText, 14, finalY + 15);
+    doc.setFont("helvetica", "bold");
+    doc.text("CERTIFICATION & VERIFICATION", 14, certY);
+    doc.setLineWidth(0.2);
+    doc.line(14, certY + 2, 50, certY + 2);
 
-    // Footer - M.A. Industries
-    const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
     doc.setFontSize(9);
-    doc.setTextColor(100, 100, 100);
     doc.setFont("helvetica", "normal");
-    doc.text("Software developed and brought to you by M.A. Industries Inc. © " + new Date().getFullYear(), 14, pageHeight - 10);
+    doc.text("I hereby certify that the measurements shown hereon were performed under my direct supervision and are accurate to the best of my professional knowledge based on GPS data provided by this software.", 14, certY + 10, { maxWidth: 100 });
 
-    doc.save('Land_Survey_Report.pdf');
+    // Signature Line
+    doc.line(130, certY + 30, 190, certY + 30);
+    doc.setFontSize(8);
+    doc.text("Authorized Signature/Stamp", 160, certY + 35, { align: 'center' });
+    doc.text(`Issued: ${new Date().toLocaleString()}`, 160, certY + 40, { align: 'center' });
+
+    // Legal Warning Bottom
+    doc.setTextColor(180, 0, 0);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    const splitText = doc.splitTextToSize("DISCLAIMER: " + t.legalAlert, pageWidth - 28);
+    doc.text(splitText, 14, pageHeight - 35);
+
+    drawFooter(doc);
+
+    doc.save(`Survey_Report_${new Date().getTime()}.pdf`);
+
   } catch (err: any) {
     console.error("PDF Export failed:", err);
     alert("Official Report PDF failed: " + err.message);
@@ -89,60 +206,71 @@ export const generatePDF = (areaSqFt: number, regionalName: string, regionalArea
 export const generateConverterPDF = (results: any) => {
   try {
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width || 210;
+    const pageHeight = doc.internal.pageSize.height || 297;
     if (!results) throw new Error("No data results found to export.");
 
     // Header
-    doc.setFillColor(46, 125, 50);
-    doc.rect(0, 0, 210, 30, 'F');
+    doc.setFillColor(27, 94, 32);
+    doc.rect(0, 0, pageWidth, 40, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
+    doc.setFontSize(24);
     doc.setFont("helvetica", "bold");
-    doc.text("Land Conversion Report", 14, 20);
-
-    // Date
-    doc.setTextColor(0, 0, 0);
+    doc.text("LAND CONVERTER PRO", 14, 18);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, 14, 38);
+    doc.text("UNITS CONVERSION REPORT", 14, 25);
+    doc.setFontSize(16);
+    doc.text("Manual Conversion", pageWidth - 14, 22, { align: 'right' });
+
+    // Date
+    doc.setTextColor(60, 60, 60);
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString()}`, 14, 50);
 
     // Results Table
     const tableData = [
-      ['Square Feet', (results.sqft || 0).toFixed(2), '—'],
-      ['Marla (Punjab Legal 225)', (results.legalMarla || 0).toFixed(2), 'Punjab Revenue Act'],
-      ['Kanal (Punjab Legal)', (results.legalKanal || 0).toFixed(2), 'Punjab Revenue Act'],
-      ['Marla (Lahore LDA 250)', (results.ldaMarla || 0).toFixed(2), 'Lahore Development Authority'],
-      ['Kanal (Lahore LDA)', (results.ldaKanal || 0).toFixed(2), 'Lahore Development Authority'],
-      ['Marla (Traditional 272)', (results.tradMarla || 0).toFixed(2), 'KPK / Rural Reference'],
-      ['Kanal (KPK Ref)', (results.kpkKanal || 0).toFixed(2), 'KPK / Rural Reference'],
+      ['Square Feet (Base)', `${(results.sqft || 0).toLocaleString()} Sq Ft`, '—'],
+      ['Marla (Punjab Legal 225)', (results.legalMarla || 0).toFixed(3), 'Punjab Revenue Act'],
+      ['Kanal (Punjab Legal)', (results.legalKanal || 0).toFixed(3), 'Punjab Revenue Act'],
+      ['Marla (Lahore LDA 250)', (results.ldaMarla || 0).toFixed(3), 'Lahore Dev Authority'],
+      ['Kanal (Lahore LDA)', (results.ldaKanal || 0).toFixed(3), 'Lahore Dev Authority'],
+      ['Marla (Traditional 272.25)', (results.tradMarla || 0).toFixed(3), 'KPK / Rural Reference'],
+      ['Kanal (KPK Ref)', (results.kpkKanal || 0).toFixed(3), 'KPK / Rural Reference'],
       ['Sq. Karam', (results.karam || 0).toFixed(2), 'Traditional Karam Unit'],
     ];
 
     autoTable(doc, {
-      startY: 48,
-      head: [['Unit', 'Value', 'Standard / Jurisdiction']],
+      startY: 58,
+      head: [['Unit / Standard', 'Calculated Value', 'Standard Reference']],
       body: tableData,
       theme: 'grid',
-      headStyles: { fillColor: [46, 125, 50], textColor: [255, 255, 255], fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [249, 250, 251] },
+      headStyles: { fillColor: [27, 94, 32], textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 10, cellPadding: 4 },
+      alternateRowStyles: { fillColor: [248, 252, 248] },
       margin: { left: 14, right: 14 },
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || 48;
+    const finalY = (doc as any).lastAutoTable.finalY || 58;
 
-    // Legal Warning
+    // Disclaimer
     doc.setFontSize(9);
     doc.setTextColor(180, 0, 0);
     doc.setFont("helvetica", "italic");
-    doc.text("DISCLAIMER: This report is for reference only. Always verify with official revenue records.", 14, finalY + 14);
+    const disclaimer = "DISCLAIMER: This conversion report is for reference only. While every effort is made for accuracy, please verify with official government revenue records for legal transactions.";
+    const splitDisclaimer = doc.splitTextToSize(disclaimer, pageWidth - 28);
+    doc.text(splitDisclaimer, 14, finalY + 15);
 
     // Footer
-    const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-    doc.setFontSize(9);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, pageHeight - 20, pageWidth - 14, pageHeight - 20);
+    doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
     doc.setFont("helvetica", "normal");
-    doc.text("Software developed and brought to you by M.A. Industries Inc. © " + new Date().getFullYear(), 14, pageHeight - 10);
+    doc.text("Software developed by M.A. Industries Inc. | Land Converter Pro v2.4", 14, pageHeight - 12);
 
-    doc.save('Conversion_Report.pdf');
+    doc.save(`Conversion_Report_${new Date().getTime()}.pdf`);
+
   } catch (err: any) {
     console.error("Converter PDF failed:", err);
     alert("Conversion PDF Export failed: " + err.message);
