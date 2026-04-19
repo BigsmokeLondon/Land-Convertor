@@ -43,7 +43,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/server\.arcgisonline\.com\/ArcGIS\/rest\/services\/World_Imagery\/MapServer\/tile\/.*$/,
+            urlPattern: /^https:\/\/.*\.arcgisonline\.com\/ArcGIS\/rest\/services\/World_Imagery\/MapServer\/tile\/.*$/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'esri-satellite-tiles',
@@ -52,7 +52,7 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24 * 30 // 30 Days
               },
               cacheableResponse: {
-                statuses: [200]
+                statuses: [0, 200]
               }
             }
           },

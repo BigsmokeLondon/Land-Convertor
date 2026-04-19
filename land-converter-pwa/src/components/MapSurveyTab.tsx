@@ -812,16 +812,16 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
           {mapStyle === 'satellite' ? (
             <TileLayer 
               attribution='&copy; ESRI' 
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" 
+              url="https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" 
               maxZoom={19} 
-              crossOrigin="anonymous"
+              crossOrigin=""
             />
           ) : (
             <TileLayer 
               attribution='&copy; OpenStreetMap' 
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
               maxZoom={19} 
-              crossOrigin="anonymous"
+              crossOrigin=""
             />
           )}
           <LocationMarker onPointAdd={addPoint} />
