@@ -15,7 +15,7 @@ export const translations = {
     vertexX: "Vertex X",
     vertexY: "Vertex Y",
     ft: "ft",
-    legalAlert: "⚠️ LEGAL WARNING: ONLY 'Marla (Punjab Legal)' = 225 sq ft is valid for official documents. Traditional references are informal only."
+    legalAlert: "LEGAL DISCLAIMER: This report is generated using GIS satellite positioning and manual tape measurements. While these values provide a highly accurate estimation for on-site verification, this document does not constitute a legal land title or an official government survey. Data provided by Arena SitePro is for technical guidance and calculation purposes only. For official legal boundary verification, always consult with a certified government land registrar or licensed revenue official."
   },
   ur: {
     appTitle: "ایرینا سائٹ پرو",

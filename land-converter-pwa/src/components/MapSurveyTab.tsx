@@ -347,11 +347,11 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
   const [isSearching, setIsSearching] = useState(false);
   const [mapStyle, setMapStyle] = useLocalStorage<'satellite' | 'street'>('la_map_style', 'satellite');
   const [surveyMode, setSurveyMode] = useLocalStorage<'area' | 'path'>('la_map_mode', 'area');
-  const [centerCoords, setCenterCoords] = useLocalStorage<{lat: number, lng: number}>('la_map_center', { lat: 31.3650, lng: 74.1850 });
+  const [centerCoords, setCenterCoords] = useLocalStorage<{lat: number, lng: number}>('la_map_center', { lat: 31.3675, lng: 74.2048 });
   
   const safeCenter: [number, number] = [
-    typeof centerCoords?.lat === 'number' ? centerCoords.lat : 31.3650,
-    typeof centerCoords?.lng === 'number' ? centerCoords.lng : 74.1850
+    typeof centerCoords?.lat === 'number' ? centerCoords.lat : 31.3675,
+    typeof centerCoords?.lng === 'number' ? centerCoords.lng : 74.2048
   ];
   const [copied, setCopied] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
@@ -502,14 +502,24 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
     if (!searchQuery.trim() || !mapInstance) return;
     setIsSearching(true);
     try {
-      const query = searchQuery;
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
-      const data = await response.json();
-      if (data && data.length > 0) {
-        const { lat, lon } = data[0];
-        mapInstance.flyTo([parseFloat(lat), parseFloat(lon)], 14);
+      const query = searchQuery.trim();
+      
+      // Check if the query is a GPS coordinate (e.g., "31.5204, 74.3587")
+      const coordinateMatch = query.match(/^([-+]?\d{1,2}([.]\d+)?),\s*([-+]?\d{1,3}([.]\d+)?)$/);
+      
+      if (coordinateMatch) {
+        const lat = parseFloat(coordinateMatch[1]);
+        const lng = parseFloat(coordinateMatch[3]);
+        mapInstance.flyTo([lat, lng], 16);
       } else {
-        alert("Location not found.");
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const { lat, lon } = data[0];
+          mapInstance.flyTo([parseFloat(lat), parseFloat(lon)], 14);
+        } else {
+          alert("Location not found.");
+        }
       }
     } catch (err) {
       alert("Search failed.");

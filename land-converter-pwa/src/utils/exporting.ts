@@ -318,8 +318,8 @@ export const generatePDF = (
       doc.setTextColor(180, 0, 0);
       doc.setFont("helvetica", "italic");
       doc.setFontSize(7);
-      const splitText = doc.splitTextToSize("DISCLAIMER: " + t.legalAlert, pageWidth - 28);
-      doc.text(splitText, 14, 105);
+      const disclaimer = doc.splitTextToSize(t.legalAlert, pageWidth - 40);
+      doc.text(disclaimer, pageWidth / 2, 110, { align: 'center' });
     } else {
       const certY = Math.max(currentFinalY + 20, 70);
       
@@ -343,8 +343,8 @@ export const generatePDF = (
       doc.setTextColor(180, 0, 0);
       doc.setFont("helvetica", "italic");
       doc.setFontSize(7);
-      const splitText = doc.splitTextToSize("DISCLAIMER: " + t.legalAlert, pageWidth - 28);
-      doc.text(splitText, 14, pageHeight - 35);
+      const disclaimer = doc.splitTextToSize(t.legalAlert, pageWidth - 40);
+      doc.text(disclaimer, pageWidth / 2, pageHeight - 35, { align: 'center' });
     }
 
     drawFooter(doc);
