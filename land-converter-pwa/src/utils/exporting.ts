@@ -206,7 +206,7 @@ export const generatePDF = (
       }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || 55;
+
 
     // --- PAGE 3: ON-SITE VERIFICATION ---
     if (metadata?.manualMeasurements && Object.keys(metadata.manualMeasurements).length > 0) {
@@ -284,7 +284,6 @@ export const generatePDF = (
         margin: { left: 14, right: 14 }
       });
 
-      const certY = (doc as any).lastAutoTable.finalY + 15;
       
     }
 
