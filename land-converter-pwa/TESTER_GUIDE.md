@@ -21,18 +21,23 @@ The **Arena SitePro** is a specialized utility designed for land measurement and
 ### 📍 Pro Mapping Toolbox (v1.6 Optimized)
 1. **Continuous Draw Mode (+ Icon):** Enable the plus icon (turns green). Plot 4+ points to create a shape. Verify the map doesn't jitter during high-speed sketching.
 2. **Node Editing (Pin Icon):** Enable the pin icon (turns blue). Drag any existing corner. The area at the top should update instantly.
-3. **Cutting Mode (Trash/Cut Icon):** Select a polygon, then use the cut tool to draw a "hole" inside it. Verify that the total area calculation subtracts the hole correctly.
+3. **Cutting Mode (Trash/Cut Icon)**: Select a polygon, then use the cut tool to draw a "hole" inside it. Verify that the total area calculation subtracts the hole correctly.
+4. **Manual Tape Input**: Click on a boundary edge (not a corner). An input prompt should appear. Enter "100" (ft). Verify that a "T: 100.00 ft" label appears at the midpoint of that segment.
+5. **GPS Coordinate Search**: Paste `31.5204, 74.3587` into the search bar. The map should fly directly to that point without needing Nominatim results.
 
 ### 📏 Export Suites & Professional Reports
 1. **Report Details (+) Button:** Click the green plus button in the top-right. Enter a Surveyor Name and Client Name.
 2. **Metadata Persistence:** Switch to the Converter tab and back. Verify the names you entered are still there.
-3. **Official PDF Export:** Click the Save (Disk) icon. Open the PDF.
-    - **Verification:** Does it say "OFFICIAL MEASUREMENT CERTIFICATE"? Do your names appear in the metadata rows? Is there a coordinate table on page 2?
-4. **KML Export:** Import the resulting KML into Google Earth Pro to verify the geometry matches perfectly.
+3. **Official PDF Export**: Click the Save (Disk) icon. Open the PDF.
+    - **Verification**: Does it say "OFFICIAL MEASUREMENT CERTIFICATE"? Do your names appear in the metadata rows? Is there a coordinate table on page 2?
+    - **Manual Verification Page**: If you entered Tape measurements, verify there is an "On-Site Verification" page. Check that the "Verified Manual Area" box at the top matches your expectations.
+4. **KML Export**: Import the resulting KML into Google Earth Pro to verify the geometry matches perfectly.
 
 ### 🧭 Field Utilities
 1. **Digital Compass:** On a mobile device, rotate the phone. Verify the compass icon tracks North correctly.
-2. **Repair Map (Wrench):** If the map seems "shifted" or stuck, tap the Red Wrench button in the search bar. The app should reload and reset centering logic.
+2. **Repair Map (Wrench)**: If the map seems "shifted" or stuck, tap the Red Wrench button in the search bar. The app should reload and reset centering logic.
+3. **Offline Map Download (Cloud Icon)**: Click the **Download Cloud** icon. A progress overlay should appear. Wait for it to finish.
+    - **Verification**: Turn on Airplane Mode. Pan/Zoom in the 2km region around the download point. The images should remain crisp.
 
 ---
 

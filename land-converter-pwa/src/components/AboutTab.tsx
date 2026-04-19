@@ -1,5 +1,5 @@
 export function AboutTab() {
-  const version = '1.6.0';
+  const version = '1.6.2';
   return (
     <div className="max-w-3xl mx-auto space-y-5 text-gray-800 pb-12">
 
@@ -104,6 +104,9 @@ export function AboutTab() {
               <ul className="text-xs text-gray-500 mt-1 space-y-0.5 list-disc list-inside">
                 <li><strong>Ultimate Pro Mapping Toolbox</strong> — one-tap access to advanced GIS drawing and cutting tools</li>
                 <li><strong>Continuous Draw Mode (Plus icon)</strong> — high-speed boundary sketching without manual panning</li>
+                <li><strong>Manual Tape Measurements</strong> — click boundary edges to enter physical on-site verification readings</li>
+                <li><strong>Offline Map Pre-caching (Cloud icon)</strong> — download a 2km region for field use in zero-signal areas</li>
+                <li><strong>GPS Coordinate Search</strong> — paste lat/lng coordinates directly into the search bar</li>
                 <li><strong>Mobile-Optimized Layout</strong> — snap-navigation and compact GPS coordinate display for field use</li>
                 <li><strong>Precision Crosshair Pinning</strong> — pan map under yellow crosshair, tap Add Pin for GPS-independent accuracy</li>
                 <li><strong>GPS Walk-and-Track</strong> — record your walk with continuous tracking, 5ft anti-jitter filtering and Auto-Follow mode</li>
@@ -156,9 +159,10 @@ export function AboutTab() {
       <div className="bg-red-50 p-5 rounded-2xl shadow-sm border border-red-200">
         <h3 className="text-base font-bold text-red-700 mb-2">⚠️ Liability Notice</h3>
         <p className="text-sm leading-relaxed text-red-900">
-          This tool provides mathematical conversions and visual estimations only. It does <strong>NOT</strong> constitute legal or surveying advice.
-          Providing false measurements to a public servant is punishable under <em>Section 182 PPC</em>.
-          Always verify plot boundaries physically with a jarib and a licensed surveyor before executing any mutation or sale deed.
+          This report is generated using GIS satellite positioning and manual tape measurements. 
+          While these values provide a highly accurate estimation for on-site verification, this document does not constitute a legal land title or an official government survey. 
+          Arena SitePro and its developers take no responsibility for legal inaccuracies or financial decisions made based on this report.
+          Always verify plot boundaries physically with a licensed government surveyor before executing any mutation or sale deed.
         </p>
       </div>
 
@@ -169,7 +173,9 @@ export function AboutTab() {
         </div>
         <div className="divide-y divide-gray-100 text-xs">
           {[
-            { v: '1.6', label: 'Pro Mapping Toolbox, Continuous Draw Mode, Mobile Nav Snapping, Hybrid GIS Engine' },
+            { v: '1.6.2', label: 'Offline Map Pre-caching, GPS Coordinate Paste, Expanded Legal Disclosure' },
+            { v: '1.6.1', label: 'Manual Tape Measurements, Verified Area Adjusted Reports, PDF Summary Box scaling' },
+            { v: '1.6.0', label: 'Pro Mapping Toolbox, Continuous Draw Mode, Mobile Nav Snapping, Hybrid GIS Engine' },
             { v: '1.5', label: 'GPS Walk-and-Track (Continuous), Auto-Follow Map Mode, 5ft Jitter Filtering' },
             { v: '1.4', label: 'Path Mode, SAT/MAP Toggle, Compass N, Perimeter Ft readout' },
             { v: '1.3', label: 'Notes Tab, Lahore LDA standard, Converter PDF & Excel, VizTab LDA bar, Map search bar' },

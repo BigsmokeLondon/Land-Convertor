@@ -18,9 +18,13 @@ A high-performance Professional Web App (PWA) and Desktop Tool (Tauri) designed 
 - **Node Editing**: Drag and drop existing boundary points to refine surveys instantly.
 - **Holes & Cutting**: Subtract unwanted areas (roads, buildings, "Gali") from larger plots.
 - **Satellite Capture**: High-resolution map screenshots with 2x canvas scaling.
+- **Manual Tape Measurements**: Click boundary edges to input actual physical tape readings for on-site verification.
+- **Offline Map Support**: Regional pre-caching (2km radius) and lazy-caching for field work without signal.
+- **GPS Search Paste**: Paste coordinates directly into the search bar for instant, precision navigation.
 
 ### 📊 Professional Exports
 - **Official Measurement Certificate**: Professional PDF reports with Surveyor, Client, and Location metadata.
+- **On-Site Verification Page**: Automated area adjustment scaling and detailed GIS vs. Tape comparison tables in PDF reports.
 - **GIS Boundary (KML)**: Export polygons directly to Google Earth Pro.
 - **Coordinate Sheet (CSV)**: Export raw GPS data for Excel.
 
@@ -40,6 +44,7 @@ A high-performance Professional Web App (PWA) and Desktop Tool (Tauri) designed 
 - **GIS Engines**: 
   - **Turf.js**: High-precision geometric calculations (Area, Perimeter, Distance).
   - **Leaflet-Geoman**: Professional-grade geometry editing and drawing.
+- **Caching**: Workbox (PWA) runtime caching for offline tile availability.
 - **Exporting**: jsPDF, autoTable, html2canvas.
 - **Desktop**: Tauri (Rust) for Windows standalone installers.
 
