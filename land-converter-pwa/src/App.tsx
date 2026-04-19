@@ -93,7 +93,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-4xl mx-auto p-3 md:p-6 bg-white md:rounded-xl md:shadow-sm md:mt-4">
-        {activeTab === 'map' && <MapSurveyTab regionalDenominator={region.unit} />}
+        {activeTab === 'map' && <MapSurveyTab regionalDenominator={region.unit} regionalName={region.name} />}
         {activeTab === 'converter' && <ConverterTab t={t} initialHistory={converterHistory} onHistoryUpdate={setConverterHistory} />}
         {activeTab === 'viz' && <VizTab data={converterHistory} />}
         {activeTab === 'lookup' && <ReverseLookupTab />}

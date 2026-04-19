@@ -339,7 +339,7 @@ function MapController({ onMapInit, onMove }: { onMapInit: (map: L_Local.Map) =>
   return null;
 }
 
-export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: number }) {
+export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDenominator: number, regionalName: string }) {
   const [points, setPoints] = useLocalStorage<any[]>('la_map_points', []);
   const [tracking, setTracking] = useState(false);
   const [mapInstance, setMapInstance] = useState<L_Local.Map | null>(null);
@@ -445,7 +445,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
       
       generatePDF(
         areaSqFt, 
-        'Marla', 
+        regionalName || 'Marla', 
         areaMarla, 
         normalizedPoints, 
         false, 

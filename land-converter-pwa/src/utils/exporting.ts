@@ -134,7 +134,9 @@ export const generatePDF = (
     // Summary Box
     doc.setFillColor(245, 248, 245);
     doc.setDrawColor(200, 210, 200);
-    doc.roundedRect(14, 95, pageWidth - 28, 35, 3, 3, 'FD');
+    // Increase height to 45 if we have a verified area adjustment to prevent overlap
+    const boxHeight = finalManualAreaText ? 45 : 35;
+    doc.roundedRect(14, 95, pageWidth - 28, boxHeight, 3, 3, 'FD');
 
     doc.setFontSize(12);
     doc.setTextColor(27, 94, 32);
@@ -146,7 +148,9 @@ export const generatePDF = (
     
     doc.setFontSize(14);
     doc.setTextColor(100, 100, 100);
-    doc.text(`≈ ${regionalArea.toFixed(2)} Marla (${regionalName})`, pageWidth - 25, 118, { align: 'right' });
+    doc.text(`Estimated: ${regionalArea.toFixed(2)} Marla`, pageWidth - 20, 118, { align: 'right' });
+    doc.setFontSize(10);
+    doc.text(`(${regionalName} Standard)`, pageWidth - 20, 124, { align: 'right' });
     
     if (finalManualAreaText) {
       doc.setFontSize(10);
@@ -288,30 +292,60 @@ export const generatePDF = (
     }
 
     const currentFinalY = (doc as any).lastAutoTable.finalY || 55;
-    const certY = Math.max(currentFinalY + 20, 70);
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("CERTIFICATION & VERIFICATION", 14, certY);
-    doc.setLineWidth(0.2);
-    doc.line(14, certY + 2, 50, certY + 2);
 
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text("I hereby certify that the measurements shown hereon were performed under my direct supervision and are accurate to the best of my professional knowledge based on GPS data provided by this software.", 14, certY + 10, { maxWidth: 100 });
+    // Check if we need to move the disclaimer & signatures to a new page to avoid footer overlap
+    // Total height needed for footer + signature + disclaimer is approx 70mm
+    if (currentFinalY + 70 > pageHeight - 25) {
+      doc.addPage();
+      drawHeader(doc, "Legal Disclaimer & Certification");
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("CERTIFICATION & VERIFICATION", 14, 50);
+      doc.setLineWidth(0.2);
+      doc.line(14, 52, 50, 52);
 
-    // Signature Line
-    doc.line(130, certY + 30, 190, certY + 30);
-    doc.setFontSize(8);
-    doc.text("Authorized Signature/Stamp", 160, certY + 35, { align: 'center' });
-    doc.text(`Issued: ${new Date().toLocaleString()}`, 160, certY + 40, { align: 'center' });
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text("I hereby certify that the measurements shown hereon were performed under my direct supervision and are accurate to the best of my professional knowledge based on GPS data provided by this software.", 14, 60, { maxWidth: 100 });
 
-    // Legal Warning Bottom
-    doc.setTextColor(180, 0, 0);
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8);
-    const splitText = doc.splitTextToSize("DISCLAIMER: " + t.legalAlert, pageWidth - 28);
-    doc.text(splitText, 14, pageHeight - 35);
+      // Signature Line
+      doc.line(130, 80, 190, 80);
+      doc.setFontSize(8);
+      doc.text("Authorized Signature/Stamp", 160, 85, { align: 'center' });
+      doc.text(`Issued: ${new Date().toLocaleString()}`, 160, 90, { align: 'center' });
+
+      // Legal Warning Bottom (Last Page)
+      doc.setTextColor(180, 0, 0);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(7);
+      const splitText = doc.splitTextToSize("DISCLAIMER: " + t.legalAlert, pageWidth - 28);
+      doc.text(splitText, 14, 105);
+    } else {
+      const certY = Math.max(currentFinalY + 20, 70);
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("CERTIFICATION & VERIFICATION", 14, certY);
+      doc.setLineWidth(0.2);
+      doc.line(14, certY + 2, 50, certY + 2);
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text("I hereby certify that the measurements shown hereon were performed under my direct supervision and are accurate to the best of my professional knowledge based on GPS data provided by this software.", 14, certY + 10, { maxWidth: 100 });
+
+      // Signature Line
+      doc.line(130, certY + 30, 190, certY + 30);
+      doc.setFontSize(8);
+      doc.text("Authorized Signature/Stamp", 160, certY + 35, { align: 'center' });
+      doc.text(`Issued: ${new Date().toLocaleString()}`, 160, certY + 40, { align: 'center' });
+
+      // Legal Warning Bottom
+      doc.setTextColor(180, 0, 0);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(7);
+      const splitText = doc.splitTextToSize("DISCLAIMER: " + t.legalAlert, pageWidth - 28);
+      doc.text(splitText, 14, pageHeight - 35);
+    }
 
     drawFooter(doc);
 
