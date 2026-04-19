@@ -6,7 +6,7 @@ const getTurf = () => (window as any).turf;
 
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { MapContainer, TileLayer, Marker, Polygon, Polyline, useMapEvents, useMap } from 'react-leaflet';
-import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search, Copy, Check, Plus, DownloadCloud, CloudOff } from 'lucide-react';
+import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search, Copy, Check, Plus, DownloadCloud } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import * as L_Local from 'leaflet';
 import html2canvas from 'html2canvas';
