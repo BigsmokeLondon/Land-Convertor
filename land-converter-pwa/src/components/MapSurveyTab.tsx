@@ -481,7 +481,7 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
 
       const canvas = await html2canvas(element, { 
         useCORS: true, 
-        allowTaint: true,
+        allowTaint: false, // Ensure we don't 'taint' the canvas with non-CORS images
         scale: 1.5, // Balanced for PDF size
         logging: false,
         backgroundColor: '#ffffff',
@@ -768,9 +768,19 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
         >
           <MapController onMapInit={setMapInstance} onMove={setCenterCoords} />
           {mapStyle === 'satellite' ? (
-            <TileLayer attribution='&copy; ESRI' url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" maxZoom={19} />
+            <TileLayer 
+              attribution='&copy; ESRI' 
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" 
+              maxZoom={19} 
+              crossOrigin="anonymous"
+            />
           ) : (
-            <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19} />
+            <TileLayer 
+              attribution='&copy; OpenStreetMap' 
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
+              maxZoom={19} 
+              crossOrigin="anonymous"
+            />
           )}
           <LocationMarker onPointAdd={addPoint} />
           <GeomanControls setPoints={setPoints} surveyMode={surveyMode} />
