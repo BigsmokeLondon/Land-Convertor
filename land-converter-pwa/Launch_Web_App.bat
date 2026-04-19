@@ -1,7 +1,7 @@
 @echo off
-title SiteMaster Web Server
+title Arena SitePro Web Server
 echo =====================================================
-echo   Starting SiteMaster Pro PWA
+echo   Starting Arena SitePro PWA
 echo ==================================================
 echo.
 echo Please keep this black window open while using the app!

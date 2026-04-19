@@ -1,4 +1,4 @@
-# 📂 Project Structure: SiteMaster Survey Pro
+# 📂 Project Structure: Arena SitePro
 
 This document outlines the organization of the codebase, specifically highlighting the integration of the GIS engine and the build automation system.
 

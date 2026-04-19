@@ -1,6 +1,6 @@
 export const translations = {
   en: {
-    appTitle: "SITEMASTER PRO",
+    appTitle: "ARENA SITEPRO",
     subtitle: "Punjab Legal Standard (225 sq ft) + Traditional References",
     tabConverter: "Converter",
     tabViz: "Visualization",
@@ -18,7 +18,7 @@ export const translations = {
     legalAlert: "⚠️ LEGAL WARNING: ONLY 'Marla (Punjab Legal)' = 225 sq ft is valid for official documents. Traditional references are informal only."
   },
   ur: {
-    appTitle: "سائٹ ماسٹر پرو",
+    appTitle: "ایرینا سائٹ پرو",
     subtitle: "پنجاب قانونی معیار (225 مربع فٹ) + روایتی حوالہ جات",
     tabConverter: "کنورٹر",
     tabViz: "ویژولائزیشن",

@@ -1,7 +1,7 @@
 @echo off
-title SiteMaster Pro - Desktop Build Runner
+title Arena SitePro - Desktop Build Runner
 echo =====================================================
-echo   SITEMASTER PRO - TAURI BUILD RUNNER
+echo   ARENA SITEPRO - TAURI BUILD RUNNER
 echo =====================================================
 echo.
 

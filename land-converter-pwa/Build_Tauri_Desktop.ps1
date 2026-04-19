@@ -14,7 +14,7 @@ Add-Type -AssemblyName Microsoft.VisualBasic
 Add-Type -AssemblyName System.Windows.Forms
 
 function Get-VersionInput {
-    $title = "SiteMaster Pro - Build Version"
+    $title = "Arena SitePro - Build Version"
     $msg = "Enter build version (e.g. 1.6.0):"
     $val = [Microsoft.VisualBasic.Interaction]::InputBox($msg, $title, "1.5.0")
     if ([string]::IsNullOrWhiteSpace($val)) {
@@ -34,7 +34,7 @@ function Confirm-Build {
 # --- PROCESS START ---
 Clear-Host
 Write-Host "=====================================================" -ForegroundColor Cyan
-Write-Host "  SITEMASTER PRO - DESKTOP BUILD SCRIPT" -ForegroundColor Cyan
+Write-Host "  ARENA SITEPRO - DESKTOP BUILD SCRIPT" -ForegroundColor Cyan
 Write-Host "=====================================================" -ForegroundColor Cyan
 
 $VERSION = Get-VersionInput

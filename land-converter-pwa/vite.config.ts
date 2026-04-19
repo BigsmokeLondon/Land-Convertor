@@ -14,8 +14,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'SiteMaster Pro',
-        short_name: 'SiteMaster Pro',
+        name: 'Arena SitePro',
+        short_name: 'Arena SitePro',
         description: 'Professional GIS Field Surveying & Multi-Standard Land Converter',
         theme_color: '#2E7D32',
         background_color: '#E8F5E9',

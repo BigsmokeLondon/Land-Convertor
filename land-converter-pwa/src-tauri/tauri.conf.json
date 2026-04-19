@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "SiteMaster Pro",
+  "productName": "Arena SitePro",
   "version": "1.6.0",
-  "identifier": "com.sitemaster.pro",
+  "identifier": "com.arena.sitepro",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "SiteMaster Pro",
+        "title": "Arena SitePro",
         "width": 1280,
         "height": 800,
         "resizable": true,

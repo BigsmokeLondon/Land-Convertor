@@ -1,6 +1,6 @@
-# 🏗️ Desktop Build Guide: SiteMaster Survey Pro
+# 🏗️ Desktop Build Guide: Arena SitePro
 
-This guide explains how to compile the SiteMaster standalone Windows application (.exe) using the integrated Tauri and PowerShell automation pipeline.
+This guide explains how to compile the Arena SitePro standalone Windows application (.exe) using the integrated Tauri and PowerShell automation pipeline.
 
 ---
 

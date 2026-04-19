@@ -1,11 +1,11 @@
-# 🗺️ Tester’s Guide: SiteMaster Pro
+# 🗺️ Tester’s Guide: Arena SitePro
 **Version:** 1.6.0
 **Focus:** Accuracy, Pro Mapping Toolbox, and High-Res Reporting
 
 ---
 
 ## 1. App Introduction
-The **SiteMaster Pro** is a specialized utility designed for land measurement and GIS surveying. It includes a synchronized GIS engine (Geoman + Turf) for field operations and professional report exporting.
+The **Arena SitePro** is a specialized utility designed for land measurement and GIS surveying. It includes a synchronized GIS engine (Geoman + Turf) for field operations and professional report exporting.
 
 ---
 

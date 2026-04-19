@@ -7,7 +7,7 @@ export function AboutTab() {
       <div className="bg-gradient-to-br from-[#1B5E20] to-[#2E7D32] text-white p-6 rounded-2xl shadow-lg">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-black tracking-tight leading-tight mb-1">SITEMASTER PRO</h2>
+            <h2 className="text-xl font-black tracking-tight leading-tight mb-1">ARENA SITEPRO</h2>
             <p className="text-green-200 text-xs font-semibold">Professional Field Surveying & Mapping Suite</p>
             <p className="text-green-300 text-[10px] mt-1">Global GIS Ready · Multi-Standard Support</p>
           </div>
