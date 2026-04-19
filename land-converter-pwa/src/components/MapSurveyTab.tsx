@@ -78,6 +78,69 @@ function LocationMarker({ onPointAdd }: { onPointAdd: (latlng: any) => void }) {
   return null;
 }
 
+// Support for Manual Measurements on Edges
+const getMidpoint = (p1: any, p2: any) => ({
+  lat: (p1.lat + p2.lat) / 2,
+  lng: (p1.lng + p2.lng) / 2
+});
+
+function EdgeLabels({ points, manualMeasurements, onSegmentClick }: { 
+  points: any[], 
+  manualMeasurements: Record<string, string>,
+  onSegmentClick: (idx: number) => void 
+}) {
+  if (!points || points.length < 2) return null;
+  
+  const midpoints = [];
+  for (let i = 0; i < points.length; i++) {
+    const p1 = points[i];
+    const p2 = points[(i + 1) % points.length];
+    
+    // In path mode, we don't close the loop
+    if (i === points.length - 1 && points.length > 2 && p1 === points[0]) continue; 
+    // Wait, the standard check for polygon vs path is better handled by state
+    
+    const mid = getMidpoint(p1, p2);
+    const dist = haversineDistanceFt(p1, p2);
+    const manual = manualMeasurements[`seg-${i}`];
+    
+    midpoints.push({ mid, dist, manual, index: i });
+  }
+
+  // To avoid duplicate labels in Path mode (last segment shouldn't exist)
+  const isActuallyClosed = points.length > 2;
+
+  return (
+    <>
+      {midpoints.map((m, i) => {
+        // Skip last segment if it's not a polygon
+        if (i === points.length - 1 && !isActuallyClosed) return null;
+        
+        return (
+          <Marker 
+            key={`label-${i}`} 
+            position={[m.mid.lat, m.mid.lng]}
+            icon={L_Local.divIcon({
+              className: 'custom-edge-label',
+              html: `
+                <div class="bg-white/95 backdrop-blur-md border-2 border-white/50 px-3 py-1.5 rounded-lg shadow-xl text-[11px] whitespace-nowrap font-extrabold flex flex-col items-center min-w-[60px]">
+                  <span class="text-gray-900">${m.dist.toFixed(1)} ft</span>
+                  ${m.manual ? `<span class="text-blue-700 border-t border-blue-100 mt-1 pt-1">T: ${m.manual} ft</span>` : ''}
+                </div>
+              `,
+              iconSize: [0, 0],
+              iconAnchor: [40, 20]
+            })}
+            eventHandlers={{
+              click: () => onSegmentClick(m.index)
+            }}
+          />
+        );
+      })}
+    </>
+  );
+}
+
 function GeomanControls({ 
   setPoints, 
   surveyMode 
@@ -298,6 +361,8 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
   const [surveyorName, setSurveyorName] = useLocalStorage('la_report_surveyor', '');
   const [locationName, setLocationName] = useLocalStorage('la_report_location', '');
   const [clientName, setClientName] = useLocalStorage('la_report_client', '');
+  const [manualArea, setManualArea] = useLocalStorage<string>('la_manual_area', '');
+  const [manualMeasurements, setManualMeasurements] = useLocalStorage<Record<string, string>>('la_manual_measurements', {});
   const [isExporting, setIsExporting] = useState(false);
   const [showMeta, setShowMeta] = useState(false);
 
@@ -335,6 +400,17 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
   const addPoint = useCallback((latlng: any) => {
     if (latlng) setPoints(prev => [...prev, latlng]);
   }, []);
+
+  const handleSegmentClick = (idx: number) => {
+    const currentVal = manualMeasurements[`seg-${idx}`] || '';
+    const newVal = prompt(`Enter manual tape measurement for this segment (Feet):`, currentVal);
+    if (newVal !== null) {
+      setManualMeasurements(prev => ({
+        ...prev,
+        [`seg-${idx}`]: newVal
+      }));
+    }
+  };
 
   const dropCenterPin = () => {
     if (mapInstance) {
@@ -377,7 +453,9 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
         {
           surveyorName,
           location: locationName,
-          clientName
+          clientName,
+          manualArea,
+          manualMeasurements
         }
       );
     } catch (e) {
@@ -441,7 +519,11 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
   };
 
   const undoPoint = () => setPoints(prev => prev.slice(0, -1));
-  const clearPoints = () => setPoints([]);
+  const clearPoints = () => {
+    setPoints([]);
+    setManualMeasurements({});
+    setManualArea('');
+  };
 
   const toggleTracking = () => {
     if (watchId === null) {
@@ -586,6 +668,16 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
                 className="w-full bg-white border border-green-200 rounded-md px-2 py-1.5 text-xs font-bold focus:ring-2 focus:ring-green-500 outline-none"
               />
             </div>
+            <div className="flex-1">
+              <label className="text-[10px] font-black text-blue-700 uppercase mb-1 block italic underline">Manual Measured Area (Actual)</label>
+              <input 
+                type="text" 
+                value={manualArea} 
+                onChange={(e) => setManualArea(e.target.value)}
+                placeholder="e.g. 275.5 Sq Ft"
+                className="w-full bg-blue-50 border border-blue-200 rounded-md px-2 py-1.5 text-xs font-black focus:ring-2 focus:ring-blue-500 outline-none text-blue-800 placeholder:text-blue-300"
+              />
+            </div>
           </div>
         )}
       </div>
@@ -606,6 +698,11 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
           <LocationMarker onPointAdd={addPoint} />
           <GeomanControls setPoints={setPoints} surveyMode={surveyMode} />
           <ProMappingToolbox surveyMode={surveyMode} />
+          <EdgeLabels 
+            points={normalizedPoints[0] || []} 
+            manualMeasurements={manualMeasurements} 
+            onSegmentClick={handleSegmentClick} 
+          />
 
           {normalizedPoints[0] && normalizedPoints[0].length > 0 && normalizedPoints[0].map((p: any, i: number) => (
             p && p.lat && p.lng ? (

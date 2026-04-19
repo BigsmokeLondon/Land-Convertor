@@ -9,7 +9,14 @@ export const generatePDF = (
   points: any, 
   isUrdu: boolean,
   mapImage?: string, // base64
-  metadata?: { surveyorName?: string, location?: string, clientName?: string, notes?: string }
+  metadata?: { 
+    surveyorName?: string, 
+    location?: string, 
+    clientName?: string, 
+    notes?: string,
+    manualArea?: string,
+    manualMeasurements?: Record<string, string>
+  }
 ) => {
   try {
     const t = isUrdu ? translations.ur : translations.en;
@@ -19,10 +26,46 @@ export const generatePDF = (
     
     // Flatten if points is a 2D array of rings
     const flatPoints = (Array.isArray(points[0])) ? points.flat() : points;
+    
     if (!flatPoints || flatPoints.length === 0) {
       alert("No points found to export.");
       return;
     }
+
+    // --- NEW: CALCULATE ADJUSTED AREA FROM TAPE MEASUREMENTS ---
+    let adjustedAreaSqFt = areaSqFt;
+    let hasManualAdjustment = false;
+    if (metadata?.manualMeasurements && Object.keys(metadata.manualMeasurements).length > 0) {
+      let gisTotal = 0;
+      let manualTotal = 0;
+      const pointsArray = (Array.isArray(points[0])) ? points[0] : points;
+      
+      for (let i = 0; i < pointsArray.length; i++) {
+        const p1 = pointsArray[i];
+        const p2 = pointsArray[(i + 1) % pointsArray.length];
+        
+        const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+        const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+        const lat1 = p1.lat * Math.PI / 180;
+        const lat2 = p2.lat * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const gisDist = (6371 * c * 3280.84);
+        
+        const manual = metadata.manualMeasurements[`seg-${i}`];
+        if (manual) {
+          gisTotal += gisDist;
+          manualTotal += parseFloat(manual);
+        }
+      }
+      
+      if (gisTotal > 0 && manualTotal > 0) {
+        const ratio = manualTotal / gisTotal;
+        adjustedAreaSqFt = areaSqFt * (ratio * ratio);
+        hasManualAdjustment = true;
+      }
+    }
+    const finalManualAreaText = metadata?.manualArea || (hasManualAdjustment ? `${adjustedAreaSqFt.toLocaleString(undefined, { maximumFractionDigits: 2 })} Sq Ft (EST)` : null);
 
     // Helper: Header & Branding
     const drawHeader = (doc: jsPDF, title: string) => {
@@ -104,6 +147,13 @@ export const generatePDF = (
     doc.setFontSize(14);
     doc.setTextColor(100, 100, 100);
     doc.text(`≈ ${regionalArea.toFixed(2)} Marla (${regionalName})`, pageWidth - 25, 118, { align: 'right' });
+    
+    if (finalManualAreaText) {
+      doc.setFontSize(10);
+      doc.setTextColor(0, 50, 150);
+      doc.setFont("helvetica", "bold");
+      doc.text(`VERIFIED ON-SITE AREA (ADJUSTED): ${finalManualAreaText}`, 20, 128);
+    }
 
     // Map Image
     if (mapImage) {
@@ -158,15 +208,86 @@ export const generatePDF = (
 
     const finalY = (doc as any).lastAutoTable.finalY || 55;
 
-    // Legal & Certification
-    // Ensure we are on the last page of the table
-    doc.setPage(doc.getNumberOfPages());
-    
-    if (finalY + 60 > pageHeight) {
+    // --- PAGE 3: ON-SITE VERIFICATION ---
+    if (metadata?.manualMeasurements && Object.keys(metadata.manualMeasurements).length > 0) {
       doc.addPage();
-      drawHeader(doc, "Technical Data");
+      drawHeader(doc, "On-Site Verification");
+      
+      doc.setFontSize(10);
+      doc.setTextColor(40, 40, 40);
+      doc.setFont("helvetica", "bold");
+      doc.text("MANUAL TAPE MEASUREMENTS (VERIFIED)", 14, 50);
+      doc.setLineWidth(0.2);
+      doc.line(14, 52, 80, 52);
+
+      const segmentData = [];
+      const pointsArray = (Array.isArray(points[0])) ? points[0] : points;
+      
+      for (let i = 0; i < pointsArray.length; i++) {
+        const p1 = pointsArray[i];
+        const p2 = pointsArray[(i + 1) % pointsArray.length];
+        
+        // haversineDist calculation (repeated here or shared)
+        // For simplicity in the report, using a placeholder if haversine wasn't imported
+        // But we have points, we can calculate.
+        const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+        const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+        const lat1 = p1.lat * Math.PI / 180;
+        const lat2 = p2.lat * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const gisDist = (6371 * c * 3280.84); // ft
+
+        const manual = metadata.manualMeasurements[`seg-${i}`];
+        if (manual) {
+          const manualVal = parseFloat(manual);
+          const variance = manualVal - gisDist;
+          const varPct = (variance / gisDist) * 100;
+
+          segmentData.push([
+            `P${i+1} -> P${((i+1) % pointsArray.length)+1}`,
+            `${gisDist.toFixed(2)} ft`,
+            `${manualVal.toFixed(2)} ft`,
+            `${variance > 0 ? '+' : ''}${variance.toFixed(2)} ft (${varPct.toFixed(1)}%)`
+          ]);
+        }
+      }
+
+      // Explanatory Sentence and Area Box
+      doc.setFontSize(10);
+      doc.setTextColor(40, 40, 40);
+      doc.setFont("helvetica", "normal");
+      const explanation = `Following on-site verification, the boundary lengths were manually adjusted using physical tape measurements, resulting in a corrected actual area of ${finalManualAreaText}.`;
+      const splitExplanation = doc.splitTextToSize(explanation, pageWidth - 28);
+      doc.text(splitExplanation, 14, 60);
+
+      const boxY = 75;
+      if (finalManualAreaText) {
+        doc.setFillColor(230, 240, 255);
+        doc.rect(14, boxY, pageWidth - 28, 22, 'F');
+        doc.setTextColor(0, 50, 150);
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text("VERIFIED MANUAL AREA (ADJUSTED):", 20, boxY + 8);
+        doc.setFontSize(14);
+        doc.text(finalManualAreaText, 20, boxY + 16);
+      }
+
+      // Segment Table
+      autoTable(doc, {
+        startY: boxY + 30,
+        head: [['Boundary Segment', 'GIS Length', 'Manual Tape', 'Variance']],
+        body: segmentData,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 50, 150], textColor: [255, 255, 255] },
+        styles: { fontSize: 9 },
+        margin: { left: 14, right: 14 }
+      });
+
+      const certY = (doc as any).lastAutoTable.finalY + 15;
+      
     }
-    
+
     const currentFinalY = (doc as any).lastAutoTable.finalY || 55;
     const certY = Math.max(currentFinalY + 20, 70);
     
