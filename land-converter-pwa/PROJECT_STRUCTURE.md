@@ -1,4 +1,4 @@
-# 📂 Project Structure: Land Converter Pro
+# 📂 Project Structure: SiteMaster Survey Pro
 
 This document outlines the organization of the codebase, specifically highlighting the integration of the GIS engine and the build automation system.
 
@@ -27,15 +27,18 @@ The primary GIS interface.
 ### 📐 `ConverterTab.tsx` & `AreaCalculatorTab.tsx`
 Handle the mathematical logic for unit conversions using `src/utils/calculations.ts`.
 
-### 🧪 `ReverseLookupTab.tsx` & `VizTab.tsx`
-Provide utility functions for identifying standards and visualizing comparative plot sizes.
+### 🧪 Reverse LookupTab.tsx, VizTab.tsx & AboutTab.tsx
+Provide utility functions for identifying standards, visualizing comparative plot sizes, and tracking version history.
+
+### 🧭 `CompassTool.tsx`
+Self-contained component that listens to `deviceorientation` events to provide a digital compass with a North (N) reference, essential for Patwari map alignment.
 
 ---
 
 ## 🧰 Utilities (`src/utils/`)
 
 - **`calculations.ts`**: Core Haversine and area calculation logic.
-- **`exporting.ts`**: PDF generation (jsPDF) and KML/CSV formatting.
+- **`exporting.ts`**: Professional PDF generation (jsPDF) with support for "Official Measurement Certificates", and KML/CSV formatting. Includes metadata injection for surveyor and client details.
 - **`ExcelExport.ts`**: Specialized handler for Excel-ready coordinate sheets.
 
 ---
@@ -47,9 +50,10 @@ To bypass filesystem locking issues on network/cloud drives during the Rust buil
 - **`Build_Tauri_Desktop_Runner.bat`**: A wrapper that triggers the PowerShell sync.
 - **`Build_Tauri_Desktop.ps1`**:
     1. **Sync**: Uses Robocopy to mirror the `Z:` master to `C:`.
-    2. **Patch**: Automatically updates versions in `package.json` and `tauri.conf.json`.
+    2. **Patch**: Automatically updates versions in `package.json`, `tauri.conf.json`, and `AboutTab.tsx`.
     3. **Build**: Runs Vite build and Tauri compilation on the local high-speed drive.
 
-### Versioning
-- **Current Development**: Version 1.5.0
+### Versioning & State
+- **Current Development**: Version 1.6.0
 - **Standard**: Punjab Revenue Act (225) compliant.
+- **Persistence**: Application utilizes `useLocalStorage` hooks across all tabs to ensure data (points, metadata, settings) survives navigation and reloads.

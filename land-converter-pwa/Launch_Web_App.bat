@@ -1,7 +1,7 @@
 @echo off
-title Land Converter Web Server
-echo ==================================================
-echo   Starting Ultimate Pakistani Land Converter PWA
+title SiteMaster Web Server
+echo =====================================================
+echo   Starting SiteMaster Pro PWA
 echo ==================================================
 echo.
 echo Please keep this black window open while using the app!

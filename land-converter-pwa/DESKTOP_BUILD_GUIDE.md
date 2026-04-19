@@ -1,6 +1,6 @@
-# 🏗️ Desktop Build Guide: Land Converter Pro
+# 🏗️ Desktop Build Guide: SiteMaster Survey Pro
 
-This guide explains how to compile the Land Converter standalone Windows application (.exe) using the integrated Tauri and PowerShell automation pipeline.
+This guide explains how to compile the SiteMaster standalone Windows application (.exe) using the integrated Tauri and PowerShell automation pipeline.
 
 ---
 
@@ -20,7 +20,7 @@ The project includes a robust automation script to handle the complexities of cl
 Double-click the **`Build_Tauri_Desktop_Runner.bat`** file in the root directory.
 
 ### Step 2: Input Version
-A GUI prompt will appear asking for the build version (e.g., `1.5.0`).
+A GUI prompt will appear asking for the build version (e.g., `1.6.0`).
 - The script automatically patches `package.json`, `tauri.conf.json`, and the `AboutTab.tsx` UI with this version.
 
 ### Step 3: Local Drive Synchronization (The Bridge)

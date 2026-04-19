@@ -1,8 +1,8 @@
-# 🌍 Land Converter Pro (v1.5.0)
+# 🌍 SiteMaster Pro (v1.6.0)
 
-**The Ultimate Land Measurement & GIS Suite for Pakistan.**
+**The Professional GIS Field Surveying & Mapping Suite.**
 
-A high-performance Professional Web App (PWA) and Desktop Tool (Tauri) designed for precise land conversion, boundary surveying, and official report generation using Pakistan's legal and traditional standards.
+A high-performance Professional Web App (PWA) and Desktop Tool (Tauri) designed for precise land conversion, boundary surveying, and official report generation using global GIS standards and regional legal scales.
 
 ---
 
@@ -13,21 +13,22 @@ A high-performance Professional Web App (PWA) and Desktop Tool (Tauri) designed 
 - **LDA/Revenue Standards**: Support for 250, 272, and 272.25 scales.
 - **Bi-Lingual**: Full support for English and Urdu with real-time switching.
 
-### 🗺️ Pro Mapping Toolbox
+### 🗺️ Pro Mapping Toolbox (v1.6 Optimized)
 - **Continuous Draw**: Plot complex polygons with real-time area/perimeter calculations.
-- **Node Editing**: Drag and drop existing boundary points to refine surveys.
-- **Hole Cutting**: Subtract unwanted areas (roads, buildings) from larger plots.
-- **Satellite Capture**: High-resolution map screenshots with perfectly aligned overlays.
+- **Node Editing**: Drag and drop existing boundary points to refine surveys instantly.
+- **Holes & Cutting**: Subtract unwanted areas (roads, buildings, "Gali") from larger plots.
+- **Satellite Capture**: High-resolution map screenshots with 2x canvas scaling.
 
 ### 📊 Professional Exports
-- **Official PDF Report**: Branded data sheets with point coordinates and legal disclaimers.
-- **GIS Boundary (KML)**: Export your data directly to Google Earth.
+- **Official Measurement Certificate**: Professional PDF reports with Surveyor, Client, and Location metadata.
+- **GIS Boundary (KML)**: Export polygons directly to Google Earth Pro.
 - **Coordinate Sheet (CSV)**: Export raw GPS data for Excel.
 
 ### 🔍 Utility Suite
+- **Digital Compass**: Integrated orientation tool with North (N) alignment.
 - **Reverse Lookup**: Identify standards based on square footage.
-- **Compass Tool**: Integrated field orientation.
-- **Data Persistence**: "Offline First" architecture—your pins and notes stay even after a refresh.
+- **Map Diagnostics**: Instant view repair and localized storage reset for data stability.
+- **Sticky Persistence**: "Offline First" architecture—automatically saves report metadata and survey points.
 
 ---
 

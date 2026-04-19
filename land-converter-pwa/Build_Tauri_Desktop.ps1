@@ -14,8 +14,8 @@ Add-Type -AssemblyName Microsoft.VisualBasic
 Add-Type -AssemblyName System.Windows.Forms
 
 function Get-VersionInput {
-    $title = "Land Converter - Build Version"
-    $msg = "Enter build version (e.g. 1.5.0):"
+    $title = "SiteMaster Pro - Build Version"
+    $msg = "Enter build version (e.g. 1.6.0):"
     $val = [Microsoft.VisualBasic.Interaction]::InputBox($msg, $title, "1.5.0")
     if ([string]::IsNullOrWhiteSpace($val)) {
         Write-Host "[ERROR] Version input cancelled or empty." -ForegroundColor Red
@@ -34,7 +34,7 @@ function Confirm-Build {
 # --- PROCESS START ---
 Clear-Host
 Write-Host "=====================================================" -ForegroundColor Cyan
-Write-Host "  LAND CONVERTER - TAURI DESKTOP BUILD SCRIPT (PS)" -ForegroundColor Cyan
+Write-Host "  SITEMASTER PRO - DESKTOP BUILD SCRIPT" -ForegroundColor Cyan
 Write-Host "=====================================================" -ForegroundColor Cyan
 
 $VERSION = Get-VersionInput
@@ -96,18 +96,20 @@ if (-not (Test-Path "node_modules\@tauri-apps\cli")) {
 
 # 5. Build Web Assets
 Write-Host "[5/6] Building Web assets (Vite)..." -ForegroundColor Cyan
-npm run build
+# Redirect stderr to stdout (2>&1) to prevent PowerShell from crashing on warnings
+npm run build 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERROR] Web build failed." -ForegroundColor Red
+    Write-Host "[ERROR] Web build failed with exit code $LASTEXITCODE" -ForegroundColor Red
     exit 1
 }
 
 # 6. Build Tauri Installer
 Write-Host "[6/6] Building Tauri desktop app (Rust)..." -ForegroundColor Cyan
 Write-Host "      This may take 5-15 minutes on the first run."
-npm run tauri:build
+# Redirect stderr to stdout (2>&1) to prevent PowerShell from crashing on warnings
+npm run tauri:build 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERROR] Tauri build failed." -ForegroundColor Red
+    Write-Host "[ERROR] Tauri build failed with exit code $LASTEXITCODE" -ForegroundColor Red
     exit 1
 }
 

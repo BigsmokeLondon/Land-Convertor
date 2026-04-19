@@ -424,7 +424,7 @@ export function MapSurveyTab({ regionalDenominator }: { regionalDenominator: num
     if (!searchQuery.trim() || !mapInstance) return;
     setIsSearching(true);
     try {
-      const query = searchQuery.toLowerCase().includes('pakistan') ? searchQuery : `${searchQuery}, Pakistan`;
+      const query = searchQuery;
       const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
       const data = await response.json();
       if (data && data.length > 0) {

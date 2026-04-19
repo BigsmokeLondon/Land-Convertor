@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Land Converter",
-  "version": "1.5.0",
-  "identifier": "com.pakland.converter",
+  "productName": "SiteMaster Pro",
+  "version": "1.6.0",
+  "identifier": "com.sitemaster.pro",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Ultimate Pak Land Survey Tool",
+        "title": "SiteMaster Pro",
         "width": 1280,
         "height": 800,
         "resizable": true,

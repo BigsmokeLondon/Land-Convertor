@@ -7,9 +7,9 @@ export function AboutTab() {
       <div className="bg-gradient-to-br from-[#1B5E20] to-[#2E7D32] text-white p-6 rounded-2xl shadow-lg">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-black tracking-tight leading-tight mb-1">ULTIMATE PAKISTANI<br />LAND CONVERTER</h2>
-            <p className="text-green-200 text-xs font-semibold">Patwari / Lawyer / Field Surveyor Reference Tool</p>
-            <p className="text-green-300 text-[10px] mt-1">Punjab Revenue Act Compliant · Lahore LDA Aware</p>
+            <h2 className="text-xl font-black tracking-tight leading-tight mb-1">SITEMASTER PRO</h2>
+            <p className="text-green-200 text-xs font-semibold">Professional Field Surveying & Mapping Suite</p>
+            <p className="text-green-300 text-[10px] mt-1">Global GIS Ready · Multi-Standard Support</p>
           </div>
           <div className="text-right flex-shrink-0">
             <span className="bg-white/20 text-white text-[10px] font-black px-2 py-1 rounded-full">v{version}</span>
@@ -21,8 +21,8 @@ export function AboutTab() {
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
         <h3 className="text-base font-bold text-[#1976D2] mb-2">🔷 Purpose</h3>
         <p className="text-sm leading-relaxed text-gray-600">
-          This application provides instant, professionally accurate land unit conversions for Pakistani revenue officials, lawyers, and property professionals.
-          It solves the critical problem of measurement confusion between three competing regional standards used across Punjab.
+          This application provides instant, professionally accurate land unit conversions for field surveyors, real estate developers, and civil engineers.
+          It handles complex geometric calculations and multi-regional standards with high-precision GIS tools.
         </p>
       </div>
 
@@ -111,7 +111,7 @@ export function AboutTab() {
                 <li><strong>📏 Path Mode</strong> — measures cumulative boundary length in feet and metres as you walk</li>
                 <li><strong>🛰 SAT / 🗺 MAP Toggle</strong> — switch between ESRI satellite imagery and OpenStreetMap</li>
                 <li><strong>📍 Auto-Follow</strong> — keep the map centered on your position during surveys</li>
-                <li><strong>City Search</strong> — fly to any Pakistani city or region by name</li>
+                <li><strong>City Search</strong> — fly to any city or global region by name</li>
                 <li><strong>Digital Compass with N marker</strong> — align with Patwari north/south orientation</li>
                 <li><strong>Screenshot, KML and PDF exports</strong> — field-ready documentation</li>
               </ul>

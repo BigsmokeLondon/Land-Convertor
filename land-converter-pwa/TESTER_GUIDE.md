@@ -1,11 +1,11 @@
-# 🗺️ Tester’s Guide: Land Converter Pro
-**Version:** 1.5.0
+# 🗺️ Tester’s Guide: SiteMaster Pro
+**Version:** 1.6.0
 **Focus:** Accuracy, Pro Mapping Toolbox, and High-Res Reporting
 
 ---
 
 ## 1. App Introduction
-The **Land Converter Pro** is a specialized utility designed for land measurement and GIS surveying, specifically following Pakistan's legal standards. It includes a synchronized GIS engine (Geoman + Turf) for field operations and professional report exporting.
+The **SiteMaster Pro** is a specialized utility designed for land measurement and GIS surveying. It includes a synchronized GIS engine (Geoman + Turf) for field operations and professional report exporting.
 
 ---
 
@@ -18,30 +18,28 @@ The **Land Converter Pro** is a specialized utility designed for land measuremen
 
 ## 3. Key Features to Test
 
-### 📍 Pro Mapping Toolbox (New in 1.5.0)
-1. **Draw Mode (+ Icon):** Enable the plus icon. It should turn green. Plot 4+ points to create a shape.
-2. **Node Editing (Pin Icon):** Enable the pin icon. It should turn blue. Drag any existing corner of your polygon. The area at the top should update instantly.
+### 📍 Pro Mapping Toolbox (v1.6 Optimized)
+1. **Continuous Draw Mode (+ Icon):** Enable the plus icon (turns green). Plot 4+ points to create a shape. Verify the map doesn't jitter during high-speed sketching.
+2. **Node Editing (Pin Icon):** Enable the pin icon (turns blue). Drag any existing corner. The area at the top should update instantly.
 3. **Cutting Mode (Trash/Cut Icon):** Select a polygon, then use the cut tool to draw a "hole" inside it. Verify that the total area calculation subtracts the hole correctly.
 
-### 📸 High-Res Screenshots
-1. Create a complex survey with several markers and a polygon.
-2. Click the **Camera** button.
-3. **Verification:** Open the downloaded image.
-    *   Are the markers perfectly aligned with the map?
-    *   Are the zoom/attribution buttons hidden in the image?
-    *   Is the image clear (High-res 2x scaling)?
+### 📏 Export Suites & Professional Reports
+1. **Report Details (+) Button:** Click the green plus button in the top-right. Enter a Surveyor Name and Client Name.
+2. **Metadata Persistence:** Switch to the Converter tab and back. Verify the names you entered are still there.
+3. **Official PDF Export:** Click the Save (Disk) icon. Open the PDF.
+    - **Verification:** Does it say "OFFICIAL MEASUREMENT CERTIFICATE"? Do your names appear in the metadata rows? Is there a coordinate table on page 2?
+4. **KML Export:** Import the resulting KML into Google Earth Pro to verify the geometry matches perfectly.
 
-### 📏 Export Suites
-1. **PDF Report:** Verify the points table includes all coordinates.
-2. **KML Export:** Import the resulting KML into Google Earth to verify the geometry matches.
-3. **CSV Export:** Verify the latitudes/longitudes are correct in Excel.
+### 🧭 Field Utilities
+1. **Digital Compass:** On a mobile device, rotate the phone. Verify the compass icon tracks North correctly.
+2. **Repair Map (Wrench):** If the map seems "shifted" or stuck, tap the Red Wrench button in the search bar. The app should reload and reset centering logic.
 
 ---
 
 ## 4. Edge Cases to Verify
-*   **The "Warming Up" Check:** Upon first launch, you should see a brief "Bootstrapping..." screen. This ensures you never enter the map with broken tools.
-*   **Dual-Layer Polygons:** Ensure cutting a hole inside a polygon correctly updates both the Sq Ft and Marla counts.
-*   **Search Fly-To:** Use the search bar for "Lahore, Pakistan". Verify the map centers correctly and doesn't break any active drawing modes.
+*   **The "Bootstrapping" Screen:** Upon first launch (or after a reset), you should see a brief "Bootstrapping GIS..." screen.
+*   **Hole Cutting:** Ensure cutting a hole inside a polygon correctly subtracts the area. Try cutting a triangular hole in a square.
+*   **Search Fly-To:** Use the search bar for "Lahore, Pakistan". Verify the map fly-to animation is smooth and centers correctly.
 
 ---
 

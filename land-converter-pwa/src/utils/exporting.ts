@@ -32,7 +32,7 @@ export const generatePDF = (
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
       doc.setFont("helvetica", "bold");
-      doc.text("LAND CONVERTER PRO", 14, 18);
+      doc.text("SITEMASTER PRO", 14, 18);
       
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
@@ -216,7 +216,7 @@ export const generateConverterPDF = (results: any) => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
     doc.setFont("helvetica", "bold");
-    doc.text("LAND CONVERTER PRO", 14, 18);
+    doc.text("SITEMASTER PRO", 14, 18);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text("UNITS CONVERSION REPORT", 14, 25);
@@ -267,7 +267,7 @@ export const generateConverterPDF = (results: any) => {
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
     doc.setFont("helvetica", "normal");
-    doc.text("Software developed by M.A. Industries Inc. | Land Converter Pro v2.4", 14, pageHeight - 12);
+    doc.text("Professional Software by M.A. Industries Inc. | SiteMaster Pro v1.6", 14, pageHeight - 12);
 
     doc.save(`Conversion_Report_${new Date().getTime()}.pdf`);
 

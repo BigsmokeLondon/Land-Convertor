@@ -14,9 +14,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Pakistani Land Converter PWA',
-        short_name: 'Land Converter',
-        description: 'Ultimate Pakistani Land Converter - Legal & Traditional',
+        name: 'SiteMaster Pro',
+        short_name: 'SiteMaster Pro',
+        description: 'Professional GIS Field Surveying & Multi-Standard Land Converter',
         theme_color: '#2E7D32',
         background_color: '#E8F5E9',
         display: 'standalone',
