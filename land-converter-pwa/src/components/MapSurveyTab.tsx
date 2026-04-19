@@ -370,7 +370,8 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
   const [surveyorName, setSurveyorName] = useLocalStorage('la_report_surveyor', '');
   const [locationName, setLocationName] = useLocalStorage('la_report_location', '');
   const [clientName, setClientName] = useLocalStorage('la_report_client', '');
-  const [manualArea, setManualArea] = useLocalStorage<string>('la_manual_area', '');
+  const [manualAdjustments, setManualAdjustments] = useLocalStorage<{label: string, value: string}[]>('la_manual_adjustments', []);
+  const totalManualArea = manualAdjustments.reduce((sum, adj) => sum + (parseFloat(adj.value) || 0), 0);
   const [manualMeasurements, setManualMeasurements] = useLocalStorage<Record<string, string>>('la_manual_measurements', {});
   const [isExporting, setIsExporting] = useState(false);
   const [showMeta, setShowMeta] = useState(false);
@@ -503,9 +504,9 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
         mapImage,
         {
           surveyorName,
-          location: locationName,
+          locationName,
           clientName,
-          manualArea,
+          manualAdjustments,
           manualMeasurements
         }
       );
@@ -745,15 +746,56 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
                 className="w-full bg-white border border-green-200 rounded-md px-2 py-1.5 text-xs font-bold focus:ring-2 focus:ring-green-500 outline-none"
               />
             </div>
-            <div className="flex-1">
-              <label className="text-[10px] font-black text-blue-700 uppercase mb-1 block italic underline">Manual Measured Area (Actual)</label>
-              <input 
-                type="text" 
-                value={manualArea} 
-                onChange={(e) => setManualArea(e.target.value)}
-                placeholder="e.g. 275.5 Sq Ft"
-                className="w-full bg-blue-50 border border-blue-200 rounded-md px-2 py-1.5 text-xs font-black focus:ring-2 focus:ring-blue-500 outline-none text-blue-800 placeholder:text-blue-300"
-              />
+            <div className="flex-[2]">
+              <label className="text-[10px] font-black text-blue-700 uppercase mb-1 block italic underline">Manual Adjustments Log (Corrections)</label>
+              <div className="space-y-2">
+                {manualAdjustments.map((adj, idx) => (
+                  <div key={idx} className="flex gap-1 items-center animate-in slide-in-from-left-2 duration-300">
+                    <input 
+                      type="text" 
+                      value={adj.label} 
+                      onChange={(e) => {
+                        const newAdj = [...manualAdjustments];
+                        newAdj[idx].label = e.target.value;
+                        setManualAdjustments(newAdj);
+                      }}
+                      placeholder="e.g. Correction North"
+                      className="flex-1 bg-white border border-blue-200 rounded px-2 py-1 text-[10px] font-bold focus:ring-1 focus:ring-blue-500 outline-none"
+                    />
+                    <input 
+                      type="number" 
+                      value={adj.value} 
+                      onChange={(e) => {
+                        const newAdj = [...manualAdjustments];
+                        newAdj[idx].value = e.target.value;
+                        setManualAdjustments(newAdj);
+                      }}
+                      placeholder="Sq Ft"
+                      className="w-16 bg-blue-50 border border-blue-200 rounded px-2 py-1 text-[10px] font-black focus:ring-1 focus:ring-blue-500 outline-none"
+                    />
+                    <button 
+                      onClick={() => setManualAdjustments(prev => prev.filter((_, i) => i !== idx))}
+                      className="text-red-400 hover:text-red-600 p-1"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))}
+                
+                <button 
+                  onClick={() => setManualAdjustments(prev => [...prev, { label: '', value: '' }])}
+                  className="w-full py-1 border border-dashed border-blue-300 rounded text-[10px] font-bold text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-1"
+                >
+                  <Plus size={10} /> Add Site Correction
+                </button>
+
+                {manualAdjustments.length > 0 && (
+                  <div className="pt-1 mt-1 border-t border-blue-100 flex justify-between items-center text-[11px] font-black text-blue-800 uppercase">
+                    <span>Total Verified:</span>
+                    <span className="bg-blue-100 px-2 py-0.5 rounded">{totalManualArea.toLocaleString()} Sq Ft</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

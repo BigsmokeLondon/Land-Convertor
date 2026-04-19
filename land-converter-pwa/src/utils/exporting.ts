@@ -11,10 +11,10 @@ export const generatePDF = (
   mapImage?: string, // base64
   metadata?: { 
     surveyorName?: string, 
-    location?: string, 
+    locationName?: string, 
     clientName?: string, 
     notes?: string,
-    manualArea?: string,
+    manualAdjustments?: { label: string, value: string }[],
     manualMeasurements?: Record<string, string>
   }
 ) => {
@@ -65,7 +65,20 @@ export const generatePDF = (
         hasManualAdjustment = true;
       }
     }
-    const finalManualAreaText = metadata?.manualArea || (hasManualAdjustment ? `${adjustedAreaSqFt.toLocaleString(undefined, { maximumFractionDigits: 2 })} Sq Ft (EST)` : null);
+
+    let finalAreaSqFt = adjustedAreaSqFt;
+    let hasVerification = hasManualAdjustment;
+
+    if (metadata?.manualAdjustments && metadata.manualAdjustments.length > 0) {
+      const logSum = metadata.manualAdjustments.reduce((sum, adj) => sum + (parseFloat(adj.value) || 0), 0);
+      if (logSum > 0) {
+        finalAreaSqFt = logSum;
+        hasVerification = true;
+      }
+    }
+
+    const finalAreaMarla = finalAreaSqFt / regionalArea;
+    const finalManualAreaText = hasVerification ? `${finalAreaSqFt.toLocaleString(undefined, { maximumFractionDigits: 2 })} Sq Ft (${finalAreaMarla.toFixed(2)} ${regionalName})` : null;
 
     // Helper: Header & Branding
     const drawHeader = (doc: jsPDF, title: string) => {
@@ -129,7 +142,7 @@ export const generatePDF = (
     addMetaRow("Date:", new Date().toLocaleDateString('en-GB'));
     addMetaRow("Surveyor Name:", metadata?.surveyorName || "____________________");
     addMetaRow("Client Property:", metadata?.clientName || "____________________");
-    addMetaRow("Survey Location:", metadata?.location || "____________________");
+    addMetaRow("Survey Location:", metadata?.locationName || "____________________");
 
     // Summary Box
     doc.setFillColor(245, 248, 245);
@@ -277,18 +290,47 @@ export const generatePDF = (
         doc.text(finalManualAreaText, 20, boxY + 16);
       }
 
-      // Segment Table
-      autoTable(doc, {
-        startY: boxY + 30,
-        head: [['Boundary Segment', 'GIS Length', 'Manual Tape', 'Variance']],
-        body: segmentData,
-        theme: 'grid',
-        headStyles: { fillColor: [0, 50, 150], textColor: [255, 255, 255] },
-        styles: { fontSize: 9 },
-        margin: { left: 14, right: 14 }
-      });
+      // Segment Table (Manual Tape Measures)
+      let nextTableY = boxY + 30;
+      if (segmentData.length > 0) {
+        autoTable(doc, {
+          startY: nextTableY,
+          head: [['Boundary Segment', 'GIS Length', 'Manual Tape', 'Variance']],
+          body: segmentData,
+          theme: 'grid',
+          headStyles: { fillColor: [0, 50, 150], textColor: [255, 255, 255] },
+          styles: { fontSize: 9 },
+          margin: { left: 14, right: 14 }
+        });
+        nextTableY = (doc as any).lastAutoTable.finalY + 15;
+      }
 
-      
+      // Area Adjustments Log Table (Verified site corrections)
+      if (metadata?.manualAdjustments && metadata.manualAdjustments.length > 0) {
+        doc.setFontSize(10);
+        doc.setTextColor(0, 50, 150);
+        doc.setFont("helvetica", "bold");
+        doc.text("SITE AREA ADJUSTMENTS LOG", 14, nextTableY);
+        
+        const adjData = metadata.manualAdjustments.map(adj => [
+          adj.label || "Site Correction",
+          `${(parseFloat(adj.value) || 0).toLocaleString()} sq ft`
+        ]);
+
+        autoTable(doc, {
+          startY: nextTableY + 5,
+          head: [['Adjustment Detail', 'Measured Value']],
+          body: [
+            ['GIS Base Calculation', `${areaSqFt.toLocaleString()} sq ft`],
+            ...adjData,
+            [{ content: 'FINAL VERIFIED TOTAL', styles: { fontStyle: 'bold' } }, { content: `${finalAreaSqFt.toLocaleString()} sq ft`, styles: { fontStyle: 'bold' } }]
+          ],
+          theme: 'striped',
+          headStyles: { fillColor: [0, 50, 150], textColor: [255, 255, 255] },
+          styles: { fontSize: 9 },
+          margin: { left: 14, right: 14 }
+        });
+      }
     }
 
     const currentFinalY = (doc as any).lastAutoTable.finalY || 55;
