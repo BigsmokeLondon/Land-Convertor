@@ -584,7 +584,7 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
   const clearPoints = () => {
     setPoints([]);
     setManualMeasurements({});
-    setManualArea('');
+    setManualAdjustments([]);
   };
 
   const toggleTracking = () => {
