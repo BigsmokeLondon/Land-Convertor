@@ -6,12 +6,13 @@ const getTurf = () => (window as any).turf;
 
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { MapContainer, TileLayer, Marker, Polygon, Polyline, useMapEvents, useMap } from 'react-leaflet';
-import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search, Copy, Check, Plus } from 'lucide-react';
+import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search, Copy, Check, Plus, DownloadCloud, CloudOff } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import * as L_Local from 'leaflet';
 import html2canvas from 'html2canvas';
 import { generateKML, generatePDF, generateCSV } from '../utils/exporting';
 import { CompassTool } from './CompassTool';
+import { getTilesInRadius, getTileUrl } from '../utils/tileMath';
 
 
 // Area calculation via Turf.js
@@ -219,7 +220,7 @@ function GeomanControls({
   return null;
 }
 
-function ProMappingToolbox({ surveyMode }: { surveyMode: 'area' | 'path' }) {
+function ProMappingToolbox({ surveyMode, onPreCache, isCaching }: { surveyMode: 'area' | 'path', onPreCache: () => void, isCaching: boolean }) {
   const map = useMap();
   const [activeDraw, setActiveDraw] = useState(false);
   const [activeEdit, setActiveEdit] = useState(false);
@@ -320,6 +321,14 @@ function ProMappingToolbox({ surveyMode }: { surveyMode: 'area' | 'path' }) {
           <Trash2 size={20} />
         </button>
       )}
+      <button
+        onClick={(e) => { e.stopPropagation(); onPreCache(); }}
+        disabled={isCaching}
+        className={`w-10 h-10 flex items-center justify-center rounded-lg shadow-md border active:scale-95 transition-all bg-white text-orange-600 border-gray-200 hover:bg-orange-50 ${isCaching ? 'animate-pulse opacity-50' : ''}`}
+        title="Download Region for Offline Use"
+      >
+        <DownloadCloud size={20} />
+      </button>
     </div>
   );
 }
@@ -365,6 +374,48 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
   const [manualMeasurements, setManualMeasurements] = useLocalStorage<Record<string, string>>('la_manual_measurements', {});
   const [isExporting, setIsExporting] = useState(false);
   const [showMeta, setShowMeta] = useState(false);
+  const [cachingProgress, setCachingProgress] = useState<{current: number, total: number} | null>(null);
+
+  const preCacheCurrentRegion = async () => {
+    if (!mapInstance) return;
+    const center = mapInstance.getCenter();
+    const radiusKm = 2; // User approved deciding radius
+    const zooms = [14, 15, 16, 17, 18]; // Detail levels
+    
+    let allTiles: any[] = [];
+    zooms.forEach(z => {
+      allTiles = [...allTiles, ...getTilesInRadius(center, radiusKm, z)];
+    });
+
+    const total = allTiles.length * 2; // satellite + street
+    let current = 0;
+    setCachingProgress({ current: 0, total });
+
+    // We process in small chunks to avoid overwhelming the browser/IP
+    const chunkSize = 20;
+    for (let i = 0; i < allTiles.length; i += chunkSize) {
+      const chunk = allTiles.slice(i, i + chunkSize);
+      await Promise.all(chunk.map(async (tile) => {
+        // Fetch both styles
+        try {
+          await Promise.all([
+            fetch(getTileUrl(tile, 'satellite'), { mode: 'no-cors' }),
+            fetch(getTileUrl(tile, 'street'), { mode: 'no-cors' })
+          ]);
+          current += 2;
+          setCachingProgress({ current, total });
+        } catch (e) {
+          current += 2; // Still progress even if one fails
+          setCachingProgress({ current, total });
+        }
+      }));
+      // Small pause between chunks
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    alert(`Offline cache complete! ~${total} tiles saved for this 2km region.`);
+    setCachingProgress(null);
+  };
 
   const repairMap = () => {
     localStorage.removeItem('la_map_center');
@@ -588,6 +639,22 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
 
   return (
     <div id="map-survey-capture-area" className="flex flex-col h-[calc(100vh-180px)] md:h-[600px] w-full relative bg-gray-50 rounded-xl overflow-hidden mb-8 shadow-inner border border-gray-200">
+      {/* Offline Caching Progress Overlay */}
+      {cachingProgress && (
+        <div className="absolute inset-0 z-[2000] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-white">
+          <DownloadCloud size={48} className="animate-bounce mb-4 text-orange-400" />
+          <h3 className="text-xl font-bold mb-2">Downloading Offline Maps...</h3>
+          <p className="text-sm text-gray-300 mb-6 text-center">We are saving a 2km region around your current location for offline field use.</p>
+          <div className="w-full max-w-xs bg-gray-700 h-3 rounded-full overflow-hidden mb-2">
+            <div 
+              className="bg-orange-500 h-full transition-all duration-300" 
+              style={{ width: `${(cachingProgress.current / cachingProgress.total) * 100}%` }}
+            />
+          </div>
+          <span className="text-xs font-mono">{cachingProgress.current} / {cachingProgress.total} Tiles</span>
+        </div>
+      )}
+
       <div className="bg-white shadow z-[1001] border-b border-gray-200 relative">
         <div className="p-3 flex justify-between items-center gap-2">
           <div className="flex-shrink-0">
@@ -707,7 +774,7 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
           )}
           <LocationMarker onPointAdd={addPoint} />
           <GeomanControls setPoints={setPoints} surveyMode={surveyMode} />
-          <ProMappingToolbox surveyMode={surveyMode} />
+          <ProMappingToolbox surveyMode={surveyMode} onPreCache={preCacheCurrentRegion} isCaching={!!cachingProgress} />
           <EdgeLabels 
             points={normalizedPoints[0] || []} 
             manualMeasurements={manualMeasurements} 
