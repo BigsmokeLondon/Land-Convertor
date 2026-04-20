@@ -6,7 +6,7 @@ const getTurf = () => (window as any).turf;
 
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { MapContainer, TileLayer, Marker, Polygon, Polyline, useMapEvents, useMap } from 'react-leaflet';
-import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search, Copy, Check, Plus, DownloadCloud } from 'lucide-react';
+import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search, Copy, Check, Plus, DownloadCloud, Upload } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import * as L_Local from 'leaflet';
 import html2canvas from 'html2canvas';
@@ -16,10 +16,21 @@ import { getTilesInRadius, getTileUrl } from '../utils/tileMath';
 
 
 // Area calculation via Turf.js
+// KML and Shapefile Parsing via CDN
+// KML and Shapefile Parsing via CDN
+const getShp = () => (window as any).shp;
+const getGeojsonKml = () => (window as any).toGeoJSON?.kml;
+
+// Emergency Glue: Bind Leaflet globally if not already set
+if (typeof window !== 'undefined') {
+  (window as any).L = (window as any).L || L_Local;
+}
+
 const calculateAreaSqFt = (rings: any[][]) => {
   const turf = getTurf();
+  if (!turf) return 0;
   try {
-    if (!turf || !rings || rings.length === 0 || rings[0].length < 3) return 0;
+    if (!rings || rings.length === 0 || !Array.isArray(rings[0]) || rings[0].length < 3) return 0;
     
     const geoJSONRings = rings.map(ring => {
       const closed = [...ring.map(p => [p.lng, p.lat])];
@@ -354,8 +365,9 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
   const [mapInstance, setMapInstance] = useState<L_Local.Map | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [mapStyle, setMapStyle] = useLocalStorage<'satellite' | 'street'>('la_map_style', 'satellite');
-  const [surveyMode, setSurveyMode] = useLocalStorage<'area' | 'path'>('la_map_mode', 'area');
+  const [poiPoints, setPoiPoints] = useLocalStorage<{lat: number, lng: number, label: string, id: string}[]>('la_map_poi_points', []);
+  const [mapStyle, setMapStyle] = useLocalStorage<'satellite' | 'street' | 'topo'>('la_map_style', 'satellite');
+  const [surveyMode, setSurveyMode] = useLocalStorage<'area' | 'path' | 'poi'>('la_map_mode', 'area');
   const [centerCoords, setCenterCoords] = useLocalStorage<{lat: number, lng: number}>('la_map_center', { lat: 31.3675, lng: 74.2048 });
   
   const safeCenter: [number, number] = [
@@ -420,8 +432,12 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
 
   const repairMap = () => {
     localStorage.removeItem('la_map_center');
+    localStorage.removeItem('la_map_points');
+    localStorage.removeItem('la_map_poi_points');
     localStorage.removeItem('la_map_style');
     localStorage.removeItem('la_active_tab');
+    localStorage.removeItem('la_manual_measurements');
+    localStorage.removeItem('la_manual_adjustments');
     window.location.reload();
   };
 
@@ -464,10 +480,84 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
     }
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    try {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      let importedPoints: any[] = [];
+      
+      if (extension === 'zip') {
+        const shp = getShp();
+        if (!shp) { alert("Shapefile parser is still loading, please try again."); return; }
+        const buffer = await file.arrayBuffer();
+        const geojson = await shp(buffer);
+        const features = Array.isArray(geojson) ? geojson[0].features : geojson.features;
+        
+        features.forEach((feature: any) => {
+           if (feature.geometry && feature.geometry.coordinates) {
+             const flatCoords = feature.geometry.coordinates.flat(Infinity);
+             for(let i=0; i<flatCoords.length; i+=2) {
+               importedPoints.push({ lng: flatCoords[i], lat: flatCoords[i+1] });
+             }
+           }
+        });
+      } else if (extension === 'kml') {
+        const kmlParser = getGeojsonKml();
+        if (!kmlParser) { alert("KML parser is still loading, please try again."); return; }
+        const text = await file.text();
+        const dom = new DOMParser().parseFromString(text, 'text/xml');
+        const geojson = kmlParser(dom);
+        
+        geojson.features.forEach((feature: any) => {
+           if (feature.geometry && feature.geometry.coordinates) {
+             const flatCoords = feature.geometry.coordinates.flat(Infinity);
+             for(let i=0; i<flatCoords.length; i+=2) {
+               // togeojson KML gives [lng, lat, elevation?]
+               importedPoints.push({ lng: flatCoords[i], lat: flatCoords[i+1] });
+             }
+           }
+        });
+      }
+      
+      if (importedPoints.length > 0) {
+        setPoints(prev => {
+          const safePrev = Array.isArray(prev) ? prev : [];
+          // If the existing data is a flat array, wrap it in a ring first
+          const normalizedPrev = (safePrev.length > 0 && !Array.isArray(safePrev[0])) 
+            ? [safePrev] 
+            : safePrev;
+          
+          if (normalizedPrev.length === 0) return [importedPoints];
+          return [...normalizedPrev, importedPoints]; // Append as a new distinct ring
+        });
+        if (mapInstance && importedPoints[0]) {
+           mapInstance.flyTo([importedPoints[0].lat, importedPoints[0].lng], 16);
+        }
+      } else {
+        alert("No visible coordinates found in the file.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error importing file. Make sure it's a valid KML or zipped Shapefile.");
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const dropCenterPin = () => {
     if (mapInstance) {
       const center = mapInstance.getCenter();
-      addPoint({ lat: center.lat, lng: center.lng });
+      if (surveyMode === 'poi') {
+        const label = prompt("Enter POI Label (e.g., Tree, Well, Corner):", "New Marker");
+        if (label !== null) {
+          setPoiPoints(prev => [...prev, { lat: center.lat, lng: center.lng, label, id: Date.now().toString() }]);
+        }
+      } else {
+        addPoint({ lat: center.lat, lng: center.lng });
+      }
     }
   };
 
@@ -621,8 +711,20 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const safePoints = Array.isArray(points) ? points : [];
-  const normalizedPoints = (safePoints.length > 0 && Array.isArray(safePoints[0])) ? safePoints : [safePoints];
+  // STAGE 1: Ensure points is an array
+  const rawPoints = Array.isArray(points) ? points : [];
+  
+  // STAGE 2: Deep Sanitization - ensure every point is a valid {lat, lng} object
+  const sanitizeRing = (ring: any[]) => {
+    if (!Array.isArray(ring)) return [];
+    return ring.filter(p => p && typeof p.lat === 'number' && typeof p.lng === 'number' && !isNaN(p.lat) && !isNaN(p.lng));
+  };
+
+  // STAGE 3: Normalize to Multi-Ring structure
+  const normalizedPoints: any[][] = (rawPoints.length > 0 && Array.isArray(rawPoints[0])) 
+    ? rawPoints.map(sanitizeRing).filter(r => r.length > 0)
+    : [sanitizeRing(rawPoints)].filter(r => r.length > 0);
+
   const areaSqFt = calculateAreaSqFt(normalizedPoints);
   const perimeterFt = calculatePerimeterFt(normalizedPoints[0] || []);
   const areaMarla = areaSqFt / (regionalDenominator || 225);
@@ -702,6 +804,12 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
             <button onClick={captureScreenshot} className="p-2 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100 active:scale-95" title="Save Screenshot"><Camera size={18} /></button>
             <button onClick={() => generateCSV(normalizedPoints)} disabled={normalizedPoints.flat().length < 1} className="p-2 bg-amber-50 text-amber-700 rounded-lg border border-amber-100 disabled:opacity-50" title="CSV"><Check size={18} /></button>
             <button onClick={() => generateKML(normalizedPoints)} disabled={normalizedPoints.flat().length < 3} className="p-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 disabled:opacity-50" title="KML"><Download size={18} /></button>
+            <div className="relative flex">
+              <input type="file" accept=".kml,.zip" ref={fileInputRef} onChange={handleFileUpload} className="hidden" id="gis-file-upload" />
+              <label htmlFor="gis-file-upload" className="cursor-pointer p-2 bg-teal-50 text-teal-700 rounded-lg border border-teal-100 active:scale-95 flex items-center justify-center" title="Import KML/SHP">
+                <Upload size={18} />
+              </label>
+            </div>
             <button 
               onClick={exportToProfessionalPDF} 
               disabled={normalizedPoints.flat().length < 3 || isExporting} 
@@ -816,6 +924,13 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
               maxZoom={19} 
               crossOrigin=""
             />
+          ) : mapStyle === 'topo' ? (
+            <TileLayer 
+              attribution='&copy; OpenTopoMap' 
+              url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png" 
+              maxZoom={17} 
+              crossOrigin=""
+            />
           ) : (
             <TileLayer 
               attribution='&copy; OpenStreetMap' 
@@ -825,13 +940,33 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
             />
           )}
           <LocationMarker onPointAdd={addPoint} />
-          <GeomanControls setPoints={setPoints} surveyMode={surveyMode} />
-          <ProMappingToolbox surveyMode={surveyMode} onPreCache={preCacheCurrentRegion} isCaching={!!cachingProgress} />
+          <GeomanControls setPoints={setPoints} surveyMode={surveyMode as any} />
+          <ProMappingToolbox surveyMode={surveyMode as any} onPreCache={preCacheCurrentRegion} isCaching={!!cachingProgress} />
           <EdgeLabels 
             points={normalizedPoints[0] || []} 
             manualMeasurements={manualMeasurements} 
             onSegmentClick={handleSegmentClick} 
           />
+
+          {poiPoints.map(poi => (
+            <Marker
+              key={poi.id}
+              position={[poi.lat, poi.lng]}
+              icon={L_Local.divIcon({
+                className: 'custom-poi',
+                html: `<div style="background-color:#EF4444;color:white;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:bold;white-space:nowrap;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);">📍 ${poi.label}</div>`,
+                iconSize: [0,0],
+                iconAnchor: [12,24]
+              })}
+              eventHandlers={{
+                dblclick: () => {
+                  if(window.confirm(`Delete POI: ${poi.label}?`)) {
+                    setPoiPoints(prev => prev.filter(p => p.id !== poi.id));
+                  }
+                }
+              }}
+            />
+          ))}
 
           {normalizedPoints[0] && normalizedPoints[0].length > 0 && normalizedPoints[0].map((p: any, i: number) => (
             p && p.lat && p.lng ? (
@@ -873,10 +1008,10 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
 
         <div className="absolute top-2 right-2 z-[500]">
           <button 
-            onClick={(e) => { e.stopPropagation(); setMapStyle(s => s === 'satellite' ? 'street' : 'satellite'); }} 
+            onClick={(e) => { e.stopPropagation(); setMapStyle(s => s === 'satellite' ? 'street' : s === 'street' ? 'topo' : 'satellite'); }} 
             className="flex items-center gap-1 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-gray-300 text-[10px] font-black pointer-events-auto"
           >
-            {mapStyle === 'satellite' ? '🛰 SAT' : '🗺 MAP'}
+            {mapStyle === 'satellite' ? '🛰 SAT' : mapStyle === 'topo' ? '⛰ TOPO' : '🗺 MAP'}
           </button>
         </div>
         <div className="absolute top-12 right-2 z-[500]">
@@ -909,7 +1044,7 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
           <button onClick={toggleTracking} className={`w-16 h-16 rounded-full shadow-2xl border-4 border-white active:scale-95 ${tracking ? 'bg-red-500 animate-pulse' : 'bg-blue-600'}`}>{tracking ? <Navigation size={28} /> : <MapPin size={28} />}</button>
         </div>
         <div className="flex flex-col gap-2 pointer-events-auto items-center">
-          <button onClick={() => { setSurveyMode(m => m === 'area' ? 'path' : 'area'); clearPoints(); }} className={`w-12 h-12 flex flex-col items-center justify-center rounded-full shadow-lg border-2 text-[9px] font-black transition-colors ${surveyMode === 'path' ? 'bg-red-500 text-white' : 'bg-white text-gray-700'}`}>{surveyMode === 'area' ? '📐' : '📏'} <span>{surveyMode === 'area' ? 'AREA' : 'PATH'}</span></button>
+          <button onClick={() => { setSurveyMode(m => m === 'area' ? 'path' : m === 'path' ? 'poi' : 'area'); }} className={`w-12 h-12 flex flex-col items-center justify-center rounded-full shadow-lg border-2 text-[9px] font-black transition-colors ${surveyMode === 'path' ? 'bg-red-500 text-white' : surveyMode === 'poi' ? 'bg-orange-500 text-white' : 'bg-white text-gray-700'}`}>{surveyMode === 'area' ? '📐' : surveyMode === 'path' ? '📏' : '📍'} <span>{surveyMode === 'area' ? 'AREA' : surveyMode === 'path' ? 'PATH' : 'POI'}</span></button>
         </div>
       </div>
     </div>
