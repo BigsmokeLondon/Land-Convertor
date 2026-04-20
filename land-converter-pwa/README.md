@@ -1,4 +1,4 @@
-# 🌍 Arena SitePro (v1.6.0)
+# 🌍 Arena SitePro (v1.6.2)
 
 **The Professional GIS Field Surveying & Mapping Suite.**
 
@@ -13,14 +13,17 @@ A high-performance Professional Web App (PWA) and Desktop Tool (Tauri) designed 
 - **LDA/Revenue Standards**: Support for 250, 272, and 272.25 scales.
 - **Bi-Lingual**: Full support for English and Urdu with real-time switching.
 
-### 🗺️ Pro Mapping Toolbox (v1.6 Optimized)
+### 🗺️ Pro Mapping Toolbox (v1.6.2 Optimized)
+- **Shapefile & KML Import**: Professional support for zipped `.shp` and Google Earth `.kml` overlays.
 - **Continuous Draw**: Plot complex polygons with real-time area/perimeter calculations.
 - **Node Editing**: Drag and drop existing boundary points to refine surveys instantly.
 - **Holes & Cutting**: Subtract unwanted areas (roads, buildings, "Gali") from larger plots.
+- **Deep Sanitizer 2.0**: Specialized coordinate filtering that prevents app crashes from malformed GIS datasets.
 - **Satellite Capture**: High-resolution map screenshots with 2x canvas scaling.
 - **Manual Tape Measurements**: Click boundary edges to input actual physical tape readings for on-site verification.
-- **Offline Map Support**: Regional pre-caching (2km radius) and lazy-caching for field work without signal.
+- **Offline Map Support**: Regional pre-caching (2km radius) and lazy-caching for fieldwork without signal.
 - **GPS Search Paste**: Paste coordinates directly into the search bar for instant, precision navigation.
+- **System Safe Mode**: Intelligent startup recovery that bypasses corrupted local memory.
 
 ### 📊 Professional Exports
 - **Official Measurement Certificate**: Professional PDF reports with Surveyor, Client, and Location metadata.

@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useLocalStorage } from './hooks/useLocalStorage';
-// REDEPLOY PING: Restoring yesterday's stable version - cache invalidate
 import { translations } from './locales';
 import { Settings, BarChart2, Calculator, ArrowLeftRight, Info, Map as MapIcon, Globe, NotebookPen } from 'lucide-react';
 import { ConverterTab } from './components/ConverterTab';
@@ -24,30 +23,37 @@ export default function App() {
   const [region, setRegion] = useLocalStorage('la_region', REGIONAL_STANDARDS[0]);
   const [converterHistory, setConverterHistory] = useLocalStorage<any[]>('la_converter_history', []);
   
-  // Debug Persistence & Sanitization
   useEffect(() => {
     const validTabs = ['map', 'area', 'converter', 'lookup', 'viz', 'notes', 'about'];
     if (!validTabs.includes(activeTab)) {
-      console.warn('Invalid tab detected, resetting to map:', activeTab);
       setActiveTab('map');
     }
     
-    // Ensure region is valid and matches its reference
     if (!region || typeof region.unit === 'undefined') {
        setRegion(REGIONAL_STANDARDS[0]);
     } else {
        const matched = REGIONAL_STANDARDS.find(r => r.unit === region.unit);
        if (!matched) {
-          console.warn('Invalid region detected, resetting to default:', region);
           setRegion(REGIONAL_STANDARDS[0]);
-       } else {
-          // Identity sync (ensures region === REGIONAL_STANDARDS[i])
+       } else if (region !== matched) {
           setRegion(matched);
        }
     }
 
-    console.log('App Mounted & Sanitized. Active Tab:', activeTab);
-  }, []);
+    // SANITIZE POINTS: Prevent crash from Shapefile corruption
+    try {
+      const storedPoints = localStorage.getItem('la_map_points');
+      if (storedPoints) {
+        const parsed = JSON.parse(storedPoints);
+        if (!Array.isArray(parsed)) {
+          localStorage.setItem('la_map_points', '[]');
+          window.location.reload();
+        }
+      }
+    } catch (e) {
+       localStorage.setItem('la_map_points', '[]');
+    }
+  }, [region]);
   
   const t = isUrdu ? translations.ur : translations.en;
 
@@ -75,10 +81,10 @@ export default function App() {
             <select 
               value={region?.unit || 225}
               onChange={(e) => setRegion(REGIONAL_STANDARDS.find(r => r.unit === Number(e.target.value))!)}
-              className="bg-white/10 text-white border border-white/30 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-white flex-1 md:w-auto option-text-dark"
+              className="bg-white/10 text-white border border-white/30 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-white flex-1 md:w-auto text-gray-900"
             >
               {REGIONAL_STANDARDS.map(r => (
-                <option key={r.id} value={r.unit} className="text-gray-900">{r.name} ({r.unit} sq ft)</option>
+                <option key={r.id} value={r.unit}>{r.name} ({r.unit} sq ft)</option>
               ))}
             </select>
             <button 
@@ -93,26 +99,30 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-4xl mx-auto p-3 md:p-6 bg-white md:rounded-xl md:shadow-sm md:mt-4">
-        {activeTab === 'map' && <MapSurveyTab regionalDenominator={region.unit} regionalName={region.name} />}
-        {activeTab === 'converter' && <ConverterTab t={t} initialHistory={converterHistory} onHistoryUpdate={setConverterHistory} />}
+        {activeTab === 'map' && <MapSurveyTab regionalDenominator={region?.unit || 225} regionalName={region?.name || 'Marla'} />}
+        {activeTab === 'converter' && (
+          <ConverterTab 
+            t={t} 
+            initialHistory={converterHistory} 
+            onHistoryUpdate={setConverterHistory} 
+          />
+        )}
         {activeTab === 'viz' && <VizTab data={converterHistory} />}
         {activeTab === 'lookup' && <ReverseLookupTab />}
-        {activeTab === 'area' && <AreaCalculatorTab t={t} regionalDenominator={region.unit} />}
+        {activeTab === 'area' && <AreaCalculatorTab t={t} regionalDenominator={region?.unit || 225} />}
         {activeTab === 'notes' && <NotesTab />}
         {activeTab === 'about' && <AboutTab />}
       </main>
 
-      {/* Mobile Bottom Navigation (Scrollable internally) */}
-      <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 md:hidden flex overflow-x-auto p-2 pb-safe z-50 snap-x">
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 w-full bg-white border-t border-gray-200 md:hidden flex overflow-x-auto p-2 pb-safe z-50">
         {tabs.map(tab => (
           <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex flex-col items-center min-w-[72px] p-2 rounded-xl transition-colors snap-center ${activeTab === tab.id ? 'text-[#2E7D32] bg-green-50 shadow-inner' : 'text-gray-500'}`}
+            className={`flex flex-col items-center min-w-[72px] p-2 rounded-xl transition-colors ${activeTab === tab.id ? 'text-[#2E7D32] bg-green-50 shadow-inner' : 'text-gray-500'}`}
           >
-            <div className={`transition-transform duration-200 ${activeTab === tab.id ? 'scale-110' : 'scale-100'}`}>
-              {tab.icon}
-            </div>
+            {tab.icon}
             <span className="text-[9px] mt-1 font-bold whitespace-nowrap">{tab.label}</span>
           </button>
         ))}

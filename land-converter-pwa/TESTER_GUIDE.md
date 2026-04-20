@@ -1,5 +1,5 @@
 # 🗺️ Tester’s Guide: Arena SitePro
-**Version:** 1.6.0
+**Version:** 1.6.2
 **Focus:** Accuracy, Pro Mapping Toolbox, and High-Res Reporting
 
 ---
@@ -10,22 +10,33 @@ The **Arena SitePro** is a specialized utility designed for land measurement and
 ---
 
 ## 2. Technical Anatomy
-*   **Synchronized GIS Bootstrap:** The app uses a sequential bootstrapper in `main.tsx`. It waits for Turf and Geoman to load from CDN and patch the global Leaflet instance before launching the UI.
-*   **Pro Mapping Toolbox:** Built using Leaflet-Geoman, allowing for multi-ring polygon support and interactive node editing.
-*   **Canvas-First Rendering:** Vectors (polygons/lines) are rendered on a canvas for 100% screenshot alignment accuracy.
+*   **GIS Engine Restoration:** The app uses a global Leaflet bridge to ensure absolute compatibility between the React bundle and external CDN plugins (Turf, Geoman).
+*   **Deep Sanitizer 2.0:** Every coordinate imported via Shapefile or KML is passed through a high-performance sanitization ring to ensure geometry stability and performance.
+*   **System Safe Mode:** A resilient startup architecture that monitors for initialization crashes and auto-recovers by sanitizing corrupted memory state.
 
 ---
 
 ## 3. Key Features to Test
 
-### 📍 Pro Mapping Toolbox (v1.6 Optimized)
+### 📂 GIS Data Import (v1.6.2 New)
+1. **Zipped Shapefile (↑ Icon):** Prepare a `.zip` archive containing `.shp`, `.shx`, and `.dbf` files. Drag or select the file using the upload icon in the Map tab.
+    - **Verification**: Does the map automatically fly to the location? Does the area calculation update instantly?
+2. **KML Overlay:** Import a `.kml` file. Verify that the boundaries match your Google Earth references.
+3. **Multi-Ring Import**: Test a Shapefile that contains multiple polygons. Verify the "Deep Sanitizer" correctly separates them into distinct survey segments.
+
+### 📍 Pro Mapping Toolbox (v1.6.2 Optimized)
 1. **Continuous Draw Mode (+ Icon):** Enable the plus icon (turns green). Plot 4+ points to create a shape. Verify the map doesn't jitter during high-speed sketching.
 2. **Node Editing (Pin Icon):** Enable the pin icon (turns blue). Drag any existing corner. The area at the top should update instantly.
 3. **Cutting Mode (Trash/Cut Icon)**: Select a polygon, then use the cut tool to draw a "hole" inside it. Verify that the total area calculation subtracts the hole correctly.
 4. **Manual Tape Input**: Click on a boundary edge (not a corner). An input prompt should appear. Enter "100" (ft). Verify that a "T: 100.00 ft" label appears at the midpoint of that segment.
 5. **GPS Coordinate Search**: Paste `31.5204, 74.3587` into the search bar. The map should fly directly to that point without needing Nominatim results.
 
-### 📏 Export Suites & Professional Reports
+### 🛡️ Resilience & Safe Mode
+1. **Startup Crash Recovery**: Force-insert broken JSON into the `la_map_points` key in LocalStorage. Refresh the app.
+    - **Verification**: Does the app automatically detect the corruption, clear the memory, and launch safely?
+2. **CDN Fallback**: If the internet is slow, verify the "Bootstrapping GIS..." screen appears until the engines are fully initialized.
+
+### 📊 Export Suites & Professional Reports
 1. **Report Details (+) Button:** Click the green plus button in the top-right. Enter a Surveyor Name and Client Name.
 2. **Metadata Persistence:** Switch to the Converter tab and back. Verify the names you entered are still there.
 3. **Official PDF Export**: Click the Save (Disk) icon. Open the PDF.

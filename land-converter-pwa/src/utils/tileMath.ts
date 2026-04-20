@@ -16,9 +16,13 @@ export function latLngToTile(lat: number, lng: number, zoom: number): TileXYZ {
   return { x, y, z: zoom };
 }
 
-export function getTileUrl(tile: TileXYZ, type: 'satellite' | 'street'): string {
+export function getTileUrl(tile: TileXYZ, type: 'satellite' | 'street' | 'topo'): string {
   if (type === 'satellite') {
     return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${tile.z}/${tile.y}/${tile.x}`;
+  }
+  if (type === 'topo') {
+    const s = ['a', 'b', 'c'][Math.floor(Math.random() * 3)];
+    return `https://${s}.tile.opentopomap.org/${tile.z}/${tile.x}/${tile.y}.png`;
   }
   // For OSM, we use a random sub-domain a, b, or c
   const s = ['a', 'b', 'c'][Math.floor(Math.random() * 3)];
