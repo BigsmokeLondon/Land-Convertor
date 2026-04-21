@@ -35,28 +35,23 @@ interface POI {
 }
 
 function POIMarker({ poi, setPoiPoints }: { poi: POI, setPoiPoints: React.Dispatch<React.SetStateAction<POI[]>> }) {
-  const [localLabel, setLocalLabel] = useState(poi.label);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const divRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-      if (!poi.label) {
-        setTimeout(() => textareaRef.current?.focus(), 150);
-      }
+    if (divRef.current && !poi.label) {
+      setTimeout(() => divRef.current?.focus(), 150);
     }
   }, []);
 
   const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
     const text = e.currentTarget.textContent || '';
-    setLocalLabel(text);
     setPoiPoints(prev => prev.map(p => p.id === poi.id ? { ...p, label: text } : p));
   };
 
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
-    setLocalLabel(e.currentTarget.textContent || '');
+    // Value is synced on blur for performance, but we can track if needed.
   };
+
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -113,7 +108,9 @@ function POIMarker({ poi, setPoiPoints }: { poi: POI, setPoiPoints: React.Dispat
         >
 
           <div 
+            ref={divRef}
             contentEditable
+
             suppressContentEditableWarning
             onBlur={handleBlur}
             onInput={handleInput}
