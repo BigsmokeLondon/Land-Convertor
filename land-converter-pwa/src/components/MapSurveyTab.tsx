@@ -48,9 +48,10 @@ function POIMarker({ poi, setPoiPoints }: { poi: POI, setPoiPoints: React.Dispat
     setPoiPoints(prev => prev.map(p => p.id === poi.id ? { ...p, label: text } : p));
   };
 
-  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+  const handleInput = () => {
     // Value is synced on blur for performance, but we can track if needed.
   };
+
 
 
   const handleDelete = (e: React.MouseEvent) => {
