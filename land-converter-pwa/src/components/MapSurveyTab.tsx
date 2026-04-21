@@ -5,7 +5,8 @@ const getTurf = () => (window as any).turf;
 // Bridge global L for TS visibility
 
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { MapContainer, TileLayer, Marker, Polygon, Polyline, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polygon, Polyline, useMapEvents, useMap, Tooltip } from 'react-leaflet';
+
 import { Save, Download, MapPin, Navigation, Trash2, RotateCcw, Crosshair, Camera, Search, Copy, Check, Plus, DownloadCloud, Upload } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import * as L_Local from 'leaflet';
@@ -21,10 +22,152 @@ import { getTilesInRadius, getTileUrl } from '../utils/tileMath';
 const getShp = () => (window as any).shp;
 const getGeojsonKml = () => (window as any).toGeoJSON?.kml;
 
-// Emergency Glue: Bind Leaflet globally if not already set
+// Emergency Glue: Bind Leaflet globally so CDN plugins can find it
 if (typeof window !== 'undefined') {
-  (window as any).L = (window as any).L || L_Local;
+  (window as any).L = L_Local;
 }
+
+interface POI {
+  lat: number;
+  lng: number;
+  label: string;
+  id: string;
+}
+
+function POIMarker({ poi, setPoiPoints }: { poi: POI, setPoiPoints: React.Dispatch<React.SetStateAction<POI[]>> }) {
+  const [localLabel, setLocalLabel] = useState(poi.label);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      if (!poi.label) {
+        setTimeout(() => textareaRef.current?.focus(), 150);
+      }
+    }
+  }, []);
+
+  const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+    const text = e.currentTarget.textContent || '';
+    setLocalLabel(text);
+    setPoiPoints(prev => prev.map(p => p.id === poi.id ? { ...p, label: text } : p));
+  };
+
+  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+    setLocalLabel(e.currentTarget.textContent || '');
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPoiPoints(prev => prev.filter(p => p.id !== poi.id));
+  };
+
+
+  return (
+    <Marker
+      position={[poi.lat, poi.lng]}
+      draggable={true}
+      eventHandlers={{
+        dragend: (e) => {
+          const { lat, lng } = e.target.getLatLng();
+          setPoiPoints(prev => prev.map(p => p.id === poi.id ? { ...p, lat, lng } : p));
+        }
+      }}
+      bubblingMouseEvents={false}
+      icon={L_Local.divIcon({
+        className: 'poi-pin-icon',
+        html: `<div style="font-size: 24px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); cursor: move; transform: translateY(-10px);">📍</div>`,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0]
+      })}
+    >
+
+      <Tooltip 
+        permanent 
+        interactive 
+        direction="top" 
+        offset={[0, -20]} 
+        className="premium-poi-tooltip"
+        opacity={1}
+      >
+        <div className="poi-label-bubble" 
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          style={{
+            background: 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(8px)',
+            border: '1.5px solid white',
+            borderRadius: '8px',
+            padding: '4px 10px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            minWidth: '60px',
+            maxWidth: '220px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            position: 'relative',
+            pointerEvents: 'auto'
+          }}
+        >
+
+          <div 
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={handleBlur}
+            onInput={handleInput}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              fontSize: '11px',
+              fontWeight: 800,
+              color: '#1a1a1a',
+              width: '100%',
+              minHeight: '1.2em',
+              lineHeight: 1.2,
+              padding: 0,
+              margin: 0,
+              fontFamily: 'inherit',
+              pointerEvents: 'auto',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word'
+            }}
+          >{poi.label}</div>
+
+          <button 
+            onClick={handleDelete}
+            data-html2canvas-ignore="true"
+            style={{
+
+              position: 'absolute',
+              top: '-8px',
+              right: '-8px',
+              width: '20px',
+              height: '20px',
+              background: '#ef4444',
+              color: 'white',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              border: '2px solid white',
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+              pointerEvents: 'auto',
+              zIndex: 1000
+            }}
+          >✕</button>
+        </div>
+      </Tooltip>
+    </Marker>
+  );
+}
+
+
 
 const calculateAreaSqFt = (rings: any[][]) => {
   const turf = getTurf();
@@ -70,7 +213,12 @@ const calculatePerimeterFt = (points: any[]): number => {
   return total;
 };
 
-function LocationMarker({ onPointAdd }: { onPointAdd: (latlng: any) => void }) {
+function LocationMarker({ onPointAdd, surveyMode, onPoiAdd }: { 
+  onPointAdd: (latlng: any) => void, 
+  surveyMode: string, 
+  onPoiAdd: (latlng: any) => void 
+}) {
+
   const map = useMap();
   useMapEvents({
     click(e) {
@@ -83,8 +231,13 @@ function LocationMarker({ onPointAdd }: { onPointAdd: (latlng: any) => void }) {
       if (isDrawing || isEditing) return;
 
       if (e && e.latlng) {
-        onPointAdd(e.latlng);
+        if (surveyMode === 'poi') {
+          onPoiAdd(e.latlng);
+        } else {
+          onPointAdd(e.latlng);
+        }
       }
+
     },
   });
   return null;
@@ -236,37 +389,48 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching }: { surveyMode: 
   const [activeDraw, setActiveDraw] = useState(false);
   const [activeEdit, setActiveEdit] = useState(false);
   const [activeCut, setActiveCut] = useState(false);
+  const [engineReady, setEngineReady] = useState(false);
+
   
   const getPM = () => {
+    if (!map) return null;
     // @ts-ignore
     let pm = map.pm || map.PM;
+    
+    // If not on map, try to initialize manually from global L.PM
     if (!pm && (window as any).L?.PM) {
        try {
+         // Force initialization of Geoman on this map instance
          // @ts-ignore
-         pm = new (window as any).L.PM.Map(map);
-       } catch (e) {}
+         new (window as any).L.PM.Map(map);
+         // @ts-ignore
+         pm = map.pm || map.PM;
+       } catch (e) {
+         console.warn("Geoman auto-init failed:", e);
+       }
     }
     return pm;
   };
+
 
   // Sync internal UI state with Geoman actual state
   useEffect(() => {
     const interval = setInterval(() => {
       const pm = getPM();
       if (pm) {
+        setEngineReady(true);
         setActiveDraw(!!pm.Draw.getActiveShape());
         setActiveEdit(!!(pm.globalEditModeEnabled && pm.globalEditModeEnabled()));
       }
     }, 500);
+
     return () => clearInterval(interval);
   }, [map]);
   
   const toggleDraw = () => {
     const pm = getPM();
-    if (!pm) {
-      alert("GIS Engine is still warming up... Please wait a few seconds.");
-      return;
-    }
+    if (!pm) return;
+
     const isDraw = pm.Draw.getActiveShape();
     if (isDraw) {
       pm.disableDraw();
@@ -283,10 +447,8 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching }: { surveyMode: 
 
   const toggleEdit = () => {
     const pm = getPM();
-    if (!pm) {
-      alert("GIS Engine is still warming up...");
-      return;
-    }
+    if (!pm) return;
+
     pm.toggleGlobalEditMode();
     setActiveEdit(!activeEdit);
     if (pm.Draw.getActiveShape()) pm.disableDraw();
@@ -307,22 +469,28 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching }: { surveyMode: 
     }
   }, []);
 
+  const pmAvailable = engineReady;
+
+
   return (
     <div ref={toolboxRef} className="absolute top-24 right-2 z-[500] flex flex-col gap-2 pointer-events-auto">
       <button
         onClick={(e) => { e.stopPropagation(); toggleDraw(); }}
-        className={`w-10 h-10 flex items-center justify-center rounded-lg shadow-md border active:scale-95 transition-all ${activeDraw ? 'bg-green-600 text-white border-green-700' : 'bg-white text-green-700 border-gray-200 hover:bg-green-50'}`}
-        title="Continuous Draw Mode"
+        disabled={!pmAvailable}
+        className={`w-10 h-10 flex items-center justify-center rounded-lg shadow-md border active:scale-95 transition-all ${!pmAvailable ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-wait' : activeDraw ? 'bg-green-600 text-white border-green-700' : 'bg-white text-green-700 border-gray-200 hover:bg-green-50'}`}
+        title={pmAvailable ? "Continuous Draw Mode" : "GIS Engine Loading..."}
       >
-        <Plus size={20} />
+        {pmAvailable ? <Plus size={20} /> : <RotateCcw size={16} className="animate-spin" />}
       </button>
       <button
         onClick={(e) => { e.stopPropagation(); toggleEdit(); }}
-        className={`w-10 h-10 flex items-center justify-center rounded-lg shadow-md border active:scale-95 transition-all ${activeEdit ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-blue-700 border-gray-200 hover:bg-blue-50'}`}
-        title="Edit / Drag Nodes"
+        disabled={!pmAvailable}
+        className={`w-10 h-10 flex items-center justify-center rounded-lg shadow-md border active:scale-95 transition-all ${!pmAvailable ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-wait' : activeEdit ? 'bg-blue-600 text-white border-blue-700' : 'bg-white text-blue-700 border-gray-200 hover:bg-blue-50'}`}
+        title={pmAvailable ? "Edit / Drag Nodes" : "GIS Engine Loading..."}
       >
         <MapPin size={20} />
       </button>
+
       {surveyMode === 'area' && (
         <button
           onClick={(e) => { e.stopPropagation(); toggleCut(); }}
@@ -388,8 +556,60 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
   const [isExporting, setIsExporting] = useState(false);
   const [showMeta, setShowMeta] = useState(false);
   const [cachingProgress, setCachingProgress] = useState<{current: number, total: number} | null>(null);
+  const [pluginsLoaded, setPluginsLoaded] = useState(false);
+
+
+  // --- NEW: DYNAMIC GIS PLUGIN LOADER ---
+  useEffect(() => {
+    const scripts = [
+      { id: 'gis-turf', url: 'https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js' },
+      { id: 'gis-geoman', url: 'https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.js' },
+      { id: 'gis-shp', url: 'https://unpkg.com/shpjs@latest/dist/shp.js' },
+      { id: 'gis-kml', url: 'https://unpkg.com/@mapbox/togeojson@0.16.0/togeojson.js' }
+    ];
+    
+    const css = [
+      { id: 'gis-geoman-css', url: 'https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.css' }
+    ];
+
+    // Inject CSS
+    css.forEach(c => {
+      if (!document.getElementById(c.id)) {
+        const link = document.createElement('link');
+        link.id = c.id;
+        link.rel = 'stylesheet';
+        link.href = c.url;
+        document.head.appendChild(link);
+      }
+    });
+
+    // Inject Scripts Sequentially
+    const loadScripts = async () => {
+      for (const s of scripts) {
+        if (!document.getElementById(s.id)) {
+          await new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.id = s.id;
+            script.src = s.url;
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = resolve; // Continue even if one fails
+            document.head.appendChild(script);
+          });
+        }
+      }
+      console.log("GIS Plugins Loaded Dynamically");
+      setPluginsLoaded(true);
+    };
+
+
+    loadScripts();
+  }, []);
+
+
 
   const preCacheCurrentRegion = async () => {
+
     if (!mapInstance) return;
     const center = mapInstance.getCenter();
     const radiusKm = 2; // User approved deciding radius
@@ -551,15 +771,19 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
     if (mapInstance) {
       const center = mapInstance.getCenter();
       if (surveyMode === 'poi') {
-        const label = prompt("Enter POI Label (e.g., Tree, Well, Corner):", "New Marker");
-        if (label !== null) {
-          setPoiPoints(prev => [...prev, { lat: center.lat, lng: center.lng, label, id: Date.now().toString() }]);
-        }
+        const newPoi = { 
+          lat: center.lat, 
+          lng: center.lng, 
+          label: '', // Empty label to start, user will type inline
+          id: Date.now().toString() 
+        };
+        setPoiPoints(prev => [...prev, newPoi]);
       } else {
         addPoint({ lat: center.lat, lng: center.lng });
       }
     }
   };
+
 
   const exportToProfessionalPDF = async () => {
     const element = document.getElementById('map-survey-capture-area');
@@ -729,9 +953,10 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
   const perimeterFt = calculatePerimeterFt(normalizedPoints[0] || []);
   const areaMarla = areaSqFt / (regionalDenominator || 225);
 
-  const turfAvailable = !!getTurf();
+  const turfAvailable = !!getTurf() || pluginsLoaded;
 
   if (!turfAvailable) {
+
     return (
       <div className="flex flex-col items-center justify-center h-[500px] bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
         <RotateCcw size={40} className="animate-spin text-green-600 mb-4" />
@@ -767,11 +992,26 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
             <div className="flex items-baseline gap-1.5 flex-wrap">
               {surveyMode === 'area' ? (
                 <>
-                  <h2 className="text-lg md:text-2xl font-black text-[#2E7D32]">{areaSqFt.toFixed(2)}</h2>
-                  <span className="text-sm font-bold text-gray-600">Sq Ft</span>
+                  <div className="flex flex-col">
+                    <div className="flex items-baseline gap-1.5">
+                      <h2 className="text-lg md:text-2xl font-black text-[#2E7D32]">{areaSqFt.toFixed(2)}</h2>
+                      <span className="text-sm font-bold text-gray-600 underline decoration-green-200">Raw GIS</span>
+                    </div>
+                    {totalManualArea !== 0 && (
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${totalManualArea > 0 ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
+                          {totalManualArea > 0 ? '+' : ''}{totalManualArea.toLocaleString()} SQ FT CORRECTION
+                        </span>
+                        <h2 className="text-sm md:text-base font-black text-gray-900">
+                          = {(areaSqFt + totalManualArea).toFixed(2)} SQ FT FINAL
+                        </h2>
+                      </div>
+                    )}
+                  </div>
                   {perimeterFt > 0 && (
-                    <span className="text-sm font-black text-red-600 whitespace-nowrap">{perimeterFt.toFixed(1)} ft</span>
+                    <span className="ml-auto text-sm font-black text-red-600 self-center">{perimeterFt.toFixed(1)} ft</span>
                   )}
+
                 </>
               ) : (
                 <>
@@ -939,7 +1179,15 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
               crossOrigin=""
             />
           )}
-          <LocationMarker onPointAdd={addPoint} />
+          <LocationMarker 
+            onPointAdd={addPoint} 
+            surveyMode={surveyMode} 
+            onPoiAdd={(latlng) => {
+              const newPoi = { lat: latlng.lat, lng: latlng.lng, label: '', id: Date.now().toString() };
+              setPoiPoints(prev => [...prev, newPoi]);
+            }}
+          />
+
           <GeomanControls setPoints={setPoints} surveyMode={surveyMode as any} />
           <ProMappingToolbox surveyMode={surveyMode as any} onPreCache={preCacheCurrentRegion} isCaching={!!cachingProgress} />
           <EdgeLabels 
@@ -949,24 +1197,15 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
           />
 
           {poiPoints.map(poi => (
-            <Marker
-              key={poi.id}
-              position={[poi.lat, poi.lng]}
-              icon={L_Local.divIcon({
-                className: 'custom-poi',
-                html: `<div style="background-color:#EF4444;color:white;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:bold;white-space:nowrap;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);">📍 ${poi.label}</div>`,
-                iconSize: [0,0],
-                iconAnchor: [12,24]
-              })}
-              eventHandlers={{
-                dblclick: () => {
-                  if(window.confirm(`Delete POI: ${poi.label}?`)) {
-                    setPoiPoints(prev => prev.filter(p => p.id !== poi.id));
-                  }
-                }
-              }}
+            <POIMarker 
+              key={poi.id} 
+              poi={poi} 
+              setPoiPoints={setPoiPoints} 
             />
           ))}
+
+
+
 
           {normalizedPoints[0] && normalizedPoints[0].length > 0 && normalizedPoints[0].map((p: any, i: number) => (
             p && p.lat && p.lng ? (

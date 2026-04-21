@@ -1,5 +1,5 @@
 # 🗺️ Tester’s Guide: Arena SitePro
-**Version:** 1.6.2
+**Version:** 1.6.3
 **Focus:** Accuracy, Pro Mapping Toolbox, and High-Res Reporting
 
 ---
@@ -24,12 +24,18 @@ The **Arena SitePro** is a specialized utility designed for land measurement and
 2. **KML Overlay:** Import a `.kml` file. Verify that the boundaries match your Google Earth references.
 3. **Multi-Ring Import**: Test a Shapefile that contains multiple polygons. Verify the "Deep Sanitizer" correctly separates them into distinct survey segments.
 
-### 📍 Pro Mapping Toolbox (v1.6.2 Optimized)
+### 📍 Pro Mapping Toolbox (v1.6.3 Optimized)
 1. **Continuous Draw Mode (+ Icon):** Enable the plus icon (turns green). Plot 4+ points to create a shape. Verify the map doesn't jitter during high-speed sketching.
 2. **Node Editing (Pin Icon):** Enable the pin icon (turns blue). Drag any existing corner. The area at the top should update instantly.
 3. **Cutting Mode (Trash/Cut Icon)**: Select a polygon, then use the cut tool to draw a "hole" inside it. Verify that the total area calculation subtracts the hole correctly.
-4. **Manual Tape Input**: Click on a boundary edge (not a corner). An input prompt should appear. Enter "100" (ft). Verify that a "T: 100.00 ft" label appears at the midpoint of that segment.
-5. **GPS Coordinate Search**: Paste `31.5204, 74.3587` into the search bar. The map should fly directly to that point without needing Nominatim results.
+4. **Point of Interest (POI/Pin Location Icon)**: 
+    - **Creation**: Click the blue map-pin icon. Click anywhere on the map. A "Glassmorphism" bubble should appear.
+    - **Typing**: Click inside the bubble and type. The bubble should auto-expand to fit your text.
+    - **Dragging**: Drag the 📍 pin to a new location. The note bubble should follow.
+    - **Deletion**: Click the small red "✕" on the bubble. The marker should vanish.
+5. **Manual Tape Input**: Click on a boundary edge (not a corner). An input prompt should appear. Enter "100" (ft). Verify that a "T: 100.00 ft" label appears at the midpoint of that segment.
+6. **GPS Coordinate Search**: Paste `31.5204, 74.3587` into the search bar. The map should fly directly to that point without needing Nominatim results.
+
 
 ### 🛡️ Resilience & Safe Mode
 1. **Startup Crash Recovery**: Force-insert broken JSON into the `la_map_points` key in LocalStorage. Refresh the app.
@@ -41,6 +47,7 @@ The **Arena SitePro** is a specialized utility designed for land measurement and
 2. **Metadata Persistence:** Switch to the Converter tab and back. Verify the names you entered are still there.
 3. **Official PDF Export**: Click the Save (Disk) icon. Open the PDF.
     - **Verification**: Does it say "OFFICIAL MEASUREMENT CERTIFICATE"? Do your names appear in the metadata rows? Is there a coordinate table on page 2?
+    - **POI Capture**: Ensure any Site Notes (POIs) you added are visible on the map screenshot in the PDF. The red "✕" button should be hidden for a clean look.
     - **Manual Verification Page**: If you entered Tape measurements, verify there is an "On-Site Verification" page. Check that the "Verified Manual Area" box at the top matches your expectations.
 4. **KML Export**: Import the resulting KML into Google Earth Pro to verify the geometry matches perfectly.
 

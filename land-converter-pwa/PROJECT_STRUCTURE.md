@@ -9,7 +9,9 @@ This document outlines the organization of the codebase, specifically highlighti
 ### 1. Bootstrapping (`src/main.tsx`)
 The entry point of the application is simplified to prioritize render speed while establishing a bridge to CDN plugins.
 - **Leaflet Bridge**: Exposes the React-bundled Leaflet instance to `window.L` to ensure plugin compatibility.
+- **Dynamic GIS Loader (v1.6.3)**: Failsafe script injection that ensures Geoman and Turf are initialized before the map survey tools are enabled, eliminating race conditions on hard refreshes.
 - **Native Launch**: Standard React 19 mounting for 100% startup reliability.
+
 
 ### 2. Main Layout & Resilience (`src/App.tsx`)
 Manages the tab switching logic and global state.
@@ -25,7 +27,9 @@ The primary GIS interface.
 - **Deep Sanitizer 2.0**: A multi-stage geometric filter that cleans every coordinate point during the render loop. This ensures that even "messy" Shapefile imports remain stable.
 - **GIS Data Import**: Handles `.zip` (Shapefile) and `.kml` (Google Earth) parsing using programmatic buffers and DOM parsers.
 - **ProMappingToolbox**: Custom floating UI for toggling Draw, Edit, and Cut modes. Syncs button styles with the engine's active state.
+- **POIMarker**: Specialized child component for Point of Interest notes. Uses native React state and interactive Tooltips to manage site notes with auto-expansion, dragging, and PDF-safe rendering.
 - **LocationMarker**: Handles GPS tracking and "Click to Drop" logic with conflict prevention.
+
 
 ### 📐 `ConverterTab.tsx` & `AreaCalculatorTab.tsx`
 Handle the mathematical logic for unit conversions using `src/utils/calculations.ts`. Supports historical tracking of calculations.
@@ -54,6 +58,7 @@ To bypass filesystem locking issues on network/cloud drives during the Rust buil
     3. **Build**: Runs Vite build and Tauri compilation on the local high-speed drive.
 
 ### Versioning & State
-- **Current Development**: Version 1.6.2
+- **Current Development**: Version 1.6.3
 - **Standard**: Punjab Revenue Act (225) compliant with LDA (250) and Traditional (272) fallbacks.
+
 - **Persistence**: Application utilizes `useLocalStorage` hooks across all tabs to ensure data (points, metadata, settings) survives navigation and reloads.

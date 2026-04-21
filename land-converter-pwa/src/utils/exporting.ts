@@ -68,11 +68,12 @@ export const generatePDF = (
 
     let finalAreaSqFt = adjustedAreaSqFt;
     let hasVerification = hasManualAdjustment;
+    let totalCorrection = 0;
 
     if (metadata?.manualAdjustments && metadata.manualAdjustments.length > 0) {
-      const logSum = metadata.manualAdjustments.reduce((sum, adj) => sum + (parseFloat(adj.value) || 0), 0);
-      if (logSum > 0) {
-        finalAreaSqFt = logSum;
+      totalCorrection = metadata.manualAdjustments.reduce((sum, adj) => sum + (parseFloat(adj.value) || 0), 0);
+      if (totalCorrection !== 0) {
+        finalAreaSqFt = adjustedAreaSqFt + totalCorrection;
         hasVerification = true;
       }
     }
@@ -170,6 +171,15 @@ export const generatePDF = (
       doc.setTextColor(0, 50, 150);
       doc.setFont("helvetica", "bold");
       doc.text(`VERIFIED ON-SITE AREA (ADJUSTED): ${finalManualAreaText}`, 20, 128);
+      
+      // Professional sentence for the operator as requested
+      doc.setFontSize(8);
+      doc.setTextColor(80, 80, 80);
+      doc.setFont("helvetica", "italic");
+      const correctionNote = totalCorrection !== 0 
+        ? `* Note: The base GIS area has been adjusted by ${totalCorrection > 0 ? '+' : ''}${totalCorrection.toLocaleString()} sq ft based on on-site verified site corrections.`
+        : `* Note: The base GIS area has been confirmed via manual tape measurements.`;
+      doc.text(correctionNote, 20, 133);
     }
 
     // Map Image

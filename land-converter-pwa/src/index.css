@@ -7,3 +7,14 @@
     @apply bg-gray-50 text-gray-900 font-sans antialiased;
   }
 }
+
+/* Premium POI Tooltip Overrides */
+.premium-poi-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.premium-poi-tooltip::before {
+  display: none !important; /* Hide Tooltip Arrow */
+}
