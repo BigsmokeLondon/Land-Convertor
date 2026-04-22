@@ -382,20 +382,12 @@ function GeomanControls({
   return null;
 }
 
-function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded }: { 
-  surveyMode: 'area' | 'path', 
-  onPreCache: () => void, 
-  isCaching: boolean,
-  isPluginsLoaded: boolean
-}) {
-
+function ProMappingToolbox({ surveyMode, onPreCache, isCaching }: { surveyMode: 'area' | 'path', onPreCache: () => void, isCaching: boolean }) {
   const map = useMap();
   const [activeDraw, setActiveDraw] = useState(false);
   const [activeEdit, setActiveEdit] = useState(false);
   const [activeCut, setActiveCut] = useState(false);
   const [engineReady, setEngineReady] = useState(false);
-
-
 
   
   const getPM = () => {
@@ -404,16 +396,13 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded 
     let pm = map.pm || map.PM;
     
     // If not on map, try to initialize manually from global L.PM
-    // @ts-ignore
-    const globalL = (window as any).L;
-    if (!pm && globalL?.PM) {
+    if (!pm && (window as any).L?.PM) {
        try {
          // Force initialization of Geoman on this map instance
          // @ts-ignore
-         new globalL.PM.Map(map);
+         new (window as any).L.PM.Map(map);
          // @ts-ignore
          pm = map.pm || map.PM;
-         if (pm) console.log("GIS Engine: Aggressive Init Success");
        } catch (e) {
          console.warn("Geoman auto-init failed:", e);
        }
@@ -422,16 +411,12 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded 
   };
 
 
-
   // Sync internal UI state with Geoman actual state
   useEffect(() => {
-    if (!isPluginsLoaded) return;
-    
     const interval = setInterval(() => {
       const pm = getPM();
       if (pm) {
         setEngineReady(true);
-
         setActiveDraw(!!pm.Draw.getActiveShape());
         setActiveEdit(!!(pm.globalEditModeEnabled && pm.globalEditModeEnabled()));
       }
@@ -439,7 +424,6 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded 
 
     return () => clearInterval(interval);
   }, [map]);
-
   
   const toggleDraw = () => {
     const pm = getPM();
@@ -522,13 +506,11 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded 
       >
         <DownloadCloud size={20} />
       </button>
-
     </div>
   );
 }
 
 function MapController({ onMapInit, onMove }: { onMapInit: (map: L_Local.Map) => void, onMove: (latlng: L_Local.LatLng) => void }) {
-
   const map = useMapEvents({
     move() {
       onMove(map.getCenter());
@@ -575,20 +557,20 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
   const [pluginsLoaded, setPluginsLoaded] = useState(false);
 
 
-  // --- IMPROVED: RESILIENT GIS PLUGIN LOADER ---
+  // --- NEW: DYNAMIC GIS PLUGIN LOADER ---
   useEffect(() => {
     const scripts = [
       { id: 'gis-turf', url: 'https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js' },
-      { id: 'gis-geoman', url: 'https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.min.js' },
-      { id: 'gis-shp', url: 'https://cdn.jsdelivr.net/npm/shpjs@4.0.4/dist/shp.min.js' },
-      { id: 'gis-kml', url: 'https://cdn.jsdelivr.net/npm/togeojson@0.16.0/togeojson.js' }
+      { id: 'gis-geoman', url: 'https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.js' },
+      { id: 'gis-shp', url: 'https://unpkg.com/shpjs@latest/dist/shp.js' },
+      { id: 'gis-kml', url: 'https://unpkg.com/@mapbox/togeojson@0.16.0/togeojson.js' }
     ];
     
     const css = [
-      { id: 'gis-geoman-css', url: 'https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.css' }
+      { id: 'gis-geoman-css', url: 'https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.css' }
     ];
 
-
+    // Inject CSS
     css.forEach(c => {
       if (!document.getElementById(c.id)) {
         const link = document.createElement('link');
@@ -599,56 +581,28 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
       }
     });
 
+    // Inject Scripts Sequentially
     const loadScripts = async () => {
-      // Check if already loaded globally (from previous tab visits)
-      if ((window as any).L?.PM && (window as any).turf) {
-        setPluginsLoaded(true);
-        return;
-      }
-
       for (const s of scripts) {
         if (!document.getElementById(s.id)) {
           await new Promise((resolve) => {
             const script = document.createElement('script');
             script.id = s.id;
             script.src = s.url;
-            script.async = false; // Sequential execution is safer for plugins
-            script.onload = () => {
-              console.log(`[GIS] Loaded: ${s.id}`);
-              resolve(true);
-            };
-            script.onerror = () => {
-              console.error(`[GIS] Failed: ${s.id}`);
-              resolve(false);
-            };
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = resolve; // Continue even if one fails
             document.head.appendChild(script);
           });
         }
       }
-
-      // Final verification before enabling UI
-      let retries = 0;
-      const verify = setInterval(() => {
-        const isReady = (window as any).L?.PM && (window as any).turf;
-        if (isReady || retries > 10) {
-          clearInterval(verify);
-          if (isReady) {
-            console.log("GIS Plugins Verified & Active");
-            setPluginsLoaded(true);
-          } else {
-            console.warn("GIS Plugins taking too long to verify. Forcing UI activation...");
-            if (typeof window !== 'undefined') (window as any).L = L_Local;
-            setPluginsLoaded(true); // Failsafe: Don't stay stuck on splash
-          }
-
-        }
-        retries++;
-      }, 500);
+      console.log("GIS Plugins Loaded Dynamically");
+      setPluginsLoaded(true);
     };
+
 
     loadScripts();
   }, []);
-
 
 
 
@@ -1002,25 +956,11 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
   if (!turfAvailable) {
 
     return (
-      <div className="flex flex-col items-center justify-center h-[500px] bg-white rounded-xl border-2 border-dashed border-gray-100 shadow-inner">
-        <div className="relative">
-          <RotateCcw size={48} className="animate-spin text-green-500 mb-4 opacity-20" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xl">🗺️</span>
-          </div>
-        </div>
-        <p className="text-gray-400 font-black uppercase tracking-widest text-[10px] mb-2">GIS Engine Bootstrapping...</p>
-        <p className="text-gray-300 text-[10px] mb-6 px-10 text-center">We are initializing high-precision geometry engines (Geoman + Turf) for field surveying.</p>
-        
-        <button 
-          onClick={() => setPluginsLoaded(true)}
-          className="text-[10px] font-bold text-blue-500 underline hover:text-blue-700 transition-colors"
-        >
-          Loading taking too long? Click here to bypass.
-        </button>
+      <div className="flex flex-col items-center justify-center h-[500px] bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+        <RotateCcw size={40} className="animate-spin text-green-600 mb-4" />
+        <p className="text-gray-500 font-bold">Bootstrapping GIS Engine...</p>
       </div>
     );
-
   }
 
   return (
@@ -1247,56 +1187,7 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
           />
 
           <GeomanControls setPoints={setPoints} surveyMode={surveyMode as any} />
-          <ProMappingToolbox 
-            surveyMode={surveyMode as any} 
-            onPreCache={preCacheCurrentRegion} 
-            isCaching={!!cachingProgress} 
-            isPluginsLoaded={pluginsLoaded}
-          />
-
-          {!pluginsLoaded && (
-            <div className="absolute top-2 right-2 z-[1000] pointer-events-auto">
-               <button className="bg-white/80 p-2 rounded shadow-sm flex items-center gap-2 text-[10px] font-bold text-gray-500 italic">
-                 <RotateCcw size={12} className="animate-spin" /> Synchronizing GIS...
-               </button>
-            </div>
-          )}
-
-          {pluginsLoaded && (
-            <div className="absolute top-24 right-14 z-[1000] pointer-events-auto">
-              <button
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  const lObj = (window as any).L;
-                  const turfObj = (window as any).turf;
-                  const pmFound = !!(lObj?.PM || (mapInstance as any)?.pm);
-
-
-                  if (pmFound && turfObj) {
-                    alert("✅ GIS Status: All Systems Operational.");
-                  } else {
-                    const msg = [
-                      "⚠️ GIS Diagnostic:",
-                      `- Leaflet: ${!!lObj ? 'OK' : 'MISSING'}`,
-                      `- Geoman (PM): ${pmFound ? 'OK' : 'MISSING'}`,
-                      `- Turf: ${!!turfObj ? 'OK' : 'MISSING'}`,
-                      "\nAttempting Emergency Link..."
-                    ].join('\n');
-                    alert(msg);
-                    
-                    if (typeof window !== 'undefined') (window as any).L = L_Local;
-                    // Force refresh via state if possible or just rely on next poll
-                  }
-                }}
-                className="w-10 h-10 flex items-center justify-center rounded-full shadow-2xl border-2 bg-red-600 text-white border-white animate-pulse active:scale-90 transition-transform"
-                title="GIS Diagnostic / Force Link"
-              >
-                ⚡
-              </button>
-            </div>
-          )}
-
-
+          <ProMappingToolbox surveyMode={surveyMode as any} onPreCache={preCacheCurrentRegion} isCaching={!!cachingProgress} />
           <EdgeLabels 
             points={normalizedPoints[0] || []} 
             manualMeasurements={manualMeasurements} 
