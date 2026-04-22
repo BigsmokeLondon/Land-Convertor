@@ -394,7 +394,7 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded 
   const [activeEdit, setActiveEdit] = useState(false);
   const [activeCut, setActiveCut] = useState(false);
   const [engineReady, setEngineReady] = useState(false);
-  const [isFixing, setIsFixing] = useState(false);
+
 
 
   
@@ -523,40 +523,12 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded 
         <DownloadCloud size={20} />
       </button>
 
-      {!pmAvailable && isPluginsLoaded && (
-        <button
-          onClick={(e) => { 
-            e.stopPropagation(); 
-            setIsFixing(true);
-            console.log("⚡ Force Fix Triggered...");
-            
-            // Final desperate attempt to bind
-            if (typeof window !== 'undefined') (window as any).L = L_Local;
-            
-            setTimeout(() => {
-              const pm = getPM();
-              if (pm) {
-                setEngineReady(true);
-                alert("✅ GIS Engine Linked Successfully!");
-              } else {
-                alert("⚠️ Still waiting for GIS scripts. Please check your internet or try again in a few seconds.");
-              }
-              setIsFixing(false);
-            }, 1000);
-          }}
-          className={`w-10 h-10 flex items-center justify-center rounded-lg shadow-md border bg-red-50 text-red-600 border-red-200 pointer-events-auto ${isFixing ? 'opacity-50' : 'animate-pulse'}`}
-          title="GIS Engine Stuck? Click to Force Fix"
-        >
-          {isFixing ? <RotateCcw size={16} className="animate-spin" /> : '⚡'}
-        </button>
-      )}
-
-
     </div>
   );
 }
 
 function MapController({ onMapInit, onMove }: { onMapInit: (map: L_Local.Map) => void, onMove: (latlng: L_Local.LatLng) => void }) {
+
   const map = useMapEvents({
     move() {
       onMove(map.getCenter());
@@ -1281,6 +1253,48 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
             isCaching={!!cachingProgress} 
             isPluginsLoaded={pluginsLoaded}
           />
+
+          {!pluginsLoaded && (
+            <div className="absolute top-2 right-2 z-[1000] pointer-events-auto">
+               <button className="bg-white/80 p-2 rounded shadow-sm flex items-center gap-2 text-[10px] font-bold text-gray-500 italic">
+                 <RotateCcw size={12} className="animate-spin" /> Synchronizing GIS...
+               </button>
+            </div>
+          )}
+
+          {pluginsLoaded && (
+            <div className="absolute top-24 right-14 z-[1000] pointer-events-auto">
+              <button
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  const lObj = (window as any).L;
+                  const turfObj = (window as any).turf;
+                  const pmFound = !!(lObj?.PM || mapInstance?.pm);
+
+                  if (pmFound && turfObj) {
+                    alert("✅ GIS Status: All Systems Operational.");
+                  } else {
+                    const msg = [
+                      "⚠️ GIS Diagnostic:",
+                      `- Leaflet: ${!!lObj ? 'OK' : 'MISSING'}`,
+                      `- Geoman (PM): ${pmFound ? 'OK' : 'MISSING'}`,
+                      `- Turf: ${!!turfObj ? 'OK' : 'MISSING'}`,
+                      "\nAttempting Emergency Link..."
+                    ].join('\n');
+                    alert(msg);
+                    
+                    if (typeof window !== 'undefined') (window as any).L = L_Local;
+                    // Force refresh via state if possible or just rely on next poll
+                  }
+                }}
+                className="w-10 h-10 flex items-center justify-center rounded-full shadow-2xl border-2 bg-red-600 text-white border-white animate-pulse active:scale-90 transition-transform"
+                title="GIS Diagnostic / Force Link"
+              >
+                ⚡
+              </button>
+            </div>
+          )}
+
 
           <EdgeLabels 
             points={normalizedPoints[0] || []} 
