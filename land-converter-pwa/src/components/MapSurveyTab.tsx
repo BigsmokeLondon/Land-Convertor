@@ -402,19 +402,23 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded 
     let pm = map.pm || map.PM;
     
     // If not on map, try to initialize manually from global L.PM
-    if (!pm && (window as any).L?.PM) {
+    // @ts-ignore
+    const globalL = (window as any).L;
+    if (!pm && globalL?.PM) {
        try {
          // Force initialization of Geoman on this map instance
          // @ts-ignore
-         new (window as any).L.PM.Map(map);
+         new globalL.PM.Map(map);
          // @ts-ignore
          pm = map.pm || map.PM;
+         if (pm) console.log("GIS Engine: Aggressive Init Success");
        } catch (e) {
          console.warn("Geoman auto-init failed:", e);
        }
     }
     return pm;
   };
+
 
 
   // Sync internal UI state with Geoman actual state
@@ -516,6 +520,22 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded 
       >
         <DownloadCloud size={20} />
       </button>
+
+      {!pmAvailable && isPluginsLoaded && (
+        <button
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            // Final desperate attempt to bind
+            if (typeof window !== 'undefined') (window as any).L = L_Local;
+            setEngineReady(!!getPM());
+          }}
+          className="w-10 h-10 flex items-center justify-center rounded-lg shadow-md border bg-red-50 text-red-600 border-red-200 animate-pulse"
+          title="GIS Engine Stuck? Click to Force Fix"
+        >
+          ⚡
+        </button>
+      )}
+
     </div>
   );
 }
