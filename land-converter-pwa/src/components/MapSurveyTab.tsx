@@ -607,14 +607,15 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
   useEffect(() => {
     const scripts = [
       { id: 'gis-turf', url: 'https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js' },
-      { id: 'gis-geoman', url: 'https://unpkg.com/@geoman-io/leaflet-geoman-free@2.14.0/dist/leaflet-geoman.js' },
-      { id: 'gis-shp', url: 'https://unpkg.com/shpjs@4.0.4/dist/shp.js' },
-      { id: 'gis-kml', url: 'https://unpkg.com/@mapbox/togeojson@0.16.0/togeojson.js' }
+      { id: 'gis-geoman', url: 'https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.min.js' },
+      { id: 'gis-shp', url: 'https://cdn.jsdelivr.net/npm/shpjs@4.0.4/dist/shp.min.js' },
+      { id: 'gis-kml', url: 'https://cdn.jsdelivr.net/npm/togeojson@0.16.0/togeojson.js' }
     ];
     
     const css = [
-      { id: 'gis-geoman-css', url: 'https://unpkg.com/@geoman-io/leaflet-geoman-free@2.14.0/dist/leaflet-geoman.css' }
+      { id: 'gis-geoman-css', url: 'https://cdn.jsdelivr.net/npm/@geoman-io/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.css' }
     ];
+
 
     css.forEach(c => {
       if (!document.getElementById(c.id)) {
