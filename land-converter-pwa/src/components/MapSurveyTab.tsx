@@ -1269,7 +1269,8 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
                   e.stopPropagation(); 
                   const lObj = (window as any).L;
                   const turfObj = (window as any).turf;
-                  const pmFound = !!(lObj?.PM || mapInstance?.pm);
+                  const pmFound = !!(lObj?.PM || (mapInstance as any)?.pm);
+
 
                   if (pmFound && turfObj) {
                     alert("✅ GIS Status: All Systems Operational.");
