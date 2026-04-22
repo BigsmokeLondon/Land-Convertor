@@ -419,10 +419,13 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded 
 
   // Sync internal UI state with Geoman actual state
   useEffect(() => {
+    if (!isPluginsLoaded) return;
+    
     const interval = setInterval(() => {
       const pm = getPM();
       if (pm) {
         setEngineReady(true);
+
         setActiveDraw(!!pm.Draw.getActiveShape());
         setActiveEdit(!!(pm.globalEditModeEnabled && pm.globalEditModeEnabled()));
       }
