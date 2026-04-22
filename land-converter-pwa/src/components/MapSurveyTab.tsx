@@ -627,9 +627,11 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
             console.log("GIS Plugins Verified & Active");
             setPluginsLoaded(true);
           } else {
-            console.error("GIS Plugins failed to attach to global L");
+            console.warn("GIS Plugins taking too long to verify. Forcing UI activation...");
             if (typeof window !== 'undefined') (window as any).L = L_Local;
+            setPluginsLoaded(true); // Failsafe: Don't stay stuck on splash
           }
+
         }
         retries++;
       }, 500);
@@ -991,11 +993,25 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
   if (!turfAvailable) {
 
     return (
-      <div className="flex flex-col items-center justify-center h-[500px] bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-        <RotateCcw size={40} className="animate-spin text-green-600 mb-4" />
-        <p className="text-gray-500 font-bold">Bootstrapping GIS Engine...</p>
+      <div className="flex flex-col items-center justify-center h-[500px] bg-white rounded-xl border-2 border-dashed border-gray-100 shadow-inner">
+        <div className="relative">
+          <RotateCcw size={48} className="animate-spin text-green-500 mb-4 opacity-20" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-xl">🗺️</span>
+          </div>
+        </div>
+        <p className="text-gray-400 font-black uppercase tracking-widest text-[10px] mb-2">GIS Engine Bootstrapping...</p>
+        <p className="text-gray-300 text-[10px] mb-6 px-10 text-center">We are initializing high-precision geometry engines (Geoman + Turf) for field surveying.</p>
+        
+        <button 
+          onClick={() => setPluginsLoaded(true)}
+          className="text-[10px] font-bold text-blue-500 underline hover:text-blue-700 transition-colors"
+        >
+          Loading taking too long? Click here to bypass.
+        </button>
       </div>
     );
+
   }
 
   return (
