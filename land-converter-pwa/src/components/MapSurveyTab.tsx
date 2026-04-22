@@ -382,7 +382,13 @@ function GeomanControls({
   return null;
 }
 
-function ProMappingToolbox({ surveyMode, onPreCache, isCaching }: { surveyMode: 'area' | 'path', onPreCache: () => void, isCaching: boolean }) {
+function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded }: { 
+  surveyMode: 'area' | 'path', 
+  onPreCache: () => void, 
+  isCaching: boolean,
+  isPluginsLoaded: boolean
+}) {
+
   const map = useMap();
   const [activeDraw, setActiveDraw] = useState(false);
   const [activeEdit, setActiveEdit] = useState(false);
@@ -424,6 +430,7 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching }: { surveyMode: 
 
     return () => clearInterval(interval);
   }, [map]);
+
   
   const toggleDraw = () => {
     const pm = getPM();
@@ -557,20 +564,19 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
   const [pluginsLoaded, setPluginsLoaded] = useState(false);
 
 
-  // --- NEW: DYNAMIC GIS PLUGIN LOADER ---
+  // --- IMPROVED: RESILIENT GIS PLUGIN LOADER ---
   useEffect(() => {
     const scripts = [
       { id: 'gis-turf', url: 'https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js' },
-      { id: 'gis-geoman', url: 'https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.js' },
-      { id: 'gis-shp', url: 'https://unpkg.com/shpjs@latest/dist/shp.js' },
+      { id: 'gis-geoman', url: 'https://unpkg.com/@geoman-io/leaflet-geoman-free@2.14.0/dist/leaflet-geoman.js' },
+      { id: 'gis-shp', url: 'https://unpkg.com/shpjs@4.0.4/dist/shp.js' },
       { id: 'gis-kml', url: 'https://unpkg.com/@mapbox/togeojson@0.16.0/togeojson.js' }
     ];
     
     const css = [
-      { id: 'gis-geoman-css', url: 'https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.css' }
+      { id: 'gis-geoman-css', url: 'https://unpkg.com/@geoman-io/leaflet-geoman-free@2.14.0/dist/leaflet-geoman.css' }
     ];
 
-    // Inject CSS
     css.forEach(c => {
       if (!document.getElementById(c.id)) {
         const link = document.createElement('link');
@@ -581,28 +587,54 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
       }
     });
 
-    // Inject Scripts Sequentially
     const loadScripts = async () => {
+      // Check if already loaded globally (from previous tab visits)
+      if ((window as any).L?.PM && (window as any).turf) {
+        setPluginsLoaded(true);
+        return;
+      }
+
       for (const s of scripts) {
         if (!document.getElementById(s.id)) {
           await new Promise((resolve) => {
             const script = document.createElement('script');
             script.id = s.id;
             script.src = s.url;
-            script.async = true;
-            script.onload = resolve;
-            script.onerror = resolve; // Continue even if one fails
+            script.async = false; // Sequential execution is safer for plugins
+            script.onload = () => {
+              console.log(`[GIS] Loaded: ${s.id}`);
+              resolve(true);
+            };
+            script.onerror = () => {
+              console.error(`[GIS] Failed: ${s.id}`);
+              resolve(false);
+            };
             document.head.appendChild(script);
           });
         }
       }
-      console.log("GIS Plugins Loaded Dynamically");
-      setPluginsLoaded(true);
-    };
 
+      // Final verification before enabling UI
+      let retries = 0;
+      const verify = setInterval(() => {
+        const isReady = (window as any).L?.PM && (window as any).turf;
+        if (isReady || retries > 10) {
+          clearInterval(verify);
+          if (isReady) {
+            console.log("GIS Plugins Verified & Active");
+            setPluginsLoaded(true);
+          } else {
+            console.error("GIS Plugins failed to attach to global L");
+            if (typeof window !== 'undefined') (window as any).L = L_Local;
+          }
+        }
+        retries++;
+      }, 500);
+    };
 
     loadScripts();
   }, []);
+
 
 
 
@@ -1187,7 +1219,13 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
           />
 
           <GeomanControls setPoints={setPoints} surveyMode={surveyMode as any} />
-          <ProMappingToolbox surveyMode={surveyMode as any} onPreCache={preCacheCurrentRegion} isCaching={!!cachingProgress} />
+          <ProMappingToolbox 
+            surveyMode={surveyMode as any} 
+            onPreCache={preCacheCurrentRegion} 
+            isCaching={!!cachingProgress} 
+            isPluginsLoaded={pluginsLoaded}
+          />
+
           <EdgeLabels 
             points={normalizedPoints[0] || []} 
             manualMeasurements={manualMeasurements} 
