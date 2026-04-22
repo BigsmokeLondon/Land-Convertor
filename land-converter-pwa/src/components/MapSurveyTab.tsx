@@ -394,6 +394,8 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded 
   const [activeEdit, setActiveEdit] = useState(false);
   const [activeCut, setActiveCut] = useState(false);
   const [engineReady, setEngineReady] = useState(false);
+  const [isFixing, setIsFixing] = useState(false);
+
 
   
   const getPM = () => {
@@ -525,16 +527,30 @@ function ProMappingToolbox({ surveyMode, onPreCache, isCaching, isPluginsLoaded 
         <button
           onClick={(e) => { 
             e.stopPropagation(); 
+            setIsFixing(true);
+            console.log("⚡ Force Fix Triggered...");
+            
             // Final desperate attempt to bind
             if (typeof window !== 'undefined') (window as any).L = L_Local;
-            setEngineReady(!!getPM());
+            
+            setTimeout(() => {
+              const pm = getPM();
+              if (pm) {
+                setEngineReady(true);
+                alert("✅ GIS Engine Linked Successfully!");
+              } else {
+                alert("⚠️ Still waiting for GIS scripts. Please check your internet or try again in a few seconds.");
+              }
+              setIsFixing(false);
+            }, 1000);
           }}
-          className="w-10 h-10 flex items-center justify-center rounded-lg shadow-md border bg-red-50 text-red-600 border-red-200 animate-pulse"
+          className={`w-10 h-10 flex items-center justify-center rounded-lg shadow-md border bg-red-50 text-red-600 border-red-200 pointer-events-auto ${isFixing ? 'opacity-50' : 'animate-pulse'}`}
           title="GIS Engine Stuck? Click to Force Fix"
         >
-          ⚡
+          {isFixing ? <RotateCcw size={16} className="animate-spin" /> : '⚡'}
         </button>
       )}
+
 
     </div>
   );
