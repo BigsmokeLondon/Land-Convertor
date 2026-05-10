@@ -30,21 +30,88 @@ export function AboutTab({ t }: { t: any }) {
         <div className="bg-gray-50 px-5 py-3 border-b border-gray-200">
           <h3 className="font-bold text-gray-800">⚖️ {t.aboutStandardsTitle || "Regional Measurement Standards"}</h3>
         </div>
-        <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="bg-[#E3F2FD] p-3 rounded-xl border border-blue-200">
-            <h4 className="font-black text-[#1565C0] text-sm">{t.aboutPunjabLegal || "Punjab Legal"}</h4>
-            <p className="text-xl font-black text-[#1976D2] mt-1">225 <span className="text-sm font-bold">{t.sqft || "sq ft"}</span></p>
-            <p className="text-[10px] text-blue-700 mt-1">{t.aboutPunjabLegalDesc || "Official standard for Fard, Mutations (Intiqal), and urban land registration across Punjab."}</p>
+
+        {/* Pakistan / Punjab */}
+        <div className="px-4 pt-4 pb-2">
+          <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">Pakistan / Punjab</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="bg-[#E3F2FD] p-3 rounded-xl border border-blue-200">
+              <h4 className="font-black text-[#1565C0] text-sm">{t.aboutPunjabLegal || "Punjab Legal"}</h4>
+              <p className="text-xl font-black text-[#1976D2] mt-1">225 <span className="text-sm font-bold">sq ft / Marla</span></p>
+              <p className="text-[10px] text-blue-700 mt-1">{t.aboutPunjabLegalDesc || "Official standard for Fard, Mutations (Intiqal), and urban land registration across Punjab."}</p>
+            </div>
+            <div className="bg-[#E0F2F1] p-3 rounded-xl border border-teal-200">
+              <h4 className="font-black text-[#00695C] text-sm">{t.aboutLahoreLDA || "Lahore LDA"}</h4>
+              <p className="text-xl font-black text-teal-700 mt-1">250 <span className="text-sm font-bold">sq ft / Marla</span></p>
+              <p className="text-[10px] text-teal-700 mt-1">{t.aboutLahoreLDADesc || "Used by Lahore Development Authority (LDA) in approved housing schemes and planned developments."}</p>
+            </div>
+            <div className="bg-[#FFF9C4] p-3 rounded-xl border border-yellow-300">
+              <h4 className="font-black text-[#E65100] text-sm">{t.aboutTraditional || "Traditional"}</h4>
+              <p className="text-xl font-black text-orange-600 mt-1">272 <span className="text-sm font-bold">sq ft / Marla</span></p>
+              <p className="text-[10px] text-yellow-800 mt-1">{t.aboutTraditionalDesc || "Rural / KPK builders' reference. NOT legally valid in Punjab urban records."}</p>
+            </div>
+            <div className="bg-[#F3E5F5] p-3 rounded-xl border border-purple-200">
+              <h4 className="font-black text-[#7B1FA2] text-sm">Rural / Revenue</h4>
+              <p className="text-xl font-black text-purple-700 mt-1">272.25 <span className="text-sm font-bold">sq ft / Marla</span></p>
+              <p className="text-[10px] text-purple-700 mt-1">Revenue department standard used in rural Punjab land records (1 Kanal = 20 Marla = 5,445 sq ft).</p>
+            </div>
           </div>
-          <div className="bg-[#E0F2F1] p-3 rounded-xl border border-teal-200">
-            <h4 className="font-black text-[#00695C] text-sm">{t.aboutLahoreLDA || "Lahore LDA"}</h4>
-            <p className="text-xl font-black text-teal-700 mt-1">250 <span className="text-sm font-bold">{t.sqft || "sq ft"}</span></p>
-            <p className="text-[10px] text-teal-700 mt-1">{t.aboutLahoreLDADesc || "Used by Lahore Development Authority (LDA) in approved housing schemes and planned developments."}</p>
+        </div>
+
+        {/* India */}
+        <div className="px-4 pt-3 pb-2">
+          <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">India</h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {[
+              { name: 'Kanal (J&K)', val: '5,445', unit: 'Kanal', note: 'J&K / Himachal Pradesh' },
+              { name: 'Bigha (UP/Bihar)', val: '27,000', unit: 'Bigha', note: '1 Bigha = 20 Biswa' },
+              { name: 'Katha (W. Bengal)', val: '720', unit: 'Katha', note: 'West Bengal standard' },
+              { name: 'Katha (Bihar)', val: '1,361', unit: 'Katha', note: 'Bihar standard' },
+              { name: 'Katha (Assam)', val: '2,880', unit: 'Katha', note: 'Assam standard' },
+              { name: 'Dhur (Bihar)', val: '68', unit: 'Dhur', note: 'Bihar sub-unit' },
+              { name: 'Guntha', val: '1,089', unit: 'Guntha', note: 'Maharashtra / Karnataka' },
+              { name: 'Cent', val: '435.6', unit: 'Cent', note: 'Tamil Nadu / Kerala' },
+            ].map(s => (
+              <div key={s.name} className="bg-orange-50 p-2.5 rounded-lg border border-orange-200">
+                <p className="font-black text-orange-800 text-xs">{s.name}</p>
+                <p className="text-base font-black text-orange-600">{s.val} <span className="text-[10px] font-bold">sq ft</span></p>
+                <p className="text-[9px] text-orange-600 mt-0.5">{s.note}</p>
+              </div>
+            ))}
           </div>
-          <div className="bg-[#FFF9C4] p-3 rounded-xl border border-yellow-300">
-            <h4 className="font-black text-[#E65100] text-sm">{t.aboutTraditional || "Traditional"}</h4>
-            <p className="text-xl font-black text-orange-600 mt-1">272 <span className="text-sm font-bold">{t.sqft || "sq ft"}</span></p>
-            <p className="text-[10px] text-yellow-800 mt-1">{t.aboutTraditionalDesc || "Rural / KPK builders' reference. NOT legally valid in Punjab urban records. Always check which standard applies."}</p>
+        </div>
+
+        {/* Nepal */}
+        <div className="px-4 pt-3 pb-2">
+          <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">Nepal</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {[
+              { name: 'Ropani', val: '5,476', note: 'Hills (1 Ropani = 16 Aana)' },
+              { name: 'Bigha (Terai)', val: '6,772', note: '1 Bigha = 20 Katha' },
+              { name: 'Katha', val: '3,645', note: 'Nepal standard' },
+              { name: 'Dhur', val: '182.25', note: 'Nepal sub-unit' },
+            ].map(s => (
+              <div key={s.name} className="bg-green-50 p-2.5 rounded-lg border border-green-200">
+                <p className="font-black text-green-800 text-xs">{s.name}</p>
+                <p className="text-base font-black text-green-600">{s.val} <span className="text-[10px] font-bold">sq ft</span></p>
+                <p className="text-[9px] text-green-600 mt-0.5">{s.note}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Universal */}
+        <div className="px-4 pt-3 pb-4">
+          <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">Universal</h4>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-gray-100 p-2.5 rounded-lg border border-gray-300">
+              <p className="font-black text-gray-700 text-xs">Acre</p>
+              <p className="text-base font-black text-gray-800">43,560 <span className="text-[10px] font-bold">sq ft</span></p>
+            </div>
+            <div className="bg-gray-100 p-2.5 rounded-lg border border-gray-300">
+              <p className="font-black text-gray-700 text-xs">Hectare</p>
+              <p className="text-base font-black text-gray-800">107,639 <span className="text-[10px] font-bold">sq ft</span></p>
+            </div>
           </div>
         </div>
       </div>
@@ -169,6 +236,7 @@ export function AboutTab({ t }: { t: any }) {
         </div>
         <div className="divide-y divide-gray-100 text-xs">
           {[
+            { v: '1.7.0', label: 'Multi-Region Standards (Katha, Dhur, Ropani, Guntha, Cent, Bigha, Acre, Hectare), 16 South Asian Languages, Full Info Tab Translation, Grouped Optgroup Selector, Universal Conversions (Acres/Hectares/m²)' },
             { v: '1.6.2', label: 'Offline Map Pre-caching, GPS Coordinate Paste, Expanded Legal Disclosure' },
             { v: '1.6.1', label: 'Manual Tape Measurements, Verified Area Adjusted Reports, PDF Summary Box scaling' },
             { v: '1.6.0', label: 'Pro Mapping Toolbox, Continuous Draw Mode, Mobile Nav Snapping, Hybrid GIS Engine' },
