@@ -4,13 +4,14 @@ This document outlines the standard procedure for committing changes and deployi
 
 ---
 
-## 🏗️ Standard Release Flow (v1.6.2+)
+## 🏗️ Standard Release Flow (v1.7.0+)
 
 ### 1. Verification (On C: Drive)
 Before committing, always ensure the local build on the **C:** drive was successful:
-1.  Run the **Build_Tauri_Desktop_Runner.bat**.
-2.  Check for the "Process Finished" message and ensure no TypeScript errors were reported.
-3.  Test the app in the browser at `http://localhost:5173/Land-Convertor/`.
+1.  Sync Z: → C: using Robocopy (or run the build script).
+2.  Run `npm run build` from `C:\Users\Admin\Documents\land-converter-pwa`.
+3.  Check for the "built in" success message and ensure no TypeScript errors were reported.
+4.  Test the app in the browser at `http://localhost:5173/Land-Convertor/`.
 
 ### 2. Version Control (On Z: Drive)
 **IMPORTANT**: All Git commands must be executed from the **Z:** (Master) drive to ensure the cloud-synced master is always the source of truth.
@@ -21,7 +22,7 @@ Before committing, always ensure the local build on the **C:** drive was success
     ```
 2.  **Create a New Branch (Recommended)**:
     ```bash
-    git checkout -b release/v1.6.2
+    git checkout -b release/v1.7.0
     ```
 3.  **Stage Changes**:
     ```bash
@@ -29,7 +30,7 @@ Before committing, always ensure the local build on the **C:** drive was success
     ```
 4.  **Commit**:
     ```bash
-    git commit -m "v1.6.2: Restored GIS engine, fixed Shapefile import, and enabled Safe Mode"
+    git commit -m "v1.7.0: Multi-region standards, 16 South Asian languages, universal conversions"
     ```
 
 ### 3. Deployment (To GitHub Pages)
@@ -37,7 +38,7 @@ The PWA is automatically deployed via GitHub Actions when changes reach the **`m
 
 1.  **Push the branch**:
     ```bash
-    git push origin release/v1.6.2
+    git push origin release/v1.7.0
     ```
 2.  **Merge to Main**: 
     - Go to GitHub and open a **Pull Request**.
@@ -54,6 +55,6 @@ If a build fails or a sync accidentally overwrites the **C:** drive fixes:
 - Re-run the sync/build script to restore the `C:` drive state from the now-fixed `Z:` master.
 
 ---
-**Version:** 1.6.2  
+**Version:** 1.7.0  
 **Maintainer:** M.A. Industries  
-**Last Updated:** April 20, 2026
+**Last Updated:** May 10, 2026

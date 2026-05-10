@@ -1,11 +1,11 @@
-# 🗺️ Tester’s Guide: Arena SitePro
-**Version:** 1.6.3
-**Focus:** Accuracy, Pro Mapping Toolbox, and High-Res Reporting
+# 🗺️ Tester's Guide: Arena SitePro
+**Version:** 1.7.0
+**Focus:** Multi-Region Standards, 16-Language Support, Accuracy, Pro Mapping Toolbox, and High-Res Reporting
 
 ---
 
 ## 1. App Introduction
-The **Arena SitePro** is a specialized utility designed for land measurement and GIS surveying. It includes a synchronized GIS engine (Geoman + Turf) for field operations and professional report exporting.
+The **Arena SitePro** is a specialized utility designed for land measurement and GIS surveying across South Asia. It supports 19 regional measurement standards (Pakistan, India, Nepal, Universal) and 16 languages. It includes a synchronized GIS engine (Geoman + Turf) for field operations and professional report exporting.
 
 ---
 
@@ -13,18 +13,40 @@ The **Arena SitePro** is a specialized utility designed for land measurement and
 *   **GIS Engine Restoration:** The app uses a global Leaflet bridge to ensure absolute compatibility between the React bundle and external CDN plugins (Turf, Geoman).
 *   **Deep Sanitizer 2.0:** Every coordinate imported via Shapefile or KML is passed through a high-performance sanitization ring to ensure geometry stability and performance.
 *   **System Safe Mode:** A resilient startup architecture that monitors for initialization crashes and auto-recovers by sanitizing corrupted memory state.
+*   **Regional Standards Engine:** 19 standards with grouped `<optgroup>` dropdown, id-based persistence, and dynamic sub-unit support.
+*   **i18n System:** 16 South Asian languages with fully translated UI, Info page, and PDF legal disclaimers.
 
 ---
 
 ## 3. Key Features to Test
 
-### 📂 GIS Data Import (v1.6.2 New)
+### 🌐 Multi-Region Standards (v1.7.0 New)
+1. **Grouped Dropdown**: Open the regional standard selector in the header. Verify you see grouped sections: Pakistan/Punjab, India — North, India — East, India — West & South, India — South, Nepal, Universal.
+2. **Dynamic Converter Row**: Select "Guntha (Maharashtra / Karnataka)". Go to the Converter tab. Enter 1089 in Square Feet.
+    - **Verification**: The green "Guntha" row should show exactly **1.0000**. Punjab rows should still be visible above.
+3. **Sub-Unit Display**: Select "Ropani (Nepal Hills)". Enter 5476 sq ft.
+    - **Verification**: Ropani should show **1.0000** and an Aana row should show **16.00**.
+4. **Universal Conversions**: With any region selected, enter 43560 sq ft.
+    - **Verification**: Acres should show **1.0000**, Hectares should show **0.4047**, m² should show **4,046.86**.
+5. **Reverse Lookup**: Select "Guntha (Maharashtra / Karnataka)" in the header, then go to Reverse Lookup. Verify "Guntha" appears as both an input unit and output unit in the list.
+6. **Region Persistence**: Select "Katha (Assam)" in the header. Close and reopen the app.
+    - **Verification**: The dropdown should still show "Katha (Assam)".
+
+### 🌍 Multi-Language Support (v1.7.0 New)
+1. **Language Selector**: Switch to "हिंदी" (Hindi). Verify the tab labels, app title, and legal disclaimer all change to Hindi.
+2. **Info Page Translation**: Switch to "বাংলা" (Bengali). Navigate to the Info & Legal tab.
+    - **Verification**: The Purpose section, Liability Notice, feature descriptions, and footer should all display in Bengali.
+3. **PDF Language**: With Urdu selected, generate a PDF export from the Map Survey tab.
+    - **Verification**: The legal disclaimer at the bottom of the PDF should be in Urdu script.
+4. **All 16 Languages**: Cycle through each language option and verify the UI updates without breaking layout.
+
+### 📂 GIS Data Import
 1. **Zipped Shapefile (↑ Icon):** Prepare a `.zip` archive containing `.shp`, `.shx`, and `.dbf` files. Drag or select the file using the upload icon in the Map tab.
     - **Verification**: Does the map automatically fly to the location? Does the area calculation update instantly?
 2. **KML Overlay:** Import a `.kml` file. Verify that the boundaries match your Google Earth references.
 3. **Multi-Ring Import**: Test a Shapefile that contains multiple polygons. Verify the "Deep Sanitizer" correctly separates them into distinct survey segments.
 
-### 📍 Pro Mapping Toolbox (v1.6.3 Optimized)
+### 📍 Pro Mapping Toolbox
 1. **Continuous Draw Mode (+ Icon):** Enable the plus icon (turns green). Plot 4+ points to create a shape. Verify the map doesn't jitter during high-speed sketching.
 2. **Node Editing (Pin Icon):** Enable the pin icon (turns blue). Drag any existing corner. The area at the top should update instantly.
 3. **Cutting Mode (Trash/Cut Icon)**: Select a polygon, then use the cut tool to draw a "hole" inside it. Verify that the total area calculation subtracts the hole correctly.
@@ -63,11 +85,14 @@ The **Arena SitePro** is a specialized utility designed for land measurement and
 *   **The "Bootstrapping" Screen:** Upon first launch (or after a reset), you should see a brief "Bootstrapping GIS..." screen.
 *   **Hole Cutting:** Ensure cutting a hole inside a polygon correctly subtracts the area. Try cutting a triangular hole in a square.
 *   **Search Fly-To:** Use the search bar for "Lahore, Pakistan". Verify the map fly-to animation is smooth and centers correctly.
+*   **Region + Language Combo:** Set language to Nepali and region to Ropani. Verify the converter, reverse lookup, and Info page all reflect both selections correctly.
+*   **Small Units:** Select "Dhur (Bihar)" (68 sq ft). Enter 68 in the converter. Verify it shows exactly 1.0000 Dhur.
 
 ---
 
 ## 5. How to Report Issues
 Provide the following:
 1. **Device:** (e.g., Samsung S23, Windows 11 Desktop)
-2. **Standard:** (e.g. 225 or 250 Marla scale used)
-3. **Reproduce steps:** (e.g. "Clicked Draw, then toggled Edit")
+2. **Region:** (e.g., "Guntha (Maharashtra/Karnataka)" or "Punjab Legal 225")
+3. **Language:** (e.g., Hindi, Bengali, English)
+4. **Reproduce steps:** (e.g. "Selected Ropani, entered 5476 sq ft, Aana row shows wrong value")

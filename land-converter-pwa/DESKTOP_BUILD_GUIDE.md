@@ -1,4 +1,4 @@
-# 🏗️ Desktop Build Guide: Arena SitePro
+# 🏗️ Desktop Build Guide: Arena SitePro (v1.7.0)
 
 This guide explains how to compile the Arena SitePro standalone Windows application (.exe) using the integrated Tauri and PowerShell automation pipeline.
 
@@ -22,6 +22,7 @@ Double-click the **`Build_Tauri_Desktop_Runner.bat`** file in the root directory
 ### Step 2: Input Version
 A GUI prompt will appear asking for the build version (e.g., `1.6.0`).
 - The script automatically patches `package.json`, `tauri.conf.json`, and the `AboutTab.tsx` UI with this version.
+- The i18n dictionary (`locales.ts`) and regional standards data are included automatically in the sync.
 
 ### Step 3: Local Drive Synchronization (The Bridge)
 Because Rust/Cargo compilation can fail or be extremely slow on network drives (like OneDrive Z:), the script:
