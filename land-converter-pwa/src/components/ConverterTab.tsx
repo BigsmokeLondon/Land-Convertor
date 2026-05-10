@@ -11,7 +11,7 @@ import {
 import { exportToExcel } from '../utils/ExcelExport';
 import { generateConverterPDF } from '../utils/exporting';
 
-export function ConverterTab({ t, initialHistory = [], onHistoryUpdate }: { t: any; initialHistory?: any[]; onHistoryUpdate?: (h: any[]) => void }) {
+export function ConverterTab({ t, region, initialHistory = [], onHistoryUpdate }: { t: any; region: any; initialHistory?: any[]; onHistoryUpdate?: (h: any[]) => void }) {
   const [sqftMode, setSqftMode] = useLocalStorage('la_conv_mode', true);
   const [inputVal, setInputVal] = useLocalStorage('la_conv_input', '');
   const [history, setHistory] = useState<any[]>(initialHistory);
@@ -42,6 +42,16 @@ export function ConverterTab({ t, initialHistory = [], onHistoryUpdate }: { t: a
     karam: (val * SQFT_PER_MARLA_LEGAL) / SQFT_PER_SQ_KARAM,
   };
 
+  // Dynamic regional unit conversion
+  const baseSqft = results.sqft;
+  const regionalValue = baseSqft / region.unit;
+  const regionalSubValue = region.subUnit ? regionalValue * region.subUnit.factor : null;
+
+  // Universal conversions
+  const acres = baseSqft / 43560;
+  const hectares = baseSqft / 107639.1;
+  const sqMetres = baseSqft / 10.7639;
+
   const addToHistory = () => {
     if (val > 0) {
       const updated = [...history, results];
@@ -49,6 +59,9 @@ export function ConverterTab({ t, initialHistory = [], onHistoryUpdate }: { t: a
       onHistoryUpdate?.(updated);
     }
   };
+
+  // Check if region is one of the core Punjab standards
+  const isPunjabRegion = ['punjab_legal', 'lahore_lda', 'traditional', 'rural_revenue'].includes(region.id);
 
   return (
     <div className="flex flex-col items-center pb-20">
@@ -108,6 +121,41 @@ export function ConverterTab({ t, initialHistory = [], onHistoryUpdate }: { t: a
         <div className="bg-[#F3E5F5] border border-[#7B1FA2] rounded-xl p-4 flex justify-between items-center shadow-sm text-[#7B1FA2]">
           <span className="font-bold">Kanal (Rural / Revenue)</span>
           <span className="text-xl font-black">{results.ruralKanal.toFixed(2)}</span>
+        </div>
+
+        {/* ── Dynamic Regional Unit (only if not already a Punjab standard) ── */}
+        {!isPunjabRegion && (
+          <>
+            <div className="mt-2 pt-2 border-t-2 border-dashed border-green-300" />
+            <div className="bg-gradient-to-r from-[#E8F5E9] to-[#C8E6C9] border-2 border-[#2E7D32] rounded-xl p-4 flex justify-between items-center shadow-md">
+              <div>
+                <span className="font-black text-[#1B5E20] text-sm">{region.unitName} ({region.name})</span>
+                <span className="block text-[10px] text-green-700 font-semibold">1 {region.unitName} = {region.unit.toLocaleString()} sq ft</span>
+              </div>
+              <span className="text-2xl font-black text-[#1B5E20]">{regionalValue.toFixed(4)}</span>
+            </div>
+            {region.subUnit && (
+              <div className="bg-[#E8F5E9] border border-[#43A047] rounded-xl p-4 flex justify-between items-center shadow-sm">
+                <span className="font-bold text-[#2E7D32]">{region.subUnit.name} ({region.name})</span>
+                <span className="text-xl font-black text-[#2E7D32]">{regionalSubValue?.toFixed(2)}</span>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── Universal Conversions ── */}
+        <div className="mt-2 pt-2 border-t border-gray-200" />
+        <div className="bg-gray-50 border border-gray-300 rounded-xl p-4 flex justify-between items-center shadow-sm">
+          <span className="font-bold text-gray-600">Acres</span>
+          <span className="text-lg font-black text-gray-800">{acres.toFixed(4)}</span>
+        </div>
+        <div className="bg-gray-50 border border-gray-300 rounded-xl p-4 flex justify-between items-center shadow-sm">
+          <span className="font-bold text-gray-600">Hectares</span>
+          <span className="text-lg font-black text-gray-800">{hectares.toFixed(4)}</span>
+        </div>
+        <div className="bg-gray-50 border border-gray-300 rounded-xl p-4 flex justify-between items-center shadow-sm">
+          <span className="font-bold text-gray-600">Sq Metres (m²)</span>
+          <span className="text-lg font-black text-gray-800">{sqMetres.toFixed(2)}</span>
         </div>
       </div>
       

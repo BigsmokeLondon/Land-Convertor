@@ -12,6 +12,11 @@ export const SQFT_PER_KANAL_RURAL = 5445.0; // 272.25 * 20
 
 export const SQFT_PER_SQ_KARAM = 30.25;
 
+// Universal standards
+export const SQFT_PER_ACRE = 43560;
+export const SQFT_PER_HECTARE = 107639.1;
+export const SQFT_PER_SQ_METRE = 10.7639;
+
 export function calculateHerons(a: number, b: number, c: number): number {
   const s = (a + b + c) / 2;
   const term = s * (s - a) * (s - b) * (s - c);

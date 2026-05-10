@@ -10,34 +10,59 @@ import { AboutTab } from './components/AboutTab';
 import { MapSurveyTab } from './components/MapSurveyTab';
 import { NotesTab } from './components/NotesTab';
 
-const REGIONAL_STANDARDS = [
-  { id: 'punjab_legal', name: 'Punjab Legal', unit: 225 },
-  { id: 'lahore_lda', name: 'Lahore LDA', unit: 250 },
-  { id: 'traditional', name: 'Traditional', unit: 272 },
-  { id: 'rural_revenue', name: 'Rural/Revenue', unit: 272.25 },
+const REGIONAL_STANDARDS: RegionalStandard[] = [
+  // ── Pakistan / Punjab ──────────────────────────────
+  { id: 'punjab_legal', name: 'Punjab Legal', unit: 225, unitName: 'Marla', group: 'Pakistan / Punjab', subUnit: { name: 'Kanal', factor: 20 } },
+  { id: 'lahore_lda', name: 'Lahore LDA', unit: 250, unitName: 'Marla', group: 'Pakistan / Punjab', subUnit: { name: 'Kanal', factor: 20 } },
+  { id: 'traditional', name: 'Traditional', unit: 272, unitName: 'Marla', group: 'Pakistan / Punjab', subUnit: { name: 'Kanal', factor: 20 } },
+  { id: 'rural_revenue', name: 'Rural/Revenue', unit: 272.25, unitName: 'Marla', group: 'Pakistan / Punjab', subUnit: { name: 'Kanal', factor: 20 } },
+
+  // ── India — North ─────────────────────────────────
+  { id: 'india_kanal', name: 'J&K / Himachal', unit: 5445, unitName: 'Kanal', group: 'India — North', subUnit: { name: 'Marla', factor: 20 } },
+  { id: 'india_bigha_up', name: 'UP / Bihar Bigha', unit: 27000, unitName: 'Bigha', group: 'India — North', subUnit: { name: 'Biswa', factor: 20 } },
+
+  // ── India — East ──────────────────────────────────
+  { id: 'katha_wb', name: 'Katha (West Bengal)', unit: 720, unitName: 'Katha', group: 'India — East' },
+  { id: 'katha_bihar', name: 'Katha (Bihar)', unit: 1361, unitName: 'Katha', group: 'India — East' },
+  { id: 'katha_assam', name: 'Katha (Assam)', unit: 2880, unitName: 'Katha', group: 'India — East' },
+  { id: 'dhur_bihar', name: 'Dhur (Bihar)', unit: 68, unitName: 'Dhur', group: 'India — East' },
+
+  // ── India — West & South ──────────────────────────
+  { id: 'guntha', name: 'Guntha (Maharashtra / Karnataka)', unit: 1089, unitName: 'Guntha', group: 'India — West & South' },
+  { id: 'cent', name: 'Cent (Tamil Nadu / Kerala)', unit: 435.6, unitName: 'Cent', group: 'India — South' },
+
+  // ── Nepal ─────────────────────────────────────────
+  { id: 'ropani', name: 'Ropani (Nepal Hills)', unit: 5476, unitName: 'Ropani', group: 'Nepal', subUnit: { name: 'Aana', factor: 16 } },
+  { id: 'dhur_nepal', name: 'Dhur (Nepal)', unit: 182.25, unitName: 'Dhur', group: 'Nepal' },
+  { id: 'katha_nepal', name: 'Katha (Nepal)', unit: 3645, unitName: 'Katha', group: 'Nepal' },
+  { id: 'bigha_nepal', name: 'Bigha (Nepal Terai)', unit: 6772.41, unitName: 'Bigha', group: 'Nepal', subUnit: { name: 'Katha', factor: 20 } },
+
+  // ── Universal ─────────────────────────────────────
+  { id: 'acre', name: 'Acre', unit: 43560, unitName: 'Acre', group: 'Universal' },
+  { id: 'hectare', name: 'Hectare', unit: 107639.1, unitName: 'Hectare', group: 'Universal' },
 ];
+
+interface RegionalStandard {
+  id: string;
+  name: string;
+  unit: number;
+  unitName: string;
+  group: string;
+  subUnit?: { name: string; factor: number };
+}
 
 export default function App() {
   const [language, setLanguage] = useLocalStorage('la_language', 'en');
   const [activeTab, setActiveTab] = useLocalStorage('la_active_tab', 'map');
-  const [region, setRegion] = useLocalStorage('la_region', REGIONAL_STANDARDS[0]);
+  const [regionId, setRegionId] = useLocalStorage('la_region_id', 'punjab_legal');
   const [converterHistory, setConverterHistory] = useLocalStorage<any[]>('la_converter_history', []);
   
+  const region = REGIONAL_STANDARDS.find(r => r.id === regionId) || REGIONAL_STANDARDS[0];
+
   useEffect(() => {
     const validTabs = ['map', 'area', 'converter', 'lookup', 'viz', 'notes', 'about'];
     if (!validTabs.includes(activeTab)) {
       setActiveTab('map');
-    }
-    
-    if (!region || typeof region.unit === 'undefined') {
-       setRegion(REGIONAL_STANDARDS[0]);
-    } else {
-       const matched = REGIONAL_STANDARDS.find(r => r.unit === region.unit);
-       if (!matched) {
-          setRegion(REGIONAL_STANDARDS[0]);
-       } else if (region !== matched) {
-          setRegion(matched);
-       }
     }
 
     // SANITIZE POINTS: Prevent crash from Shapefile corruption
@@ -53,7 +78,7 @@ export default function App() {
     } catch (e) {
        localStorage.setItem('la_map_points', '[]');
     }
-  }, [region]);
+  }, []);
   
   const t = translations[language] || translations.en;
 
@@ -79,12 +104,16 @@ export default function App() {
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto">
             <select 
-              value={region?.unit || 225}
-              onChange={(e) => setRegion(REGIONAL_STANDARDS.find(r => r.unit === Number(e.target.value))!)}
-              className="bg-white/10 text-white border border-white/30 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-white flex-1 md:w-auto text-gray-900"
+              value={regionId}
+              onChange={(e) => setRegionId(e.target.value)}
+              className="bg-white/10 text-white border border-white/30 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-white flex-1 md:w-auto [&>option]:text-gray-900 [&>optgroup]:text-gray-600 [&>optgroup]:font-bold"
             >
-              {REGIONAL_STANDARDS.map(r => (
-                <option key={r.id} value={r.unit}>{r.name} ({r.unit} sq ft)</option>
+              {Array.from(new Set(REGIONAL_STANDARDS.map(r => r.group))).map(group => (
+                <optgroup key={group} label={group}>
+                  {REGIONAL_STANDARDS.filter(r => r.group === group).map(r => (
+                    <option key={r.id} value={r.id}>{r.name} ({r.unit.toLocaleString()} sq ft / {r.unitName})</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
             <select
@@ -115,17 +144,18 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-4xl mx-auto p-3 md:p-6 bg-white md:rounded-xl md:shadow-sm md:mt-4">
-        {activeTab === 'map' && <MapSurveyTab regionalDenominator={region?.unit || 225} regionalName={region?.name || 'Marla'} />}
+        {activeTab === 'map' && <MapSurveyTab regionalDenominator={region.unit} regionalName={region.unitName} />}
         {activeTab === 'converter' && (
           <ConverterTab 
             t={t} 
+            region={region}
             initialHistory={converterHistory} 
             onHistoryUpdate={setConverterHistory} 
           />
         )}
         {activeTab === 'viz' && <VizTab data={converterHistory} />}
-        {activeTab === 'lookup' && <ReverseLookupTab />}
-        {activeTab === 'area' && <AreaCalculatorTab t={t} regionalDenominator={region?.unit || 225} />}
+        {activeTab === 'lookup' && <ReverseLookupTab region={region} />}
+        {activeTab === 'area' && <AreaCalculatorTab t={t} regionalDenominator={region.unit} />}
         {activeTab === 'notes' && <NotesTab />}
         {activeTab === 'about' && <AboutTab t={t} />}
       </main>

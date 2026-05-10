@@ -7,7 +7,14 @@ import {
   SQFT_PER_SQ_KARAM 
 } from '../utils/calculations';
 
-const units = [
+interface LookupUnit {
+  id: string;
+  label: string;
+  factor: number;
+  color?: string;
+}
+
+const coreUnits: LookupUnit[] = [
   { id: 'sqft', label: 'Square Feet', factor: 1 },
   { id: 'legal_marla', label: 'Marla (Punjab Legal 225)', factor: SQFT_PER_MARLA_LEGAL },
   { id: 'legal_kanal', label: 'Kanal (Punjab Legal)', factor: SQFT_PER_KANAL_LEGAL },
@@ -17,7 +24,11 @@ const units = [
   { id: 'trad_kanal', label: 'Kanal (Traditional)', factor: SQFT_PER_KANAL_TRAD },
   { id: 'rural_marla', label: 'Marla (Rural/Revenue 272.25)', factor: SQFT_PER_MARLA_RURAL },
   { id: 'rural_kanal', label: 'Kanal (Rural / Revenue)', factor: SQFT_PER_KANAL_RURAL },
-  { id: 'karam', label: 'Sq. Karam', factor: SQFT_PER_SQ_KARAM }
+  { id: 'karam', label: 'Sq. Karam', factor: SQFT_PER_SQ_KARAM },
+  // Universal
+  { id: 'acre', label: 'Acre', factor: 43560 },
+  { id: 'hectare', label: 'Hectare', factor: 107639.1 },
+  { id: 'sqm', label: 'Sq Metres (m²)', factor: 10.7639 },
 ];
 
 const unitColors: Record<string, string> = {
@@ -31,11 +42,28 @@ const unitColors: Record<string, string> = {
   rural_marla: 'bg-purple-50 border-purple-200 text-purple-800',
   rural_kanal: 'bg-purple-50 border-purple-200 text-purple-800',
   karam: 'bg-gray-50 border-gray-200 text-gray-700',
+  acre: 'bg-gray-50 border-gray-300 text-gray-700',
+  hectare: 'bg-gray-50 border-gray-300 text-gray-700',
+  sqm: 'bg-gray-50 border-gray-300 text-gray-700',
+  regional: 'bg-green-50 border-green-300 text-green-800',
+  regional_sub: 'bg-green-50 border-green-200 text-green-700',
 };
 
-export function ReverseLookupTab() {
+export function ReverseLookupTab({ region }: { region: any }) {
   const [unit, setUnit] = useLocalStorage('la_lookup_unit', 'sqft');
   const [valStr, setValStr] = useLocalStorage('la_lookup_val', '');
+
+  // Build dynamic units list: core + regional (if not already a Punjab standard)
+  const isPunjabRegion = ['punjab_legal', 'lahore_lda', 'traditional', 'rural_revenue'].includes(region.id);
+  
+  const units: LookupUnit[] = [...coreUnits];
+  
+  if (!isPunjabRegion) {
+    units.push({ id: 'regional', label: `${region.unitName} (${region.name})`, factor: region.unit });
+    if (region.subUnit) {
+      units.push({ id: 'regional_sub', label: `${region.subUnit.name} (${region.name})`, factor: region.unit / region.subUnit.factor });
+    }
+  }
 
   const val = parseFloat(valStr) || 0;
   const selectedUnit = units.find(u => u.id === unit) || units[0];
@@ -76,7 +104,7 @@ export function ReverseLookupTab() {
           return (
             <div key={u.id} className={`border rounded-xl p-4 flex justify-between items-center shadow-sm ${colorClass}`}>
               <span className="font-bold">{u.label}</span>
-              <span className="text-xl font-black">{converted.toFixed(2)}</span>
+              <span className="text-xl font-black">{converted.toFixed(u.factor > 10000 ? 4 : 2)}</span>
             </div>
           );
         })}
