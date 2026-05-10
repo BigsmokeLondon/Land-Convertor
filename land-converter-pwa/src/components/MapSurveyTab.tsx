@@ -812,7 +812,7 @@ export function MapSurveyTab({ regionalDenominator, regionalName }: { regionalDe
         regionalName || 'Marla', 
         areaMarla, 
         normalizedPoints, 
-        false, 
+        (localStorage.getItem('la_language') || '').replace(/["']/g, '') || 'en', 
         mapImage,
         {
           surveyorName,

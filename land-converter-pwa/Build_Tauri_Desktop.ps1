@@ -7,6 +7,10 @@ $ErrorActionPreference = "Stop"
 # --- CONFIGURATION ---
 $SOURCE = "Z:\Data\Camwood Ondrive\OneDrive - Camwood Limited\Arena\AI\AntiGavity\land-converter-pwa"
 $LOCAL = "C:\Users\Admin\Documents\land-converter-pwa"
+$SOURCEmsi = "Z:\Data\Camwood Ondrive\OneDrive - Camwood Limited\Arena\AI\AntiGavity\Support Files\dist\msi"
+$LOCALmsi = "C:\Users\Admin\Documents\land-converter-pwa\src-tauri\target\release\bundle\msi"
+$SOURCEexe = "Z:\Data\Camwood Ondrive\OneDrive - Camwood Limited\Arena\AI\AntiGavity\Support Files\dist\nsis"
+$LOCALexe = "C:\Users\Admin\Documents\land-converter-pwa\src-tauri\target\release\bundle\nsis"
 $LOG = Join-Path $LOCAL "build_log.txt"
 
 # --- HELPERS ---
@@ -57,6 +61,7 @@ $xdDirs = @("node_modules", "dist", ".git", ".github", "src-tauri\target")
 $xfFiles = @("*.log", "build_log.txt")
 
 & robocopy "$SOURCE" "$LOCAL" /E /XD $xdDirs /XF $xfFiles /NFL /NDL /NJH /NJS /MT:8
+
 
 # Robocopy exit codes < 8 are successful syncs/no changes
 if ($LASTEXITCODE -ge 8) {
@@ -125,6 +130,9 @@ if (Test-Path "$BUNDLE\nsis") {
 } elseif (Test-Path "$BUNDLE\msi") {
     Copy-Item "$BUNDLE\msi\*.msi" $RELEASES -Force
 }
+
+& robocopy "$LOCALmsi" "$SOURCEmsi" /E /XD $xdDirs /XF $xfFiles /NFL /NDL /NJH /NJS /MT:8
+& robocopy "$LOCALexe" "$SOURCEexe" /E /XD $xdDirs /XF $xfFiles /NFL /NDL /NJH /NJS /MT:8
 
 Write-Host "=====================================================" -ForegroundColor Green
 Write-Host "  BUILD COMPLETE (Version $VERSION)" -ForegroundColor Green

@@ -18,7 +18,7 @@ const REGIONAL_STANDARDS = [
 ];
 
 export default function App() {
-  const [isUrdu, setIsUrdu] = useLocalStorage('la_is_urdu', false);
+  const [language, setLanguage] = useLocalStorage('la_language', 'en');
   const [activeTab, setActiveTab] = useLocalStorage('la_active_tab', 'map');
   const [region, setRegion] = useLocalStorage('la_region', REGIONAL_STANDARDS[0]);
   const [converterHistory, setConverterHistory] = useLocalStorage<any[]>('la_converter_history', []);
@@ -55,7 +55,7 @@ export default function App() {
     }
   }, [region]);
   
-  const t = isUrdu ? translations.ur : translations.en;
+  const t = translations[language] || translations.en;
 
   const tabs = [
     { id: 'map', icon: <MapIcon size={20} />, label: t.tabMap },
@@ -87,12 +87,28 @@ export default function App() {
                 <option key={r.id} value={r.unit}>{r.name} ({r.unit} sq ft)</option>
               ))}
             </select>
-            <button 
-              onClick={() => setIsUrdu(!isUrdu)}
-              className="bg-white/20 hover:bg-white/30 px-4 py-1.5 rounded-lg border border-white/40 shadow-sm transition backdrop-blur-sm text-xs font-bold"
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="bg-white/20 text-white border border-white/40 rounded-lg px-2 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-white shadow-sm transition backdrop-blur-sm [&>option]:text-gray-900"
             >
-              {isUrdu ? 'EN' : 'اردو'}
-            </button>
+              <option value="en">EN</option>
+              <option value="ur">اردو</option>
+              <option value="hi">हिंदी</option>
+              <option value="bn">বাংলা</option>
+              <option value="pa">ਪੰਜਾਬੀ</option>
+              <option value="ne">नेपाली</option>
+              <option value="mr">मराठी</option>
+              <option value="si">සිංහල</option>
+              <option value="ta">தமிழ்</option>
+              <option value="te">తెలుగు</option>
+              <option value="gu">ગુજરાતી</option>
+              <option value="ml">മലയാളം</option>
+              <option value="kn">ಕನ್ನಡ</option>
+              <option value="or">ଓଡ଼ିଆ</option>
+              <option value="ps">پښتو</option>
+              <option value="sd">سنڌي</option>
+            </select>
           </div>
         </div>
       </header>
@@ -111,7 +127,7 @@ export default function App() {
         {activeTab === 'lookup' && <ReverseLookupTab />}
         {activeTab === 'area' && <AreaCalculatorTab t={t} regionalDenominator={region?.unit || 225} />}
         {activeTab === 'notes' && <NotesTab />}
-        {activeTab === 'about' && <AboutTab />}
+        {activeTab === 'about' && <AboutTab t={t} />}
       </main>
 
       {/* Mobile Bottom Navigation */}

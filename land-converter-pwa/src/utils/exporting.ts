@@ -7,7 +7,7 @@ export const generatePDF = (
   regionalName: string, 
   regionalArea: number, 
   points: any, 
-  isUrdu: boolean,
+  language: string,
   mapImage?: string, // base64
   metadata?: { 
     surveyorName?: string, 
@@ -19,7 +19,7 @@ export const generatePDF = (
   }
 ) => {
   try {
-    const t = isUrdu ? translations.ur : translations.en;
+    const t = translations[language] || translations.en;
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width || 210;
     const pageHeight = doc.internal.pageSize.height || 297;

@@ -1,4 +1,4 @@
-export function AboutTab() {
+export function AboutTab({ t }: { t: any }) {
   const version = '1.6.2';
   return (
     <div className="max-w-3xl mx-auto space-y-5 text-gray-800 pb-12">
@@ -19,10 +19,9 @@ export function AboutTab() {
 
       {/* Purpose */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-        <h3 className="text-base font-bold text-[#1976D2] mb-2">🔷 Purpose</h3>
+        <h3 className="text-base font-bold text-[#1976D2] mb-2">🔷 {t.aboutPurposeTitle || "Purpose"}</h3>
         <p className="text-sm leading-relaxed text-gray-600">
-          This application provides instant, professionally accurate land unit conversions for field surveyors, real estate developers, and civil engineers.
-          It handles complex geometric calculations and multi-regional standards with high-precision GIS tools.
+          {t.aboutPurposeDesc || "This application provides instant, professionally accurate land unit conversions for field surveyors, real estate developers, and civil engineers. It handles complex geometric calculations and multi-regional standards with high-precision GIS tools."}
         </p>
       </div>
 
@@ -157,12 +156,9 @@ export function AboutTab() {
 
       {/* Liability Notice */}
       <div className="bg-red-50 p-5 rounded-2xl shadow-sm border border-red-200">
-        <h3 className="text-base font-bold text-red-700 mb-2">⚠️ Liability Notice</h3>
+        <h3 className="text-base font-bold text-red-700 mb-2">⚠️ {t.aboutLiabilityTitle || "Liability Notice"}</h3>
         <p className="text-sm leading-relaxed text-red-900">
-          This report is generated using GIS satellite positioning and manual tape measurements. 
-          While these values provide a highly accurate estimation for on-site verification, this document does not constitute a legal land title or an official government survey. 
-          Arena SitePro and its developers take no responsibility for legal inaccuracies or financial decisions made based on this report.
-          Always verify plot boundaries physically with a licensed government surveyor before executing any mutation or sale deed.
+          {t.aboutLiabilityDesc || "This report is generated using GIS satellite positioning and manual tape measurements. While these values provide a highly accurate estimation for on-site verification, this document does not constitute a legal land title or an official government survey. Arena SitePro and its developers take no responsibility for legal inaccuracies or financial decisions made based on this report. Always verify plot boundaries physically with a licensed government surveyor before executing any mutation or sale deed."}
         </p>
       </div>
 
